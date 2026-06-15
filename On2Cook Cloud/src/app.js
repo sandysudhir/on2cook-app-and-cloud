@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615c";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615c";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615b";
+} from "./ncb-services.js?v=20260615c";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615b";
+} from "./data-store.js?v=20260615c";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -886,7 +886,7 @@ function setInventoryCheckState(device, recipeNames = []) {
     inventoryChecking: true,
     recipeNames: [...recipeNames],
     totalRecipes: recipeNames.length,
-    summary: recipeNames.length > 0 ? `Checking existing recipes before upload (${recipeNames.length})` : "Checking existing recipes before upload"
+    summary: recipeNames.length > 0 ? `Checking device recipes (${recipeNames.length})` : "Checking device recipes"
   };
   device.lastUpdatedAt = nowIso();
 }
@@ -900,7 +900,7 @@ function setUploadPlan(device, recipes, skippedRecipes = []) {
       skippedRecipeNames: skippedNames,
       summary:
         skippedNames.length > 0
-          ? `All selected recipes already exist on this device (${skippedNames.length})`
+          ? `Required recipe already exists on this device (${skippedNames.length})`
           : "No recipes need to be uploaded"
     };
     device.lastUpdatedAt = nowIso();
@@ -949,7 +949,7 @@ function completeUploadPlan(device, uploadedRecipeNames = []) {
       uploadedRecipeNames.length > 0
         ? `Recipe upload complete: ${uploadedRecipeNames.length} uploaded, ${skippedNames.length} skipped`
         : skippedNames.length > 0
-          ? `All selected recipes already exist on this device (${skippedNames.length})`
+          ? `Required recipe already exists on this device (${skippedNames.length})`
           : "Recipe upload complete"
   };
   device.lastUpdatedAt = nowIso();
@@ -1132,6 +1132,16 @@ function syncSelectedRecipesToAllDevices(draft) {
   draft.devices.forEach((device) => {
     const existingIds = Array.isArray(device.allowedRecipeIds) ? device.allowedRecipeIds : [];
     device.allowedRecipeIds = Array.from(new Set([...existingIds, ...selectedRecipeIds]));
+  });
+}
+
+function clearStartupRecipeUploadState(draft) {
+  draft.devices.forEach((device) => {
+    device.baselineRecipeSyncPending = false;
+    device.startupGuardUntil = "";
+    if (device.uploadState?.active || device.uploadState?.inventoryChecking) {
+      device.uploadState = emptyUploadState();
+    }
   });
 }
 
@@ -1690,10 +1700,10 @@ function handleTransportEvents() {
       device.browserDeviceId = browserDeviceId;
       device.bluetoothName = bluetoothName;
       device.connection = "connected";
-      device.baselineRecipeSyncPending = true;
+      device.baselineRecipeSyncPending = false;
       device.uploadState = emptyUploadState();
       device.telemetry.workStatus = "idle";
-      appendActivity(device, `Connected to ${bluetoothName || browserDeviceId}`, "success");
+      appendActivity(device, `Connected to ${bluetoothName || browserDeviceId}. Recipe upload is disabled until a recipe is run.`, "success");
     });
     ble.sendDateTime(slot).catch(() => {});
     window.setTimeout(() => {
@@ -1706,13 +1716,6 @@ function handleTransportEvents() {
       if (!session || session.transfer || (session.run?.quietUntil && Date.now() < Number(session.run.quietUntil))) return;
       ble.requestFirmwareVersion(slot).catch(() => {});
     }, 1400);
-    window.setTimeout(() => {
-      const session = ble.getSession(slot);
-      if (!session || !session.server?.connected || session.transfer || session.run) return;
-      syncBaselineRecipesOnConnect(Number(slot), { silent: true }).catch((error) => {
-        console.error("Baseline connect sync failed.", error);
-      });
-    }, 500);
   });
 
   ble.addEventListener("device-disconnected", (event) => {
@@ -2053,16 +2056,19 @@ async function startOrderFlow(orderId, preferredSlot = null) {
       if (!draftDevice) return draft;
       appendFlowActivity(draftDevice, "Idle confirmed before recipe start", "info", idleBeforeSync.at);
     });
-    const latestDevice = getDevice(device.slot) || device;
-    const knownRecipeKeys = getKnownDeviceRecipeKeys(latestDevice);
-    const recipeKey = normalizeRecipeNameKey(recipe.firmwareName);
+    const uploadedRecipes = await ensureRecipesAvailableOnDevice(device.slot, [recipe], {
+      silent: true,
+      forceInventory: true,
+      overwriteExisting: false,
+      inventoryTimeoutMs: 4500
+    });
     mutate((draft) => {
       const draftDevice = draft.devices.find((item) => item.slot === device.slot);
       if (!draftDevice) return draft;
-      if (knownRecipeKeys.has(recipeKey)) {
-        appendFlowActivity(draftDevice, `${recipe.firmwareName} already present on device`, "info");
+      if (uploadedRecipes.length > 0) {
+        appendFlowActivity(draftDevice, `${recipe.firmwareName} uploaded for this run`, "success");
       } else {
-        appendFlowActivity(draftDevice, "Recipe inventory not confirmed; attempting direct run without upload", "warning");
+        appendFlowActivity(draftDevice, `${recipe.firmwareName} already present on device`, "info");
       }
     });
     await ble.runRecipe(device.slot, recipe.firmwareName, {
@@ -2105,107 +2111,35 @@ async function syncSelectedRecipesToDevice(slot, options = {}) {
   const snapshot = state();
   const device = snapshot.devices.find((item) => item.slot === Number(slot));
   if (!device) return;
-  const recipes = getDeviceSyncRecipes(snapshot, device);
-  if (recipes.length === 0) {
-    if (!options.silent) showToast("No selected recipes are enabled for this device", "warning");
-    return;
-  }
   if (!options.silent) {
-    showToast(`Checking ${recipes.length} allowed recipes for Device ${slot}`, "info");
+    showToast(`Checking recipes stored on Device ${slot}`, "info");
   }
   try {
-    const uploadedRecipes = await ensureRecipesAvailableOnDevice(slot, recipes, {
-      silent: options.silent,
-      forceInventory: options.forceInventory !== false,
-      overwriteExisting: options.overwriteExisting === true
+    const inventoryNames = await refreshDeviceRecipeInventory(slot, {
+      force: true,
+      timeoutMs: options.inventoryTimeoutMs || 4500
     });
     if (!options.silent) {
-      showToast(
-        uploadedRecipes.length > 0
-          ? `Device ${slot} synced (${uploadedRecipes.length} new recipe${uploadedRecipes.length === 1 ? "" : "s"})`
-          : `Device ${slot} already had those recipes`,
-        "success"
-      );
+      showToast(`Device ${slot} inventory checked: ${inventoryNames.length} recipe${inventoryNames.length === 1 ? "" : "s"} found`, "success");
     }
     mutate((draft) => {
       const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
       if (!draftDevice) return draft;
       draftDevice.baselineRecipeSyncPending = false;
       draftDevice.startupGuardUntil = "";
+      draftDevice.uploadState = {
+        ...emptyUploadState(),
+        summary: `Inventory checked: ${inventoryNames.length} recipe${inventoryNames.length === 1 ? "" : "s"} on device`
+      };
     });
   } catch (error) {
     mutate((draft) => {
       const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
       if (!draftDevice) return draft;
-      failUploadPlan(draftDevice, `Recipe sync failed: ${error.message}`);
-      appendActivity(draftDevice, `Recipe sync failed: ${error.message}`, "error");
+      failUploadPlan(draftDevice, `Inventory check failed: ${error.message}`);
+      appendActivity(draftDevice, `Inventory check failed: ${error.message}`, "error");
     });
     if (!options.silent) showToast(error.message, "error");
-    throw error;
-  }
-}
-
-async function syncBaselineRecipesOnConnect(slot, options = {}) {
-  const snapshot = state();
-  const device = snapshot.devices.find((item) => item.slot === Number(slot));
-  if (!device || device.connection !== "connected") return [];
-  const recipes = getSelectedRecipes(snapshot);
-  if (recipes.length === 0) {
-    mutate((draft) => {
-      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
-      if (!draftDevice) return draft;
-      draftDevice.baselineRecipeSyncPending = false;
-      draftDevice.startupGuardUntil = "";
-      appendActivity(draftDevice, "No baseline recipes were selected for connect sync", "warning");
-    });
-    queueIdleWork();
-    return [];
-  }
-
-  mutate((draft) => {
-    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
-    if (!draftDevice) return draft;
-    draftDevice.baselineRecipeSyncPending = true;
-    draftDevice.startupGuardUntil = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-    setInventoryCheckState(
-      draftDevice,
-      recipes.map((recipe) => recipe.firmwareName)
-    );
-  });
-
-  try {
-    const uploadedRecipes = await ensureRecipesAvailableOnDevice(Number(slot), recipes, {
-      silent: true,
-      forceInventory: true,
-      overwriteExisting: false
-    });
-
-    mutate((draft) => {
-      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
-      if (!draftDevice) return draft;
-      draftDevice.baselineRecipeSyncPending = false;
-      draftDevice.startupGuardUntil = "";
-      if (uploadedRecipes.length === 0) {
-        draftDevice.uploadState = {
-          ...draftDevice.uploadState,
-          summary: `Device already has all ${recipes.length} selected recipes`
-        };
-      }
-    });
-    queueIdleWork();
-    return uploadedRecipes;
-  } catch (error) {
-    mutate((draft) => {
-      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
-      if (!draftDevice) return draft;
-      draftDevice.startupGuardUntil = "";
-      draftDevice.baselineRecipeSyncPending = false;
-      failUploadPlan(draftDevice, `Connect sync failed: ${error.message}`);
-      appendActivity(draftDevice, `Connect sync failed: ${error.message}`, "error");
-    });
-    if (!options.silent) {
-      showToast(`Device ${slot} connect sync failed: ${error.message}`, "error");
-    }
     throw error;
   }
 }
@@ -3378,7 +3312,6 @@ function renderDevicePhone(snapshot, device) {
   const currentOrder = getCurrentJob(snapshot, device);
   const queueOrders = getQueueOrders(snapshot, device);
   const selectableRecipes = getDeviceSyncRecipes(snapshot, device);
-  const syncCount = selectableRecipes.length;
   const serialPhotoUrl = safeOptionalUrl(device.serialPhotoDataUrl, "serial photo");
   const runtimeRecipe = getRuntimeRecipe(snapshot, device);
   const timelineRecipe = getDeviceTimelineRecipe(snapshot, device, runtimeRecipe);
@@ -3485,7 +3418,7 @@ function renderDevicePhone(snapshot, device) {
             }
           </section>
           <section class="stack-section">
-            <div class="mini-title">Manual run and sync</div>
+            <div class="mini-title">Manual run and inventory</div>
             <div class="settings-card">
               ${
                 uploadState.summary
@@ -3526,7 +3459,7 @@ function renderDevicePhone(snapshot, device) {
               </label>
               <div class="action-row">
                 <button class="primary-button small" data-action="run-device-selected-recipe" data-slot="${device.slot}">Run now</button>
-                <button class="secondary-button small" data-action="sync-selected-recipes" data-slot="${device.slot}">Sync selected ${syncCount}</button>
+                <button class="secondary-button small" data-action="sync-selected-recipes" data-slot="${device.slot}">Check device recipes</button>
               </div>
               <label class="file-field">
                 <span>Serial number photo</span>
@@ -3637,7 +3570,6 @@ function renderModal(snapshot) {
     const telemetryMode = getTelemetryMode(device);
     const currentIngredient = getCurrentIngredient(device, runtimeRecipe);
     const currentInstruction = getCurrentInstruction(device, runtimeRecipe);
-    const syncRecipes = getDeviceSyncRecipes(snapshot, device);
     const recipeFilter = String(modal.payload.recipeFilter || "").trim().toLowerCase();
     const filteredRecipes = snapshot.recipes
       .filter((recipe) => recipe.selected)
@@ -3773,7 +3705,7 @@ function renderModal(snapshot) {
                     ? `<button class="secondary-button" type="button" data-action="disconnect-device" data-slot="${device.slot}">Disconnect</button>`
                     : `<button class="primary-button" type="button" data-action="connect-device" data-slot="${device.slot}">Connect</button>`
                 }
-                <button class="secondary-button" type="button" data-action="sync-selected-recipes" data-slot="${device.slot}">Sync selected ${syncRecipes.length}</button>
+                <button class="secondary-button" type="button" data-action="sync-selected-recipes" data-slot="${device.slot}">Check device recipes</button>
                 <button class="secondary-button" type="button" data-action="read-device-recipes" data-slot="${device.slot}">Read recipes</button>
                 <button class="secondary-button" type="button" data-action="request-status" data-slot="${device.slot}">Refresh status</button>
                 <button class="secondary-button" type="button" data-action="list-logs" data-slot="${device.slot}">Fetch logs</button>
@@ -4992,6 +4924,7 @@ async function init() {
   globalRecipeCatalog = await loadGlobalRecipeCatalog();
   store = createStore(loadState(seedRecipes));
   mutate((draft) => {
+    clearStartupRecipeUploadState(draft);
     syncSelectedRecipesToAllDevices(draft);
   });
   bindStore();
