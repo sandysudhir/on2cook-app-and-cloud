@@ -36,3 +36,19 @@ STATUS=?
 - Device numbers are assigned from connected Bluetooth devices in connection order: first connected = Device 1, second connected = Device 2, etc.
 - Queues are in-memory for this build. Persistence/backend login/database is still the next phase.
 - Full Gradle build was not possible in the sandbox because the Gradle wrapper attempts to download Gradle from `services.gradle.org`, and internet access is blocked.
+
+## 2026-06-15 APK order-first flow update
+
+- Reworked the native Android order path so tapping an order card opens an order-focused device workspace instead of leaving Orders and Devices as separate dead-end screens.
+- The `renderSelectDevice(...)` screen now acts like an order-to-device workspace with a highlighted device card, left and right arrows, and swipe handling on the device card itself.
+- Quick device chips now open the same workspace already focused on the selected device instead of only repainting the order list.
+- Pending order primary actions now move into the workspace first, so the operator can stay inside the order flow and choose or review the target device before sending the cook command.
+- After a start or queue action from the Orders tab, the app stays in the order workspace rather than dropping the operator back into a generic list.
+- Added this running markdown log requirement to the workflow so each change batch can be tracked in the same file.
+
+## Validation notes
+
+- `HomeFragment.kt` was updated for the new order-first APK interaction flow.
+- A Gradle compile was attempted locally with Android Studio's bundled JBR, but the project currently fails earlier in kapt with a pre-existing JDK/module compatibility error:
+  `IllegalAccessError ... KaptJavaCompiler cannot access com.sun.tools.javac.main.JavaCompiler`
+- That compile failure is an environment/build-chain issue, not a syntax error reported against the new order-workspace changes themselves.

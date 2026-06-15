@@ -19,6 +19,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.Animation
@@ -1315,14 +1316,15 @@ class HomeFragment : Fragment() {
 
     private fun renderSelectDevice(item: KitchenOrderItem) {
         requestAllConnectedDeviceStatuses(force = true)
-        if (selectedAssignDevice == null || selectedAssignDevice?.state == DeviceState.OFFLINE || selectedAssignDevice?.macAddress.isNullOrBlank()) {
-            selectedAssignDevice = idleOnDevices().firstOrNull() ?: onDevices().firstOrNull()
-        }
+        syncSelectedAssignDeviceForOrder(item)
         val root = baseScrollRoot()
         val content = root.getChildAt(0) as LinearLayout
-        content.addView(screenHeader("Select Device", true) { renderOrdersScreen(orderListMode) })
+        content.addView(screenHeader("Order Workspace", true) { renderOrdersScreen(orderListMode) })
         content.addView(selectDeviceOrderHeader(item))
-        content.addView(label("SELECT DEVICE · ${connectedDeviceMacs().size} CONNECTED", 14, "#111111", true).apply { setPadding(dp(16), dp(12), dp(16), dp(6)) })
+        content.addView(label("ORDER TO DEVICE FLOW - ${connectedDeviceMacs().size} CONNECTED", 14, "#111111", true).apply { setPadding(dp(16), dp(12), dp(16), dp(4)) })
+        content.addView(label("Swipe left or right on the device card, or use the arrows, to move across devices while keeping this order in focus.", 12, "#666666", false).apply { setPadding(dp(16), 0, dp(16), dp(8)) })
+        content.addView(orderWorkspaceDevicePager(item))
+        content.addView(label("ALL DEVICES", 13, "#111111", true).apply { setPadding(dp(16), dp(10), dp(16), dp(4)) })
         (idleOnDevices() + busyOnDevices() + allKitchenDevices().filter { it.state == DeviceState.OFFLINE }).forEach { device -> content.addView(selectDeviceRow(item, device)) }
         val note = label("Free devices start immediately. Busy devices receive this item in queue. Offline devices are disabled until connected over Bluetooth.", 12, "#666666", false)
         note.setPadding(dp(16), dp(10), dp(16), dp(4))
@@ -1351,6 +1353,7 @@ class HomeFragment : Fragment() {
             Toast.makeText(requireContext(), "Select a connected On2Cook device first", Toast.LENGTH_SHORT).show()
             return
         }
+        selectedQuickDeviceForOrder[orderWorkspaceKey(item)] = selected.number
         if (selected.state == DeviceState.IDLE) {
             startOrderItemOnDevice(item, selected)
         } else {
@@ -1390,6 +1393,8 @@ class HomeFragment : Fragment() {
         requestAllConnectedDeviceStatuses(force = true)
         if (activeOrderModuleTab == OrderModuleTab.DEVICES) {
             renderDeviceDetail(allKitchenDevices().firstOrNull { it.macAddress == device.macAddress } ?: device)
+        } else if (activeOrderModuleTab == OrderModuleTab.ORDERS) {
+            renderSelectDevice(item)
         } else {
             renderOrdersScreen(OrderListMode.CURRENT)
         }
@@ -1405,8 +1410,10 @@ class HomeFragment : Fragment() {
         Toast.makeText(requireContext(), "${item.itemName} added to Device ${device.number} queue", Toast.LENGTH_SHORT).show()
         if (activeOrderModuleTab == OrderModuleTab.DEVICES) {
             renderDeviceDetail(allKitchenDevices().firstOrNull { it.macAddress == device.macAddress } ?: device)
-        } else {
+        } else if (activeOrderModuleTab == OrderModuleTab.ORDERS) {
             renderSelectDevice(item)
+        } else {
+            renderOrdersScreen(OrderListMode.CURRENT)
         }
     }
 
@@ -1990,8 +1997,35 @@ class HomeFragment : Fragment() {
     private fun sortedQuickDevices(): List<KitchenDevice> = idleOnDevices() + busyOnDevices()
 
     private fun selectedQuickDevice(item: KitchenOrderItem): KitchenDevice? {
-        val selectedNumber = selectedQuickDeviceForOrder[item.orderId + item.itemCode]
+        val selectedNumber = selectedQuickDeviceForOrder[orderWorkspaceKey(item)]
         return onDevices().firstOrNull { it.number == selectedNumber } ?: idleOnDevices().firstOrNull()
+    }
+
+    private fun orderWorkspaceKey(item: KitchenOrderItem): String = item.orderId + item.itemCode
+
+    private fun workspaceDevices(): List<KitchenDevice> = sortedQuickDevices().ifEmpty { allKitchenDevices() }
+
+    private fun syncSelectedAssignDeviceForOrder(item: KitchenOrderItem) {
+        val devices = workspaceDevices()
+        if (devices.isEmpty()) {
+            selectedAssignDevice = null
+            return
+        }
+        val selectedNumber = selectedQuickDeviceForOrder[orderWorkspaceKey(item)] ?: selectedAssignDevice?.number
+        selectedAssignDevice = devices.firstOrNull { it.number == selectedNumber } ?: devices.first()
+        selectedQuickDeviceForOrder[orderWorkspaceKey(item)] = selectedAssignDevice?.number ?: return
+    }
+
+    private fun shiftSelectedWorkspaceDevice(item: KitchenOrderItem, delta: Int) {
+        val devices = workspaceDevices()
+        if (devices.isEmpty()) return
+        val currentNumber = selectedAssignDevice?.number ?: devices.first().number
+        val currentIndex = devices.indexOfFirst { it.number == currentNumber }.takeIf { it >= 0 } ?: 0
+        val nextIndex = (currentIndex + delta).coerceIn(0, devices.lastIndex)
+        val target = devices[nextIndex]
+        selectedAssignDevice = target
+        selectedQuickDeviceForOrder[orderWorkspaceKey(item)] = target.number
+        renderSelectDevice(item)
     }
 
     private fun requestAllConnectedDeviceStatuses(force: Boolean = false) {
@@ -2172,16 +2206,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun handlePendingPrimaryAction(item: KitchenOrderItem) {
-        val selected = selectedQuickDevice(item)
-        if (idleOnDevices().isEmpty() || selected == null) {
-            selectOrderModuleTab(OrderModuleTab.DEVICES)
-            return
-        }
-        if (selected.state == DeviceState.IDLE) {
-            startOrderItemOnDevice(item, selected)
-        } else {
-            queueOrderItemOnDevice(item, selected)
-        }
+        renderSelectDevice(item)
     }
 
     private fun isDeviceInUse(device: KitchenDevice): Boolean = device.state == DeviceState.COOKING || device.state == DeviceState.QUEUED
@@ -3183,7 +3208,10 @@ class HomeFragment : Fragment() {
             }
         }
         card.addView(actionRow)
-        return card.apply { layoutParams = cardLp(14, 4, 14, 10) }
+        return card.apply {
+            layoutParams = cardLp(14, 4, 14, 10)
+            setOnClickListener { renderSelectDevice(item) }
+        }
     }
 
     private fun previousOrderCard(item: KitchenOrderItem): LinearLayout {
@@ -3250,8 +3278,9 @@ class HomeFragment : Fragment() {
             background = roundedDrawable(fill, stroke, 1, 6)
             includeFontPadding = false
             setOnClickListener {
-                selectedQuickDeviceForOrder[item.orderId + item.itemCode] = device.number
-                renderOrdersScreen(orderListMode)
+                selectedQuickDeviceForOrder[orderWorkspaceKey(item)] = device.number
+                selectedAssignDevice = device
+                renderSelectDevice(item)
             }
         }
     }
@@ -3409,6 +3438,133 @@ class HomeFragment : Fragment() {
         return card
     }
 
+    private fun orderWorkspaceDevicePager(item: KitchenOrderItem): LinearLayout {
+        val devices = workspaceDevices()
+        val selected = selectedAssignDevice ?: devices.firstOrNull()
+        return LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            val row = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding(dp(16), 0, dp(16), 0)
+            }
+            row.addView(smallOutlineButton("<") { shiftSelectedWorkspaceDevice(item, -1) }, LinearLayout.LayoutParams(dp(42), dp(42)).apply { marginEnd = dp(8) })
+            row.addView(
+                if (selected != null) orderWorkspaceSelectedDeviceCard(item, selected) else emptyDeviceWorkspaceCard(),
+                LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            )
+            row.addView(smallOutlineButton(">") { shiftSelectedWorkspaceDevice(item, 1) }, LinearLayout.LayoutParams(dp(42), dp(42)).apply { marginStart = dp(8) })
+            addView(row)
+            if (devices.isNotEmpty() && selected != null) {
+                addView(orderWorkspaceDots(item, devices, selected), LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                    gravity = android.view.Gravity.CENTER_HORIZONTAL
+                    topMargin = dp(8)
+                })
+            }
+        }
+    }
+
+    private fun orderWorkspaceSelectedDeviceCard(item: KitchenOrderItem, device: KitchenDevice): LinearLayout {
+        val card = cardContainer().apply {
+            var downX = 0f
+            setOnTouchListener { view, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        downX = event.x
+                        true
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        val deltaX = event.x - downX
+                        when {
+                            deltaX > dp(48) -> {
+                                shiftSelectedWorkspaceDevice(item, -1)
+                                true
+                            }
+                            deltaX < -dp(48) -> {
+                                shiftSelectedWorkspaceDevice(item, 1)
+                                true
+                            }
+                            else -> {
+                                view.performClick()
+                                true
+                            }
+                        }
+                    }
+                    else -> true
+                }
+            }
+            setOnClickListener { renderDeviceDetail(device) }
+        }
+        val top = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+        }
+        top.addView(deviceNumberBox(device), LinearLayout.LayoutParams(dp(52), dp(52)).apply { marginEnd = dp(12) })
+        val mid = LinearLayout(requireContext()).apply { orientation = LinearLayout.VERTICAL }
+        mid.addView(label("Device ${device.number} - ${device.name}", 15, "#111111", true))
+        mid.addView(label(deviceStatusLine(device), 12, "#4A4A4A", false).apply { setPadding(0, dp(4), 0, 0) })
+        if (device.currentItem.isNotBlank()) {
+            mid.addView(label("Now: ${device.currentItem}", 12, "#111111", true).apply { setPadding(0, dp(4), 0, 0) })
+        }
+        top.addView(mid, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        top.addView(chip(deviceActionLabel(device), if (device.state == DeviceState.OFFLINE) Color.parseColor("#EFEFEF") else lightenColor(deviceColor(device.state)), if (device.state == DeviceState.OFFLINE) "#777777" else colorToHex(deviceColor(device.state))))
+        card.addView(top)
+        if (device.state == DeviceState.COOKING || device.state == DeviceState.QUEUED) {
+            card.addView(progressBar(if (device.state == DeviceState.COOKING) 0.55f else 0.25f, deviceColor(device.state)))
+        }
+        card.addView(label("This order: ${item.itemName}", 12, "#333333", false).apply { setPadding(0, dp(10), 0, 0) })
+        card.addView(label("Device queue: ${queuedItemsForDevice(device).size} item(s)", 12, "#666666", false).apply { setPadding(0, dp(4), 0, 0) })
+        val actionRow = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, dp(10), 0, 0)
+        }
+        actionRow.addView(
+            smallColoredButton(if (device.state == DeviceState.IDLE) "Cook Now" else "Add Queue", "#FF6B35", "#FFFFFF", "#FF6B35") {
+                selectedAssignDevice = device
+                selectedQuickDeviceForOrder[orderWorkspaceKey(item)] = device.number
+                if (device.state == DeviceState.IDLE) startOrderItemOnDevice(item, device) else queueOrderItemOnDevice(item, device)
+            },
+            LinearLayout.LayoutParams(0, dp(40), 1f).apply { marginEnd = dp(8) }
+        )
+        actionRow.addView(
+            smallOutlineButton("View Device") { renderDeviceDetail(device) },
+            LinearLayout.LayoutParams(0, dp(40), 1f)
+        )
+        card.addView(actionRow)
+        return card
+    }
+
+    private fun emptyDeviceWorkspaceCard(): LinearLayout {
+        return cardContainer().apply {
+            addView(label("No device connected yet", 15, "#111111", true))
+            addView(label("Connect an On2Cook device over Bluetooth to assign or queue this order.", 12, "#666666", false).apply { setPadding(0, dp(6), 0, 0) })
+        }
+    }
+
+    private fun orderWorkspaceDots(item: KitchenOrderItem, devices: List<KitchenDevice>, selected: KitchenDevice): LinearLayout {
+        return LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            devices.forEach { device ->
+                addView(
+                    View(requireContext()).apply {
+                        background = roundedDrawable(
+                            if (device.number == selected.number) Color.parseColor("#FF6B35") else Color.parseColor("#E0E0E0"),
+                            if (device.number == selected.number) Color.parseColor("#FF6B35") else Color.parseColor("#E0E0E0"),
+                            0,
+                            99
+                        )
+                        setOnClickListener {
+                            selectedAssignDevice = device
+                            selectedQuickDeviceForOrder[orderWorkspaceKey(item)] = device.number
+                            renderSelectDevice(item)
+                        }
+                    },
+                    LinearLayout.LayoutParams(dp(if (device.number == selected.number) 18 else 8), dp(8)).apply { marginEnd = dp(6) }
+                )
+            }
+        }
+    }
+
     private fun selectDeviceRow(item: KitchenOrderItem, device: KitchenDevice): LinearLayout {
         val isSelected = selectedAssignDevice?.number == device.number
         val color = deviceColor(device.state)
@@ -3421,6 +3577,7 @@ class HomeFragment : Fragment() {
             setOnClickListener {
                 if (device.state == DeviceState.OFFLINE) return@setOnClickListener
                 selectedAssignDevice = device
+                selectedQuickDeviceForOrder[orderWorkspaceKey(item)] = device.number
                 renderSelectDevice(item)
             }
         }
@@ -3850,3 +4007,4 @@ class HomeFragment : Fragment() {
             }
     }
 }
+
