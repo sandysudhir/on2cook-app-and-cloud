@@ -1,4 +1,4 @@
-const CACHE_NAME = "on2cook-cloud-v21";
+const CACHE_NAME = "on2cook-cloud-v22";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -15,17 +15,27 @@ const CORE_ASSETS = [
   "./data/order_recipes/DAL%20MAKHANI.zip?v=20260612q",
   "./data/order_recipes/KUNG%20PAO%20CHICKEN.zip?v=20260612q",
   "./data/order_recipes/MASOOR%20DAL%20.zip?v=20260612q",
-  "./src/styles.css?v=20260612q",
-  "./src/app.js?v=20260612q",
-  "./src/ble-transport.js?v=20260612q",
-  "./src/data-store.js?v=20260612q",
-  "./src/zip-reader.js?v=20260612q",
+  "./src/styles.css?v=20260615b",
+  "./src/app.js?v=20260615b",
+  "./src/ble-transport.js?v=20260615b",
+  "./src/data-store.js?v=20260615b",
+  "./src/zip-reader.js?v=20260615b",
   "./assets/app_banner.png"
 ];
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        CORE_ASSETS.map((asset) =>
+          cache.add(asset).catch((error) => {
+            console.warn("[On2Cook] Skipping optional cache asset.", asset, error);
+          })
+        )
+      )
+    )
+  );
 });
 
 self.addEventListener("activate", (event) => {

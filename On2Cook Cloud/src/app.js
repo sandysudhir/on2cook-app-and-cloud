@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260612q";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260612q";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615b";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615b";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615a";
+} from "./ncb-services.js?v=20260615b";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260612q";
+} from "./data-store.js?v=20260615b";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -63,6 +63,24 @@ function mutate(recipe) {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function safeRandomId(prefix = "id") {
+  const uuid =
+    globalThis.crypto && typeof globalThis.crypto.randomUUID === "function"
+      ? globalThis.crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${prefix}-${uuid}`;
+}
+
+function safeOptionalUrl(value, label = "optional URL") {
+  const url = String(value || "").trim();
+  if (!url || url === "undefined" || url === "null") return "";
+  if (/\/undefined(?:[?#]|$)/i.test(url)) {
+    console.warn(`[On2Cook] Skipping ${label} because it resolved to undefined.`, { url });
+    return "";
+  }
+  return url;
 }
 
 function emptyActiveRun() {
@@ -121,7 +139,7 @@ async function loadSeedRecipesFromArchives() {
   }
   return Promise.all(
     manifest.map(async (entry, index) => {
-      const zipUrl = String(entry.zipUrl || "").trim();
+      const zipUrl = safeOptionalUrl(entry.zipUrl, `seed recipe ZIP ${index + 1}`);
       if (!zipUrl) {
         throw new Error(`Recipe archive entry ${index + 1} is missing zipUrl.`);
       }
@@ -181,7 +199,7 @@ function normalizeCatalogKey(value) {
 function buildCatalogEntryFromRecipe(record, options = {}) {
   const signature = record.recipeSignature || recipeSignatureFromJson(record.recipeJson);
   return {
-    id: options.catalogEntryId || `imported-${crypto.randomUUID()}`,
+    id: options.catalogEntryId || safeRandomId("imported"),
     recipeName: record.displayName,
     zipName: options.sourceName || record.zipName || `${record.displayName}.zip`,
     zipUrl: options.zipUrl || "",
@@ -727,7 +745,7 @@ function getOrderCreatedDisplay(order) {
 }
 
 function getOrderThumbUrl(order) {
-  return order.previewImageDataUrl || "";
+  return safeOptionalUrl(order.previewImageDataUrl, "order image");
 }
 
 function getOrderStage(order) {
@@ -824,7 +842,7 @@ function buildOrderPrintHtml(order) {
 
 function appendActivity(device, text, tone = "info", at = nowIso(), meta = null) {
   const item = {
-    id: crypto.randomUUID(),
+    id: safeRandomId("id"),
     text,
     tone,
     at,
@@ -1011,7 +1029,7 @@ function createRecipeRecordFromCloudRow(row) {
     recipeJson.name[0] = firmwareName;
   }
   return {
-    id: crypto.randomUUID(),
+    id: safeRandomId("id"),
     type: row.status === "active" ? "final" : "base",
     baseRecipeId: row.base_recipe_name || null,
     source: "cloud",
@@ -2197,7 +2215,7 @@ async function runDeviceRecipe(slot, recipeId) {
   const recipe = findRecipeById(snapshot, recipeId);
   if (!recipe) return;
   const order = decorateOrderRecord({
-    id: crypto.randomUUID(),
+    id: safeRandomId("id"),
     orderId: `#M${Math.floor(Math.random() * 900 + 100)}`,
     itemName: recipe.displayName,
     recipeLookup: recipe.displayName,
@@ -3013,6 +3031,7 @@ function renderManualModeTab(snapshot) {
 
 function renderRecipeCard(snapshot, recipe, perms) {
   const selectedClass = recipe.selected ? "selected" : "";
+  const recipeImageUrl = safeOptionalUrl(recipe.imageDataUrl, "recipe image");
   const devices = snapshot.devices
     .map((device) => {
       const allowed = isRecipeAllowedOnDevice(snapshot, device, recipe.id);
@@ -3025,8 +3044,8 @@ function renderRecipeCard(snapshot, recipe, perms) {
     .join("");
   return `
     <article class="recipe-card ${selectedClass}">
-      <div class="recipe-thumb ${recipe.imageDataUrl ? "has-image" : ""}">
-        ${recipe.imageDataUrl ? `<img src="${recipe.imageDataUrl}" alt="${escapeHtml(recipe.displayName)}">` : `<span>${escapeHtml(recipe.displayName.slice(0, 1))}</span>`}
+      <div class="recipe-thumb ${recipeImageUrl ? "has-image" : ""}">
+        ${recipeImageUrl ? `<img src="${escapeHtml(recipeImageUrl)}" alt="${escapeHtml(recipe.displayName)}">` : `<span>${escapeHtml(recipe.displayName.slice(0, 1))}</span>`}
       </div>
       <div class="recipe-copy">
         <div class="row space">
@@ -3062,6 +3081,7 @@ function renderRecipesTab(snapshot, perms) {
   const selectedRecipes = snapshot.recipes.filter((recipe) => recipe.selected && recipe.type !== "final");
   const finalRecipes = snapshot.recipes.filter((recipe) => recipe.type === "final");
   const mode = snapshot.ui.recipeMode;
+  const recipeFinderUrl = safeOptionalUrl(snapshot.settings.recipeFinder.baseUrl, "recipe finder URL");
   return `
     <section class="stack-section">
       <div class="section-head">
@@ -3086,7 +3106,7 @@ function renderRecipesTab(snapshot, perms) {
           ? `
             <div class="settings-card">
               <div class="mini-title">Recipe finder import</div>
-              <a class="link-button" href="${escapeHtml(snapshot.settings.recipeFinder.baseUrl)}" target="_blank" rel="noreferrer">Open recipe finder</a>
+              ${recipeFinderUrl ? `<a class="link-button" href="${escapeHtml(recipeFinderUrl)}" target="_blank" rel="noreferrer">Open recipe finder</a>` : `<span class="subtle">Recipe finder URL is not configured.</span>`}
               <form class="inline-form" data-form="import-zip-url">
                 <input class="field-input" type="url" name="zipUrl" placeholder="Paste a direct recipe ZIP URL" value="${escapeHtml(snapshot.settings.recipeFinder.lastZipUrl)}" required>
                 <button class="primary-button small" type="submit">Import URL</button>
@@ -3359,6 +3379,7 @@ function renderDevicePhone(snapshot, device) {
   const queueOrders = getQueueOrders(snapshot, device);
   const selectableRecipes = getDeviceSyncRecipes(snapshot, device);
   const syncCount = selectableRecipes.length;
+  const serialPhotoUrl = safeOptionalUrl(device.serialPhotoDataUrl, "serial photo");
   const runtimeRecipe = getRuntimeRecipe(snapshot, device);
   const timelineRecipe = getDeviceTimelineRecipe(snapshot, device, runtimeRecipe);
   const headline = getDeviceRecipeHeadline(snapshot, device, currentOrder, timelineRecipe);
@@ -3512,8 +3533,8 @@ function renderDevicePhone(snapshot, device) {
                 <input type="file" accept="image/*" data-input="serial-photo" data-slot="${device.slot}">
               </label>
               ${
-                device.serialPhotoDataUrl
-                  ? `<img class="serial-photo" src="${device.serialPhotoDataUrl}" alt="Serial photo for ${escapeHtml(device.displayName)}">`
+                serialPhotoUrl
+                  ? `<img class="serial-photo" src="${escapeHtml(serialPhotoUrl)}" alt="Serial photo for ${escapeHtml(device.displayName)}">`
                   : ""
               }
             </div>
@@ -3711,7 +3732,7 @@ function renderModal(snapshot) {
             <div class="settings-card">
               <div class="mini-title">Recipe finder and allowed recipes</div>
               <div class="action-row">
-                <a class="link-button" href="${escapeHtml(snapshot.settings.recipeFinder.baseUrl)}" target="_blank" rel="noreferrer">Open Recipe Finder</a>
+                ${safeOptionalUrl(snapshot.settings.recipeFinder.baseUrl, "recipe finder URL") ? `<a class="link-button" href="${escapeHtml(safeOptionalUrl(snapshot.settings.recipeFinder.baseUrl, "recipe finder URL"))}" target="_blank" rel="noreferrer">Open Recipe Finder</a>` : `<span class="subtle">Recipe finder URL is not configured.</span>`}
                 <button class="secondary-button" type="button" data-action="open-recipes-tab">Manage imported recipes</button>
               </div>
               <label class="field-label">
@@ -3998,7 +4019,7 @@ async function handleManualOrderSubmit(formData) {
   const preferredSlot = formData.get("preferredSlot");
   const recipe = findEffectiveRecipeForOrder(snapshot, recipeLookup || itemName);
   const order = decorateOrderRecord({
-    id: crypto.randomUUID(),
+    id: safeRandomId("id"),
     orderId: `#M${Math.floor(Math.random() * 900 + 100)}`,
     itemName: String(itemName),
     recipeLookup: String(recipeLookup),
@@ -4083,7 +4104,7 @@ async function importRecipeRecord(result, options = {}) {
   const displayName = Array.isArray(recipeJson.name) ? recipeJson.name[0] : recipeJson.name;
   const recipeSignature = recipeSignatureFromJson(recipeJson);
   const record = {
-    id: crypto.randomUUID(),
+    id: safeRandomId("id"),
     type: "base",
     baseRecipeId: null,
     source: options.source || "imported",
@@ -4183,7 +4204,7 @@ async function importRecipeRecord(result, options = {}) {
 function createPendingOrderFromRecipe(recipe, orderIndex = 0, source = "Global Recipes") {
   return decorateOrderRecord(
     {
-      id: crypto.randomUUID(),
+      id: safeRandomId("id"),
       orderId: `#G${Math.floor(Math.random() * 900 + 100)}`,
       itemName: recipe.displayName,
       recipeLookup: recipe.displayName,
@@ -4221,11 +4242,12 @@ async function ensureGlobalCatalogRecipeImported(entry, options = {}) {
     }
     return findRecipeForGlobalCatalogEntry(state(), entry);
   }
-  const result = entry.zipUrl
-    ? await importRecipeZipUrl(`${entry.zipUrl}?v=${RECIPE_ARCHIVE_VERSION}`)
+  const entryZipUrl = safeOptionalUrl(entry.zipUrl, "global recipe ZIP");
+  const result = entryZipUrl
+    ? await importRecipeZipUrl(`${entryZipUrl}?v=${RECIPE_ARCHIVE_VERSION}`)
     : createImportResultFromCatalogEntry(entry);
   return importRecipeRecord(result, {
-    zipUrl: entry.zipUrl,
+    zipUrl: entryZipUrl,
     source: entry.source === "imported" ? "imported" : "library",
     selected: options.ensureSelected !== false,
     activateRecipesTab: false,
@@ -4402,7 +4424,7 @@ async function handleSubmit(event) {
   if (formName === "add-user") {
     mutate((draft) => {
       draft.users.push({
-        id: crypto.randomUUID(),
+        id: safeRandomId("id"),
         facilityId: draft.currentFacilityId,
         email: String(formData.get("email")),
         displayName: String(formData.get("displayName")),
@@ -4469,8 +4491,12 @@ async function handleSubmit(event) {
     return;
   }
   if (formName === "import-zip-url") {
-    const zipUrl = String(formData.get("zipUrl"));
+    const zipUrl = safeOptionalUrl(formData.get("zipUrl"), "recipe import ZIP");
     updateNestedSetting("recipeFinder.lastZipUrl", zipUrl);
+    if (!zipUrl) {
+      showToast("Paste a valid recipe ZIP URL first", "warning");
+      return;
+    }
     try {
       const result = await importRecipeZipUrl(zipUrl);
       const recipe = await importRecipeRecord(result, { zipUrl, showToast: false });
@@ -4989,3 +5015,4 @@ init().catch((error) => {
     </div>
   `;
 });
+

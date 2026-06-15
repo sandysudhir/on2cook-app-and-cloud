@@ -7,7 +7,12 @@ function asArray(payload) {
 }
 
 async function requestJson(url, options = {}) {
-  const response = await fetch(url, {
+  const cleanUrl = String(url || "").trim();
+  if (!cleanUrl || cleanUrl === "undefined" || cleanUrl === "null" || /\/undefined(?:[?#]|$)/i.test(cleanUrl)) {
+    console.warn("[On2Cook] Skipping cloud request because URL is missing.", { url });
+    throw new Error("Cloud request URL is missing.");
+  }
+  const response = await fetch(cleanUrl, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",

@@ -4,7 +4,11 @@ const MAX_PERSISTED_DEVICE_ACTIVITY = 30;
 const MAX_PERSISTED_PREVIOUS_ORDERS = 25;
 
 function uid(prefix) {
-  return `${prefix}_${crypto.randomUUID()}`;
+  const uuid =
+    globalThis.crypto && typeof globalThis.crypto.randomUUID === "function"
+      ? globalThis.crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${prefix}_${uuid}`;
 }
 
 function isoNow() {
@@ -1040,6 +1044,13 @@ export function importState(rawText, seedRecipes) {
 }
 
 async function supabaseRequest(settings, path, options = {}) {
+  if (!settings?.url || !settings?.anonKey) {
+    console.warn("[On2Cook] Skipping Supabase request because configuration is incomplete.", {
+      hasUrl: Boolean(settings?.url),
+      hasAnonKey: Boolean(settings?.anonKey)
+    });
+    throw new Error("Supabase is not configured.");
+  }
   const url = `${settings.url.replace(/\/$/, "")}/rest/v1/${path}`;
   const headers = {
     "Content-Type": "application/json",

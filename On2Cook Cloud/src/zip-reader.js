@@ -138,10 +138,15 @@ export async function importRecipeZipFile(file) {
 }
 
 export async function importRecipeZipUrl(url) {
-  const response = await fetch(url);
+  const cleanUrl = String(url || "").trim();
+  if (!cleanUrl || cleanUrl === "undefined" || cleanUrl === "null") {
+    console.warn("[On2Cook] Skipping recipe ZIP fetch because URL is missing.", { url });
+    throw new Error("Recipe ZIP URL is missing.");
+  }
+  const response = await fetch(cleanUrl);
   if (!response.ok) {
-    throw new Error(`Unable to fetch ZIP from ${url}`);
+    throw new Error(`Unable to fetch ZIP from ${cleanUrl}`);
   }
   const buffer = await response.arrayBuffer();
-  return importRecipeZipArrayBuffer(buffer, url.split("/").pop() || "recipe.zip");
+  return importRecipeZipArrayBuffer(buffer, cleanUrl.split("/").pop() || "recipe.zip");
 }
