@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615d";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615d";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615e";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615e";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615d";
+} from "./ncb-services.js?v=20260615e";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615d";
+} from "./data-store.js?v=20260615e";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -2547,6 +2547,185 @@ function renderStatusPill(status) {
   return `<span class="status-pill ${tone}">${escapeHtml(status.replaceAll("_", " "))}</span>`;
 }
 
+const PRO_POWER_STEPS = [0, 40, 60, 80, 100];
+const PRO_MICROWAVE_STEPS = [0, 180, 360, 540, 720, 800, 900];
+const PRO_STIRRER_SPEEDS = ["low", "medium", "high", "very-high"];
+
+function toInt(value, fallback = 0) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizePowerStep(value) {
+  const numeric = toInt(value, 0);
+  return PRO_POWER_STEPS.reduce((nearest, option) => (Math.abs(option - numeric) < Math.abs(nearest - numeric) ? option : nearest), 0);
+}
+
+function normalizeMicrowavePower(value) {
+  const numeric = toInt(value, 0);
+  if (numeric <= 0) return 0;
+  return PRO_MICROWAVE_STEPS.reduce((nearest, option) => (Math.abs(option - numeric) < Math.abs(nearest - numeric) ? option : nearest), 800);
+}
+
+function stirrerSpeedFromFirmware(value) {
+  const text = String(value || "").toLowerCase();
+  if (text.includes("very") || text === "4") return "very-high";
+  if (text.includes("high") || text === "3") return "high";
+  if (text.includes("low") || text === "1") return "low";
+  if (text === "0" || text.includes("off") || text === "false") return "off";
+  return "medium";
+}
+
+function firmwareStirrerFromSpeed(speed) {
+  if (speed === "off") return "0";
+  if (speed === "low") return "1";
+  if (speed === "high") return "3";
+  if (speed === "very-high") return "4";
+  return "2";
+}
+
+function makeProSubBlock(overrides = {}) {
+  const stirrerSpeed = overrides.stirrerSpeed || "medium";
+  const stirrerActive = overrides.stirrerActive !== false && stirrerSpeed !== "off";
+  return {
+    inductionPower: normalizePowerStep(overrides.inductionPower ?? 0),
+    microwaveActive: Boolean(overrides.microwaveActive),
+    microwavePower: normalizeMicrowavePower(overrides.microwavePower || 800),
+    stirrerActive,
+    stirrerSpeed: stirrerActive ? stirrerSpeed : "medium",
+    stirrerMode: stirrerActive ? "continuous" : "off"
+  };
+}
+
+function makeProMinute(index, overrides = {}) {
+  return {
+    id: `min-${index}`,
+    minuteIndex: index,
+    sourceStepIndex: Number.isFinite(Number(overrides.sourceStepIndex)) ? Number(overrides.sourceStepIndex) : index,
+    title: overrides.title || `Minute ${index + 1}`,
+    weight: overrides.weight || "",
+    lidOpen: Boolean(overrides.lidOpen),
+    lidOpenDuration: Math.max(0, Math.min(60, toInt(overrides.lidOpenDuration, overrides.lidOpen ? 60 : 0))),
+    subBlocks: overrides.subBlocks || [makeProSubBlock(), makeProSubBlock(), makeProSubBlock(), makeProSubBlock()],
+    waterBlocks: overrides.waterBlocks || [false, false, false, false],
+    ingredients: overrides.ingredients || []
+  };
+}
+
+function recipeJsonToProMinutes(recipeJson) {
+  const steps = Array.isArray(recipeJson?.Instruction) ? recipeJson.Instruction : [];
+  if (steps.length === 0) return [makeProMinute(0)];
+  const minutes = [];
+  steps.forEach((step, stepIndex) => {
+    const duration = Math.max(15, getInstructionDuration(step) || 60);
+    const minuteCount = Math.max(1, Math.ceil(duration / 60));
+    const inductionSeconds = Math.max(0, toInt(step.Induction_on_time, 0));
+    const microwaveSeconds = Math.max(0, toInt(step.Magnetron_on_time, 0));
+    const stirrerSpeed = stirrerSpeedFromFirmware(step.stirrer_on);
+    const stirrerActive = stirrerSpeed !== "off";
+    Array.from({ length: minuteCount }).forEach((_, partIndex) => {
+      const minuteOffset = partIndex * 60;
+      const subBlocks = [0, 1, 2, 3].map((block) => {
+        const blockStart = minuteOffset + block * 15;
+        return makeProSubBlock({
+          inductionPower: blockStart < inductionSeconds && blockStart < duration ? step.Induction_power : 0,
+          microwaveActive: blockStart < microwaveSeconds && blockStart < duration,
+          microwavePower: step.Magnetron_power || 800,
+          stirrerActive: stirrerActive && blockStart < duration,
+          stirrerSpeed: stirrerActive ? stirrerSpeed : "medium"
+        });
+      });
+      const waterOn = (toInt(step.pump_on, 0) > 0 || String(step.pump_on || "").toLowerCase() === "on") && partIndex === 0;
+      minutes.push(
+        makeProMinute(minutes.length, {
+          title: minuteCount > 1 ? `${step.Text || `Step ${stepIndex + 1}`} (${partIndex + 1}/${minuteCount})` : step.Text || `Step ${stepIndex + 1}`,
+          sourceStepIndex: stepIndex,
+          weight: step.Weight || "",
+          lidOpen: String(step.lid || "").toLowerCase().includes("open"),
+          lidOpenDuration: String(step.lid || "").toLowerCase().includes("open") ? Math.min(60, Math.max(0, duration - minuteOffset)) : 0,
+          subBlocks,
+          waterBlocks: [waterOn, false, false, false],
+          ingredients: step.Weight || step.Text ? [{ id: `step-${stepIndex}-${partIndex}-ingredient`, name: step.Text || `Step ${stepIndex + 1}`, quantity: 0, unit: step.Weight || "" }] : []
+        })
+      );
+    });
+  });
+  return minutes;
+}
+
+function getProDraft(snapshot) {
+  return snapshot.ui.activeModal?.payload?.draft || null;
+}
+
+function recipeToProDraft(recipe) {
+  return {
+    recipeId: recipe.id,
+    displayName: recipe.displayName,
+    firmwareName: recipe.firmwareName,
+    aliases: Array.isArray(recipe.aliases) ? recipe.aliases.join(", ") : recipe.displayName,
+    selectedMinute: 0,
+    selectedBlock: 0,
+    minutes: recipeJsonToProMinutes(recipe.recipeJson)
+  };
+}
+
+function proDraftToFirmwareRecipe(sourceRecipe, draft) {
+  const recipeJson = cloneRecipeForEditing(sourceRecipe);
+  const originalSteps = Array.isArray(recipeJson.Instruction) ? recipeJson.Instruction : [];
+  const fallbackStep = originalSteps[0] || {};
+  recipeJson.Instruction = draft.minutes.flatMap((minute) =>
+    minute.subBlocks.map((subBlock, blockIndex) => {
+      const original = originalSteps[minute.sourceStepIndex] || fallbackStep;
+      const waterOn = Boolean(minute.waterBlocks?.[blockIndex]);
+      return {
+        ...structuredClone(original),
+        id: draft.minutes.indexOf(minute) * 4 + blockIndex + 1,
+        Text: minute.title || original.Text || `Minute ${minute.minuteIndex + 1}`,
+        Weight: minute.weight || original.Weight || "",
+        lid: minute.lidOpen ? "open" : "close",
+        durationInSec: 15,
+        Induction_on_time: subBlock.inductionPower > 0 ? "15" : "0",
+        Induction_power: String(subBlock.inductionPower || 0),
+        Magnetron_on_time: subBlock.microwaveActive ? "15" : "0",
+        Magnetron_power: String(subBlock.microwaveActive ? subBlock.microwavePower || 800 : 0),
+        stirrer_on: subBlock.stirrerActive ? firmwareStirrerFromSpeed(subBlock.stirrerSpeed) : "0",
+        pump_on: waterOn ? "15" : "",
+        wait_time: original.wait_time || "0",
+        warm_time: original.warm_time || "0",
+        threshold: original.threshold || "0"
+      };
+    })
+  );
+  return recipeJson;
+}
+
+function openProfessionalEditor(recipeId) {
+  const recipe = findRecipeById(state(), recipeId);
+  if (!recipe) {
+    showToast("Recipe not found", "error");
+    return;
+  }
+  openModal("professional-editor", { recipeId, draft: recipeToProDraft(recipe) });
+}
+
+function updateProDraft(mutator) {
+  mutate((draftState) => {
+    const modal = draftState.ui.activeModal;
+    if (!modal || modal.type !== "professional-editor" || !modal.payload?.draft) return draftState;
+    mutator(modal.payload.draft);
+  });
+}
+
+function getSelectedProMinute(draft) {
+  return draft.minutes[Math.max(0, Math.min(draft.minutes.length - 1, Number(draft.selectedMinute) || 0))] || null;
+}
+
+function getSelectedProBlock(draft) {
+  const minute = getSelectedProMinute(draft);
+  if (!minute) return null;
+  return minute.subBlocks[Math.max(0, Math.min(3, Number(draft.selectedBlock) || 0))] || null;
+}
+
 function renderControlTabs(snapshot) {
   const tabs = [
     ["orders", "Orders"],
@@ -2583,7 +2762,7 @@ function renderGlobalRecipesTab(snapshot) {
   });
   return `
     <section class="stack-section">
-      <div class="mini-title">Global recipe library</div>
+      <div class="mini-title">Select Recipe</div>
       <div class="settings-card">
         <div class="queue-summary">
           <div class="summary-chip">Library ${recipeCatalog.length}</div>
@@ -2600,11 +2779,11 @@ function renderGlobalRecipesTab(snapshot) {
           <button class="secondary-button small" data-action="global-recipes-remove-from-list">Remove picked from Recipe list</button>
           <button class="secondary-button small" data-action="global-recipes-clear-picks">Clear picks</button>
         </div>
-        <p class="subtle">The bundled ten recipes stay in place. Use this screen to bring additional ZIP recipes into the Recipe list or create pending Orders from them.</p>
+        <p class="subtle">Select recipes here, then add them to the kitchen Recipe list, create pending Orders, or open the Edit Recipe workflow.</p>
       </div>
     </section>
     <section class="stack-section">
-      <div class="mini-title">All recipes</div>
+      <div class="mini-title">Recipe selection</div>
       ${
         filteredCatalog.length === 0
           ? `<div class="empty-card">No recipes match that search.</div>`
@@ -2634,6 +2813,13 @@ function renderGlobalRecipesTab(snapshot) {
                           ${picked.has(entry.id) ? "Picked" : "Pick"}
                         </span>
                       </div>
+                    </div>
+                    <div class="action-row top-gap">
+                      ${
+                        existingRecipe
+                          ? `<button class="primary-button small" data-action="open-professional-editor" data-recipe-id="${existingRecipe.id}">Edit Recipe</button>`
+                          : `<button class="secondary-button small" data-action="global-recipe-import-one" data-recipe-catalog-id="${escapeHtml(entry.id)}">Add to Recipe list</button>`
+                      }
                     </div>
                   </article>
                 `;
@@ -3013,8 +3199,8 @@ function renderRecipeCard(snapshot, recipe, perms) {
           </button>
           ${
             perms.canCreateFinalRecipes
-              ? `<button class="primary-button small" data-action="${recipe.type === "final" ? "edit-final-recipe" : "create-final-recipe"}" data-recipe-id="${recipe.id}">
-                  ${recipe.type === "final" ? "Edit Final" : "Create Final"}
+              ? `<button class="primary-button small" data-action="open-professional-editor" data-recipe-id="${recipe.id}">
+                  ${recipe.type === "final" ? "Edit Final" : "Edit Recipe"}
                 </button>`
               : ""
           }
@@ -3497,9 +3683,169 @@ function renderDevicePhone(snapshot, device) {
   `;
 }
 
+function renderProMinuteCell(minute, selectedMinute, selectedBlock) {
+  const isSelectedMinute = minute.minuteIndex === selectedMinute;
+  return `
+    <div class="pro-minute ${isSelectedMinute ? "selected" : ""}">
+      <button class="pro-minute-head" data-action="pro-select-minute" data-minute="${minute.minuteIndex}">
+        ${minute.minuteIndex + 1}m
+      </button>
+      <div class="pro-row lid-row">
+        <span>${minute.lidOpen ? "Open" : "Closed"}</span>
+      </div>
+      <div class="pro-row chunk-row">
+        ${minute.subBlocks
+          .map(
+            (block, blockIndex) => `
+              <button class="pro-chunk induction ${isSelectedMinute && selectedBlock === blockIndex ? "selected" : ""} ${block.inductionPower > 0 ? "on" : ""}" data-action="pro-select-block" data-minute="${minute.minuteIndex}" data-block="${blockIndex}">
+                ${block.inductionPower}
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+      <div class="pro-row chunk-row">
+        ${minute.subBlocks
+          .map(
+            (block, blockIndex) => `
+              <button class="pro-chunk microwave ${block.microwaveActive ? "on" : ""}" data-action="pro-select-block" data-minute="${minute.minuteIndex}" data-block="${blockIndex}">
+                ${block.microwaveActive ? block.microwavePower : "0"}
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+      <div class="pro-row chunk-row">
+        ${minute.subBlocks
+          .map(
+            (block, blockIndex) => `
+              <button class="pro-chunk stirrer ${block.stirrerActive ? "on" : ""}" data-action="pro-select-block" data-minute="${minute.minuteIndex}" data-block="${blockIndex}">
+                ${block.stirrerActive ? block.stirrerSpeed.replace("very-", "v") : "off"}
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+      <div class="pro-row chunk-row">
+        ${minute.waterBlocks
+          .map(
+            (active, blockIndex) => `
+              <button class="pro-chunk water ${active ? "on" : ""}" data-action="pro-toggle-water" data-minute="${minute.minuteIndex}" data-block="${blockIndex}">
+                ${active ? "150" : "0"}
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderProfessionalEditorModal(snapshot, modal) {
+  const sourceRecipe = findRecipeById(snapshot, modal.payload.recipeId);
+  const draft = getProDraft(snapshot);
+  if (!sourceRecipe || !draft) return "";
+  const minute = getSelectedProMinute(draft);
+  const block = getSelectedProBlock(draft);
+  const selectedMinute = Number(draft.selectedMinute) || 0;
+  const selectedBlock = Number(draft.selectedBlock) || 0;
+  const totalSeconds = draft.minutes.length * 60;
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card pro-editor-modal">
+        <div class="row space pro-editor-topbar">
+          <div>
+            <div class="eyebrow">Edit Recipe</div>
+            <h3>${escapeHtml(draft.displayName)}</h3>
+            <p class="subtle">${draft.minutes.length} minutes | ${secondsLabel(totalSeconds)} | 4 x 15-second chunks per minute</p>
+          </div>
+          <button class="icon-button" data-action="close-modal">x</button>
+        </div>
+        <div class="pro-editor-layout">
+          <section class="pro-timeline-panel">
+            <div class="pro-grid-shell">
+              <div class="pro-labels">
+                <div class="pro-label head">Time</div>
+                <div class="pro-label">Lid</div>
+                <div class="pro-label">Ind</div>
+                <div class="pro-label">Micro</div>
+                <div class="pro-label">Stir</div>
+                <div class="pro-label">Water</div>
+              </div>
+              <div class="pro-minutes">
+                ${draft.minutes.map((item) => renderProMinuteCell(item, selectedMinute, selectedBlock)).join("")}
+              </div>
+            </div>
+            <div class="pro-editor-actions">
+              <button class="secondary-button small" data-action="pro-add-minute">Add minute</button>
+              <button class="secondary-button small" data-action="pro-remove-minute">Remove last minute</button>
+              <button class="secondary-button small" data-action="pro-copy-block-to-minute">Copy selected block across minute</button>
+            </div>
+          </section>
+          <aside class="pro-inspector">
+            <div class="mini-title">Selected block</div>
+            <div class="settings-card compact-card">
+              <label class="field-label">Recipe name<input class="field-input" data-input="pro-display-name" value="${escapeHtml(draft.displayName)}"></label>
+              <label class="field-label">Firmware name<input class="field-input" data-input="pro-firmware-name" value="${escapeHtml(draft.firmwareName)}"></label>
+              <label class="field-label">Aliases<input class="field-input" data-input="pro-aliases" value="${escapeHtml(draft.aliases)}"></label>
+            </div>
+            <div class="settings-card compact-card">
+              <div class="meta-grid">
+                <span>Minute ${selectedMinute + 1}</span>
+                <span>${selectedBlock * 15}-${(selectedBlock + 1) * 15}s</span>
+              </div>
+              <label class="field-label">Step label<input class="field-input" data-input="pro-minute-title" value="${escapeHtml(minute?.title || "")}"></label>
+              <label class="field-label">Weight / note<input class="field-input" data-input="pro-minute-weight" value="${escapeHtml(minute?.weight || "")}"></label>
+              <label class="toggle-row"><input type="checkbox" data-input="pro-lid-open" ${minute?.lidOpen ? "checked" : ""}> Lid open during this minute</label>
+              <label class="field-label">
+                Induction power
+                <select class="field-input" data-input="pro-induction-power">
+                  ${PRO_POWER_STEPS.map((value) => `<option value="${value}" ${block?.inductionPower === value ? "selected" : ""}>${value}%</option>`).join("")}
+                </select>
+              </label>
+              <label class="field-label">
+                Microwave power
+                <select class="field-input" data-input="pro-microwave-power">
+                  ${PRO_MICROWAVE_STEPS.map((value) => `<option value="${value}" ${Number(block?.microwaveActive ? block?.microwavePower : 0) === value ? "selected" : ""}>${value === 0 ? "Off" : `${value} W`}</option>`).join("")}
+                </select>
+              </label>
+              <label class="field-label">
+                Stirrer
+                <select class="field-input" data-input="pro-stirrer-speed">
+                  <option value="off" ${block?.stirrerActive === false ? "selected" : ""}>Off</option>
+                  ${PRO_STIRRER_SPEEDS.map((value, index) => `<option value="${value}" ${block?.stirrerActive !== false && block?.stirrerSpeed === value ? "selected" : ""}>Speed ${index + 1}${value === "medium" ? " default" : ""}</option>`).join("")}
+                </select>
+              </label>
+              <label class="toggle-row"><input type="checkbox" data-input="pro-water-block" ${minute?.waterBlocks?.[selectedBlock] ? "checked" : ""}> Water on for this 15s block</label>
+            </div>
+            <div class="settings-card compact-card">
+              <div class="mini-title">Run Recipe</div>
+              <p class="subtle">Save creates a final modified recipe using the same firmware JSON shape. Run now sends this selected recipe only when a device is chosen.</p>
+              <label class="field-label">
+                Device
+                <select class="field-input" data-input="pro-run-slot">
+                  <option value="">Choose connected device</option>
+                  ${getConnectedDevices(snapshot).map((device) => `<option value="${device.slot}">Device ${device.slot} - ${escapeHtml(device.displayName)}</option>`).join("")}
+                </select>
+              </label>
+              <div class="action-row">
+                <button class="primary-button small" data-action="pro-save-final">Save final</button>
+                <button class="secondary-button small" data-action="pro-save-and-run">Save and run</button>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderModal(snapshot) {
   const modal = snapshot.ui.activeModal;
   if (!modal) return "";
+  if (modal.type === "professional-editor") {
+    return renderProfessionalEditorModal(snapshot, modal);
+  }
   if (modal.type === "manual-order") {
     const options = getSelectedRecipes(snapshot)
       .map(
@@ -4050,6 +4396,44 @@ function applyRecipeEditor(formData) {
   showToast(`Saved final recipe ${finalRecipe.displayName}`, "success");
 }
 
+function saveProfessionalRecipe() {
+  const snapshot = state();
+  const modal = snapshot.ui.activeModal;
+  const draft = modal?.payload?.draft;
+  if (!modal || modal.type !== "professional-editor" || !draft) return null;
+  const sourceRecipe = findRecipeById(snapshot, modal.payload.recipeId);
+  if (!sourceRecipe) {
+    showToast("Recipe not found", "error");
+    return null;
+  }
+  const baseRecipe =
+    sourceRecipe.type === "final" && sourceRecipe.baseRecipeId ? findRecipeById(snapshot, sourceRecipe.baseRecipeId) || sourceRecipe : sourceRecipe;
+  const recipeJson = proDraftToFirmwareRecipe(sourceRecipe, draft);
+  const finalRecipe = createFinalRecipeFromBase(baseRecipe, recipeJson, {
+    displayName: draft.displayName,
+    firmwareName: draft.firmwareName,
+    aliases: draft.aliases,
+    imageDataUrl: sourceRecipe.imageDataUrl
+  });
+  if (sourceRecipe.type === "final") {
+    finalRecipe.id = sourceRecipe.id;
+    finalRecipe.createdAt = sourceRecipe.createdAt;
+  }
+  mutate((draftState) => {
+    draftState.recipes = draftState.recipes.filter(
+      (recipe) =>
+        recipe.id !== sourceRecipe.id &&
+        !(recipe.type === "final" && recipe.baseRecipeId === baseRecipe.id && recipe.id !== finalRecipe.id)
+    );
+    const baseDraft = draftState.recipes.find((recipe) => recipe.id === baseRecipe.id);
+    if (baseDraft) baseDraft.selected = false;
+    draftState.recipes.unshift(finalRecipe);
+    draftState.ui.recipeMode = "final";
+    syncSelectedRecipesToAllDevices(draftState);
+  });
+  return state().recipes.find((recipe) => recipe.id === finalRecipe.id) || finalRecipe;
+}
+
 async function importRecipeRecord(result, options = {}) {
   const recipeJson = structuredClone(result.recipeJson);
   const displayName = Array.isArray(recipeJson.name) ? recipeJson.name[0] : recipeJson.name;
@@ -4499,6 +4883,16 @@ async function handleClick(event) {
     await addPickedGlobalRecipesToRecipeList();
     return;
   }
+  if (action === "global-recipe-import-one") {
+    const entry = getRecipeCatalog(state()).find((item) => item.id === button.dataset.recipeCatalogId);
+    if (!entry) {
+      showToast("Recipe not found in the global library", "error");
+      return;
+    }
+    const recipe = await ensureGlobalCatalogRecipeImported(entry, { ensureSelected: true });
+    showToast(recipe ? `${recipe.displayName} added to the Recipe list` : "Unable to add recipe", recipe ? "success" : "error");
+    return;
+  }
   if (action === "global-recipes-add-to-orders") {
     await addPickedGlobalRecipesToOrders();
     return;
@@ -4606,8 +5000,80 @@ async function handleClick(event) {
     toggleRecipePermission(button.dataset.slot, button.dataset.recipeId);
     return;
   }
-  if (action === "create-final-recipe" || action === "edit-final-recipe") {
-    openModal("recipe-editor", { recipeId: button.dataset.recipeId });
+  if (action === "create-final-recipe" || action === "edit-final-recipe" || action === "open-professional-editor") {
+    openProfessionalEditor(button.dataset.recipeId);
+    return;
+  }
+  if (action === "pro-select-minute") {
+    updateProDraft((draft) => {
+      draft.selectedMinute = Number(button.dataset.minute) || 0;
+      draft.selectedBlock = 0;
+    });
+    return;
+  }
+  if (action === "pro-select-block") {
+    updateProDraft((draft) => {
+      draft.selectedMinute = Number(button.dataset.minute) || 0;
+      draft.selectedBlock = Number(button.dataset.block) || 0;
+    });
+    return;
+  }
+  if (action === "pro-toggle-water") {
+    updateProDraft((draft) => {
+      const minute = draft.minutes[Number(button.dataset.minute) || 0];
+      const blockIndex = Number(button.dataset.block) || 0;
+      if (!minute?.waterBlocks) return;
+      minute.waterBlocks[blockIndex] = !minute.waterBlocks[blockIndex];
+      draft.selectedMinute = Number(button.dataset.minute) || 0;
+      draft.selectedBlock = blockIndex;
+    });
+    return;
+  }
+  if (action === "pro-add-minute") {
+    updateProDraft((draft) => {
+      draft.minutes.push(makeProMinute(draft.minutes.length));
+      draft.selectedMinute = draft.minutes.length - 1;
+      draft.selectedBlock = 0;
+    });
+    return;
+  }
+  if (action === "pro-remove-minute") {
+    updateProDraft((draft) => {
+      if (draft.minutes.length <= 1) return;
+      draft.minutes.pop();
+      draft.minutes.forEach((minute, index) => {
+        minute.minuteIndex = index;
+        minute.id = `min-${index}`;
+      });
+      draft.selectedMinute = Math.min(Number(draft.selectedMinute) || 0, draft.minutes.length - 1);
+    });
+    return;
+  }
+  if (action === "pro-copy-block-to-minute") {
+    updateProDraft((draft) => {
+      const minute = getSelectedProMinute(draft);
+      const block = getSelectedProBlock(draft);
+      if (!minute || !block) return;
+      minute.subBlocks = minute.subBlocks.map(() => structuredClone(block));
+    });
+    return;
+  }
+  if (action === "pro-save-final" || action === "pro-save-and-run") {
+    const savedRecipe = saveProfessionalRecipe();
+    if (!savedRecipe) return;
+    if (action === "pro-save-and-run") {
+      const slotSelect = app.querySelector('[data-input="pro-run-slot"]');
+      const slot = Number(slotSelect?.value || 0);
+      if (!slot) {
+        showToast("Saved final recipe. Choose a connected device before running.", "warning");
+        return;
+      }
+      closeModal();
+      await runDeviceRecipe(slot, savedRecipe.id);
+      return;
+    }
+    closeModal();
+    showToast(`Saved final recipe ${savedRecipe.displayName}`, "success");
     return;
   }
   if (action === "delete-final-recipe") {
@@ -4891,6 +5357,40 @@ async function handleChange(event) {
   if (input.dataset.input === "global-recipe-search") {
     mutate((draft) => {
       draft.ui.globalRecipeSearch = input.value;
+    });
+    return;
+  }
+
+  if (input.dataset.input?.startsWith("pro-") && input.dataset.input !== "pro-run-slot") {
+    const key = input.dataset.input;
+    updateProDraft((draft) => {
+      const minute = getSelectedProMinute(draft);
+      const block = getSelectedProBlock(draft);
+      if (key === "pro-display-name") draft.displayName = input.value;
+      if (key === "pro-firmware-name") draft.firmwareName = input.value;
+      if (key === "pro-aliases") draft.aliases = input.value;
+      if (key === "pro-minute-title" && minute) minute.title = input.value;
+      if (key === "pro-minute-weight" && minute) minute.weight = input.value;
+      if (key === "pro-lid-open" && minute) {
+        minute.lidOpen = input.checked;
+        minute.lidOpenDuration = input.checked ? 60 : 0;
+      }
+      if (key === "pro-induction-power" && block) {
+        block.inductionPower = normalizePowerStep(input.value);
+      }
+      if (key === "pro-microwave-power" && block) {
+        const power = normalizeMicrowavePower(input.value);
+        block.microwaveActive = power > 0;
+        block.microwavePower = power || 800;
+      }
+      if (key === "pro-stirrer-speed" && block) {
+        block.stirrerActive = input.value !== "off";
+        block.stirrerSpeed = input.value === "off" ? "medium" : input.value;
+        block.stirrerMode = input.value === "off" ? "off" : "continuous";
+      }
+      if (key === "pro-water-block" && minute) {
+        minute.waterBlocks[Number(draft.selectedBlock) || 0] = input.checked;
+      }
     });
     return;
   }
