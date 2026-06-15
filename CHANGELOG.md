@@ -8,3 +8,5 @@
 - Changed cook/order start flow to check device inventory and upload only the single recipe being cooked if it is missing.
 - Cleared stale saved upload states on app startup so old "Recipe uploading x/y" messages do not resume visually.
 - Bumped web cache version to `20260615c` and deployed updated files to `https://www.on2cook.net`.
+- Improved mobile browser layout: compact hero, full-width snapped phone cards, single-page vertical scrolling, fitted five-tab header, and service-worker update handling.
+- Bumped web cache version to `20260615d` / service-worker cache `v24`.

@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615c";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615c";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615d";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615d";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615c";
+} from "./ncb-services.js?v=20260615d";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615c";
+} from "./data-store.js?v=20260615d";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -1181,7 +1181,26 @@ async function registerServiceWorker() {
   }
   if (!window.isSecureContext) return;
   try {
-    await navigator.serviceWorker.register("./service-worker.js");
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    const registration = await navigator.serviceWorker.register("./service-worker.js");
+    if (registration.waiting) {
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    }
+    registration.addEventListener("updatefound", () => {
+      const worker = registration.installing;
+      if (!worker) return;
+      worker.addEventListener("statechange", () => {
+        if (worker.state === "installed" && navigator.serviceWorker.controller) {
+          worker.postMessage({ type: "SKIP_WAITING" });
+        }
+      });
+    });
+    registration.update().catch(() => {});
   } catch (error) {
     console.error("Unable to register service worker.", error);
   }
