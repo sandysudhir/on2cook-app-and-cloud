@@ -24,3 +24,6 @@
 - Added a Recipe Sheet modal for Live Cook results and device last-run history, showing outcome, actual/planned time, time since finish, ingredients, profile data, and cooking steps.
 - Added compact last-recipe and active-run tabs on device cards so operators can open the latest recipe sheet/details directly above the queue.
 - Bumped web cache version to `20260615i` / service-worker cache `v29`.
+- Added post-cook library saving from the Recipe Sheet with required new recipe name validation, separate final recipe creation, automatic recipe/device availability updates, and cloud sync attempt.
+- Added finished-dish photo capture/upload placeholders and Back to Editor / Return Home finish-session actions.
+- Bumped web cache version to `20260615j` / service-worker cache `v30`.

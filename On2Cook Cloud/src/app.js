@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615i";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615i";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615j";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615j";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615i";
+} from "./ncb-services.js?v=20260615j";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615i";
+} from "./data-store.js?v=20260615j";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -3872,6 +3872,32 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
           ${steps.slice(0, 12).map((step, index) => `<div><span>${index + 1}. ${escapeHtml(step.label)} | ${escapeHtml(step.lid)}</span><strong>IH ${escapeHtml(step.ind)} | MW ${escapeHtml(step.mag)}</strong></div>`).join("") || `<div class="empty-card">No cooking steps available.</div>`}
         </div>
       </section>
+      ${
+        draft
+          ? `
+            <section class="recipe-sheet-finish">
+              <div class="mini-title">Dish photo</div>
+              <div class="photo-drop">
+                ${draft.dishPhotoDataUrl ? `<img class="dish-photo-preview" src="${escapeHtml(draft.dishPhotoDataUrl)}" alt="Finished dish photo">` : `<div class="photo-icon">camera</div>`}
+                <strong>Capture your dish</strong>
+                <p>Photograph the finished result to attach to this recipe sheet.</p>
+                <div class="action-row">
+                  <label class="secondary-button small file-button">Take Photo<input type="file" accept="image/*" capture="environment" data-input="live-dish-photo"></label>
+                  <label class="secondary-button small file-button">Upload<input type="file" accept="image/*" data-input="live-dish-photo"></label>
+                </div>
+                <button class="secondary-button small" data-action="share-recipe-image" ${draft.dishPhotoDataUrl ? "" : "disabled"}>${draft.dishPhotoDataUrl ? "Share Image" : "Share Image - add a photo first"}</button>
+              </div>
+              <div class="mini-title">Finish session</div>
+              <label class="field-label">Save as new recipe name<input class="field-input" data-input="library-recipe-name" value="${escapeHtml(`${displayName} Final`)}" placeholder="Enter a new recipe name"></label>
+              <div class="action-row">
+                <button class="primary-button" data-action="save-live-recipe-library">Save to Library</button>
+                <button class="secondary-button" data-action="reopen-live-editor">Back to Editor</button>
+                <button class="secondary-button" data-action="close-modal">Return Home</button>
+              </div>
+            </section>
+          `
+          : ""
+      }
     </div>
   `;
 }
@@ -5085,6 +5111,74 @@ function saveProfessionalRecipe() {
   return state().recipes.find((recipe) => recipe.id === finalRecipe.id) || finalRecipe;
 }
 
+async function saveLiveDraftToLibrary(newName) {
+  const snapshot = state();
+  const modal = snapshot.ui.activeModal;
+  const draft = modal?.payload?.draft;
+  if (!modal || modal.type !== "live-recipe-sheet" || !draft) {
+    showToast("Recipe sheet is not available for saving", "error");
+    return null;
+  }
+  const cleanName = String(newName || "").trim();
+  if (!cleanName) {
+    showToast("Enter a new recipe name before saving", "warning");
+    return null;
+  }
+  const originalNames = new Set(
+    [
+      draft.displayName,
+      draft.firmwareName,
+      ...(Array.isArray(draft.aliases) ? draft.aliases : String(draft.aliases || "").split(","))
+    ]
+      .map((item) => normalizeRecipeNameKey(item))
+      .filter(Boolean)
+  );
+  if (originalNames.has(normalizeRecipeNameKey(cleanName))) {
+    showToast("Use a new recipe name. The saved recipe cannot use the old name.", "warning");
+    return null;
+  }
+  if (snapshot.recipes.some((recipe) => normalizeRecipeNameKey(recipe.displayName) === normalizeRecipeNameKey(cleanName) || normalizeRecipeNameKey(recipe.firmwareName) === normalizeRecipeNameKey(cleanName))) {
+    showToast("That recipe name already exists in the library", "warning");
+    return null;
+  }
+  const sourceRecipe = findRecipeById(snapshot, draft.recipeId) || snapshot.recipes.find((recipe) => recipe.selected) || snapshot.recipes[0];
+  if (!sourceRecipe) {
+    showToast("No base recipe is available for saving", "error");
+    return null;
+  }
+  const recipeJson = proDraftToFirmwareRecipe(sourceRecipe, {
+    ...draft,
+    displayName: cleanName,
+    firmwareName: cleanName,
+    aliases: cleanName
+  });
+  const finalRecipe = createFinalRecipeFromBase(sourceRecipe, recipeJson, {
+    displayName: cleanName,
+    firmwareName: cleanName,
+    aliases: cleanName,
+    imageDataUrl: draft.dishPhotoDataUrl || sourceRecipe.imageDataUrl || ""
+  });
+  finalRecipe.source = "live-final";
+  finalRecipe.selected = true;
+  mutate((draftState) => {
+    draftState.recipes.unshift(finalRecipe);
+    draftState.ui.activeTab = "recipes";
+    draftState.ui.recipeMode = "final";
+    syncSelectedRecipesToAllDevices(draftState);
+  });
+  const saved = state().recipes.find((recipe) => recipe.id === finalRecipe.id) || finalRecipe;
+  const syncResult = await syncImportedRecipeToCloud(saved);
+  if (syncResult.synced) {
+    showToast(`${saved.displayName} saved to library and synced to cloud`, "success");
+  } else if (syncResult.reason === "not-signed-in") {
+    showToast(`${saved.displayName} saved locally. Sign in to sync it to cloud.`, "success");
+  } else {
+    showToast(`${saved.displayName} saved locally. Cloud sync can retry later.`, "warning");
+  }
+  closeModal();
+  return saved;
+}
+
 async function importRecipeRecord(result, options = {}) {
   const recipeJson = structuredClone(result.recipeJson);
   const displayName = Array.isArray(recipeJson.name) ? recipeJson.name[0] : recipeJson.name;
@@ -5888,6 +5982,23 @@ async function handleClick(event) {
     openModal("live-recipe-sheet", { draft });
     return;
   }
+  if (action === "reopen-live-editor") {
+    const modal = state().ui.activeModal;
+    const draft = modal?.payload?.draft ? structuredClone(modal.payload.draft) : null;
+    if (!draft) return;
+    draft.step = "timeline";
+    openModal("professional-editor", { recipeId: draft.recipeId, draft });
+    return;
+  }
+  if (action === "save-live-recipe-library") {
+    const input = app.querySelector('[data-input="library-recipe-name"]');
+    await saveLiveDraftToLibrary(input?.value || "");
+    return;
+  }
+  if (action === "share-recipe-image") {
+    showToast("Image sharing will be enabled after the photo/share provider is connected.", "info");
+    return;
+  }
   if (action === "pro-live-prev" || action === "pro-live-next") {
     updateProDraft((draft) => {
       const live = getProLive(draft);
@@ -6171,6 +6282,20 @@ async function handleChange(event) {
         if (!device) return draft;
         device.serialPhotoDataUrl = String(reader.result || "");
       });
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  if (input.dataset.input === "live-dish-photo" && input.files?.[0]) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      mutate((draftState) => {
+        if (draftState.ui.activeModal?.type !== "live-recipe-sheet") return draftState;
+        draftState.ui.activeModal.payload.draft.dishPhotoDataUrl = String(reader.result || "");
+      });
+      showToast("Dish photo attached to recipe sheet", "success");
     };
     reader.readAsDataURL(file);
     return;
