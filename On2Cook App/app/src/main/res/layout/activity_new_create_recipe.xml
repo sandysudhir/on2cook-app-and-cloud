@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:background="@color/dark_grey"
+    android:layout_height="match_parent"
+    tools:context=".NewCreateRecipe">
+
+
+
+
+    <ernestoyaquello.com.verticalstepperform.VerticalStepperFormView
+        android:id="@+id/stepper_form"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:form_last_button_text="Done"
+        app:form_display_bottom_navigation="false"
+        app:form_circle_background_color="@color/colorPrimary"
+        app:form_allow_step_opening_on_header_click="true"
+        app:form_allow_non_linear_navigation="true"
+        app:form_include_confirmation_step="true"
+        app:form_next_button_background_color="@color/colorPrimary"
+        app:form_next_button_pressed_background_color="@color/colorPrimaryDark"
+        app:form_display_cancel_button_in_last_step="true"
+        app:form_cancel_button_background_color="@android:color/transparent"
+        app:form_cancel_button_pressed_background_color="@android:color/transparent"
+        app:form_cancel_button_text_color="@color/colorPrimary"
+        app:form_cancel_button_pressed_text_color="@color/colorPrimaryDark"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

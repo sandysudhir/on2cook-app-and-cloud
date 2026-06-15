@@ -1,0 +1,1902 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clRecipe"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        tools:context=".multiple_connection.ui.RecipeFragment">
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/nestedScroll"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:fillViewport="true"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            app:layout_constraintBottom_toTopOf="@id/progressBarAllRecipePagination"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingLeft="@dimen/dp_20"
+                android:paddingRight="@dimen/dp_20"
+                android:paddingBottom="@dimen/dp_20">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clSearchView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_10"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingLeft="@dimen/dp_8"
+                    android:paddingTop="@dimen/dp_5"
+                    android:paddingRight="@dimen/dp_8"
+                    android:paddingBottom="@dimen/dp_5"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/ivSearch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_8"
+                        android:src="@drawable/ic_search"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/etSearch"
+                        style="@style/regular_16_light_black"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dp_40"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_marginRight="@dimen/dp_10"
+                        android:background="@android:color/transparent"
+                        android:focusable="true"
+                        android:gravity="center|left"
+                        android:imeOptions="actionDone"
+                        android:text="Search Recipe"
+                        android:textColor="@color/dark_grey2"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintLeft_toRightOf="@+id/ivSearch"
+                        app:layout_constraintStart_toEndOf="@+id/ivSearch"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/ivMic"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="@dimen/dp_10"
+                        android:src="@drawable/ic_mic"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintRight_toLeftOf="@+id/ivFilter"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/ivFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_filter"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        tools:ignore="ImageContrastCheck"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clAddNewRecipe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_10"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingLeft="@dimen/dp_8"
+                    android:paddingTop="@dimen/dp_14"
+                    android:paddingRight="@dimen/dp_8"
+                    android:paddingBottom="@dimen/dp_14"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clSearchView">
+
+                    <ImageView
+                        android:id="@+id/ivAdd"
+                        android:layout_width="@dimen/dp_22"
+                        android:layout_height="@dimen/dp_22"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:src="@drawable/ic_add_new"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        style="@style/bold_14_dark_grey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:text="Fetch New Recipe"
+                        app:layout_constraintBottom_toBottomOf="@+id/ivAdd"
+                        app:layout_constraintLeft_toRightOf="@+id/ivAdd"
+                        app:layout_constraintTop_toTopOf="@+id/ivAdd"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clCreateNewRecipe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_10"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingLeft="@dimen/dp_8"
+                    android:paddingTop="@dimen/dp_14"
+                    android:paddingRight="@dimen/dp_8"
+                    android:paddingBottom="@dimen/dp_14"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clAddNewRecipe">
+
+                    <ImageView
+                        android:id="@+id/ivAdd2"
+                        android:layout_width="@dimen/dp_22"
+                        android:layout_height="@dimen/dp_22"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:src="@drawable/ic_add_new"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        style="@style/bold_14_dark_grey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:text="Create New Recipe"
+                        app:layout_constraintBottom_toBottomOf="@+id/ivAdd2"
+                        app:layout_constraintLeft_toRightOf="@+id/ivAdd2"
+                        app:layout_constraintTop_toTopOf="@+id/ivAdd2"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clRecentAct"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_20"
+                    android:visibility="gone"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clCreateNewRecipe">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvRecentAct"
+                        style="@style/regular_17_dark_gey_6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_recent_activity"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_marginRight="@dimen/dp_10"
+                        android:background="@color/dark_grey5"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvRecentAct"
+                        app:layout_constraintLeft_toRightOf="@+id/tvRecentAct"
+                        app:layout_constraintRight_toLeftOf="@+id/tvSeeAll"
+                        app:layout_constraintTop_toTopOf="@+id/tvRecentAct"/>
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvSeeAll"
+                        style="@style/regular_10_dark_gey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_see_all"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvRecentAct"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvRecentAct"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/reRecentItems"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_8"
+                        android:nestedScrollingEnabled="false"
+                        android:orientation="horizontal"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvRecentAct"
+                        app:spanCount="2"
+                        tools:listitem="@layout/item_recent_item_list" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clAddedRecipe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_20"
+                    android:visibility="gone"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clInsertRecipe">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvAddedRecipe"
+                        style="@style/regular_17_dark_gey_6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_recent_added"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_marginRight="@dimen/dp_10"
+                        android:background="@color/dark_grey5"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvAddedRecipe"
+                        app:layout_constraintLeft_toRightOf="@+id/tvAddedRecipe"
+                        app:layout_constraintRight_toLeftOf="@+id/tvSeeAddedAll"
+                        app:layout_constraintTop_toTopOf="@+id/tvAddedRecipe" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvSeeAddedAll"
+                        style="@style/regular_10_dark_gey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_see_all"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvAddedRecipe"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvAddedRecipe"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/reRecentAddedItems"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_8"
+                        android:nestedScrollingEnabled="false"
+                        android:orientation="horizontal"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvAddedRecipe"
+                        app:spanCount="2"
+                        tools:itemCount="8" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clQuickAccess"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_20"
+                    android:visibility="gone"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clModes">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvQuickAccess"
+                        style="@style/regular_17_dark_gey_6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_quick_access"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/reQuickAccess"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_8"
+                        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvQuickAccess"
+                        app:spanCount="2"
+                        tools:itemCount="2" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clInsertRecipe"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_10"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingLeft="@dimen/dp_8"
+                    android:paddingTop="@dimen/dp_14"
+                    android:paddingRight="@dimen/dp_8"
+                    android:paddingBottom="@dimen/dp_14"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clRecentAct">
+
+                    <ImageView
+                        android:id="@+id/ivAdd3"
+                        android:layout_width="@dimen/dp_22"
+                        android:layout_height="@dimen/dp_22"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:src="@drawable/ic_upload"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        style="@style/bold_14_dark_grey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:text="@string/txt_upload_from_storage"
+                        app:layout_constraintBottom_toBottomOf="@+id/ivAdd3"
+                        app:layout_constraintLeft_toRightOf="@+id/ivAdd3"
+                        app:layout_constraintTop_toTopOf="@+id/ivAdd3"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clShareAllRecipe"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_10"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingLeft="@dimen/dp_8"
+                    android:paddingTop="@dimen/dp_14"
+                    android:paddingRight="@dimen/dp_8"
+                    android:paddingBottom="@dimen/dp_14"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clAddedRecipe">
+
+                    <ImageView
+                        android:id="@+id/ivAdd4"
+                        android:layout_width="@dimen/dp_22"
+                        android:layout_height="@dimen/dp_22"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:src="@drawable/ic_share"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="@color/black" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        style="@style/bold_14_dark_grey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:text="@string/txt_share_all_recipe"
+                        app:layout_constraintBottom_toBottomOf="@+id/ivAdd4"
+                        app:layout_constraintLeft_toRightOf="@+id/ivAdd4"
+                        app:layout_constraintTop_toTopOf="@+id/ivAdd4"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clModes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_20"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clShareAllRecipe">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvModes"
+                        style="@style/regular_17_dark_gey_6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_manual"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:background="@color/dark_grey5"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvModes"
+                        app:layout_constraintLeft_toRightOf="@+id/tvModes"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvModes" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvInd"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_marginTop="@dimen/dp_20"
+                        android:text="@string/txt_start_ind"
+                        android:textColor="@color/orange"
+                        app:layout_constraintTop_toBottomOf="@+id/tvModes"
+                        tools:ignore="MissingConstraints" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clPower"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvInd"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvInd">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvPlusPower"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginLeft="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="+"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvPowerCount"
+                            style="@style/regular_15_dark_gey_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/dp_34"
+                            android:gravity="center"
+                            android:paddingHorizontal="@dimen/dp_10"
+                            android:text=" 100 %"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toRightOf="@id/tvPlusPower"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvMinusPower"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginRight="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="-"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toRightOf="@+id/tvPowerCount"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <LinearLayout
+                        android:id="@+id/clInd"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        app:layout_constraintBottom_toTopOf="@+id/reModes"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/clPower">
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/dp_10"
+                            android:layout_weight="1">
+
+                            <androidx.constraintlayout.widget.Guideline
+                                android:id="@+id/guidelinePowerInd"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                app:layout_constraintGuide_percent="0.60"
+                                app:layout_constraintStart_toEndOf="@+id/tvIndTime" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvIndTime"
+                                style="@style/regular_15_dark_gey_3"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginLeft="@dimen/dp_10"
+                                android:text="00 : 00"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toRightOf="@id/tvMinusInd"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/imgPowerInd"
+                                android:layout_width="@dimen/quick_start_icon_size"
+                                android:layout_height="@dimen/quick_start_icon_size"
+                                android:layout_marginLeft="@dimen/dp_10"
+                                android:padding="@dimen/quick_start_icon_padding"
+                                android:src="@drawable/ic_start"
+                                app:layout_constraintBottom_toBottomOf="@id/tvIndTime"
+                                app:layout_constraintLeft_toRightOf="@id/guidelinePowerInd"
+                                app:layout_constraintTop_toTopOf="@id/tvIndTime" />
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/indPause"
+                                android:layout_width="@dimen/dp_34"
+                                android:layout_height="@dimen/dp_34"
+                                android:layout_marginLeft="@dimen/dp_10"
+                                android:src="@drawable/ic_pause"
+                                android:visibility="gone"
+                                app:layout_constraintBottom_toBottomOf="@id/tvIndTime"
+                                app:layout_constraintLeft_toRightOf="@id/imgPowerInd"
+                                app:layout_constraintTop_toTopOf="@id/tvIndTime" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvPlusInd"
+                                style="@style/regular_25_dark_grey_10"
+                                android:layout_width="@dimen/quick_start_icon_size"
+                                android:layout_height="@dimen/quick_start_icon_size"
+                                android:layout_marginLeft="@dimen/dp_10"
+                                android:background="@drawable/ic_round_corner_white"
+                                android:gravity="center"
+                                android:text="+"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvIndCount"
+                                style="@style/regular_15_dark_gey_3"
+                                android:layout_width="@dimen/dp_34"
+                                android:layout_height="@dimen/dp_34"
+                                android:gravity="center"
+                                android:text="10"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toRightOf="@id/tvPlusInd"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvMinusInd"
+                                style="@style/regular_25_dark_grey_10"
+                                android:layout_width="@dimen/quick_start_icon_size"
+                                android:layout_height="@dimen/quick_start_icon_size"
+                                android:layout_marginRight="@dimen/dp_10"
+                                android:background="@drawable/ic_round_corner_white"
+                                android:gravity="center"
+                                android:text="-"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toRightOf="@+id/tvIndCount"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/llMag"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        app:layout_constraintTop_toBottomOf="@+id/constPowerMag">
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/clMag"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/dp_10"
+                            android:layout_weight="1"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/tvMag">
+
+                            <androidx.constraintlayout.widget.Guideline
+                                android:id="@+id/guidelinePower"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                app:layout_constraintGuide_percent="0.60"
+                                app:layout_constraintStart_toEndOf="@+id/tvMagTime"/>
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvMagTime"
+                                style="@style/regular_15_dark_gey_3"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="@dimen/dp_10"
+                                android:gravity="center"
+                                android:text="00 : 00"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toRightOf="@id/tvMinusMag"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/imgPowerMag"
+                                android:layout_width="@dimen/quick_start_icon_size"
+                                android:layout_height="@dimen/quick_start_icon_size"
+                                android:layout_marginLeft="@dimen/dp_10"
+                                android:padding="@dimen/quick_start_icon_padding"
+                                android:src="@drawable/ic_start"
+                                app:layout_constraintBottom_toBottomOf="@id/tvMagTime"
+                                app:layout_constraintLeft_toRightOf="@+id/guidelinePower"
+                                app:layout_constraintTop_toTopOf="@id/tvMagTime" />
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/magPause"
+                                android:layout_width="@dimen/dp_34"
+                                android:layout_height="@dimen/dp_34"
+                                android:layout_marginLeft="@dimen/dp_10"
+                                android:src="@drawable/ic_pause"
+                                android:visibility="gone"
+                                app:layout_constraintBottom_toBottomOf="@id/tvMagTime"
+                                app:layout_constraintLeft_toRightOf="@id/imgPowerMag"
+                                app:layout_constraintTop_toTopOf="@id/tvMagTime" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvPlusMag"
+                                style="@style/regular_25_dark_grey_10"
+                                android:layout_width="@dimen/quick_start_icon_size"
+                                android:layout_height="@dimen/quick_start_icon_size"
+                                android:layout_marginLeft="@dimen/dp_10"
+                                android:background="@drawable/ic_round_corner_white"
+                                android:gravity="center"
+                                android:text="+"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvMagCount"
+                                style="@style/regular_15_dark_gey_3"
+                                android:layout_width="@dimen/dp_34"
+                                android:layout_height="@dimen/dp_34"
+                                android:gravity="center"
+                                android:text="10"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toRightOf="@id/tvPlusMag"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvMinusMag"
+                                style="@style/regular_25_dark_grey_10"
+                                android:layout_width="@dimen/quick_start_icon_size"
+                                android:layout_height="@dimen/quick_start_icon_size"
+                                android:layout_marginRight="@dimen/dp_10"
+                                android:background="@drawable/ic_round_corner_white"
+                                android:gravity="center"
+                                android:text="-"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toRightOf="@+id/tvMagCount"
+                                app:layout_constraintTop_toTopOf="parent" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/imgInd"
+                        android:layout_width="@dimen/dp_34"
+                        android:layout_height="@dimen/dp_34"
+                        android:layout_marginStart="@dimen/dp_10"
+                        android:src="@drawable/stove"
+                        android:visibility="gone"
+                        app:layout_constraintTop_toBottomOf="@+id/reModes"
+                        tools:ignore="MissingConstraints" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvMag"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/dp_10"
+                        android:layout_marginTop="@dimen/dp_20"
+                        android:gravity="center"
+                        android:text="@string/txt_start_mag"
+                        android:textColor="@color/orange"
+                        app:layout_constraintTop_toBottomOf="@+id/reModes"
+                        tools:ignore="MissingConstraints" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/constPowerMag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvMag"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvMag">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvPlusPowerMag"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginLeft="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="+"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvPowerCountMag"
+                            style="@style/regular_15_dark_gey_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/dp_34"
+                            android:gravity="center"
+                            android:paddingHorizontal="@dimen/dp_10"
+                            android:text="100 %"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toRightOf="@id/tvPlusPowerMag"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvMinusPowerMag"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginRight="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="-"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toRightOf="@+id/tvPowerCountMag"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/reModes"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_8"
+                        android:orientation="horizontal"
+                        android:visibility="gone"
+                        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/clInd"
+                        app:spanCount="2"
+                        tools:itemCount="2"
+                        tools:listitem="@layout/item_modes_item_list" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvStirrer"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_20"
+                        android:gravity="center"
+                        android:text="@string/txt_stirrer"
+                        android:textColor="@color/orange"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/llMag" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clDifficultyLevel"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/dp_50"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/ic_round_corner_white"
+                        android:padding="6dp"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/imgStirrerPower">
+
+                        <belka.us.androidtoggleswitch.widgets.ToggleSwitch
+                            android:id="@+id/toggleDifficultyLevel"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:allowClickWhenDisabled="false"
+                            android:textSize="@dimen/sp_14"
+                            android:textStyle="bold"
+                            app:activeBgColor="@color/orange"
+                            app:activeTextColor="@android:color/white"
+                            app:inactiveBgColor="@color/dark_grey"
+                            app:inactiveTextColor="@color/light_black"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:separatorColor="@color/gray_very_light"
+                            app:toggleWidth="0dp" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <com.airbnb.lottie.LottieAnimationView
+                        android:id="@+id/lavStirrer"
+                        android:layout_width="@dimen/dp_40"
+                        android:layout_height="@dimen/dp_40"
+                        android:background="@drawable/ic_three_round_corner_white"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="@id/tvStirrer"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintLeft_toRightOf="@id/tvStirrer"
+                        app:layout_constraintTop_toTopOf="@id/tvStirrer"
+                        app:lottie_autoPlay="false"
+                        app:lottie_loop="true"
+                        app:lottie_rawRes="@raw/boiling_pot" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvSprinkle"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/txt_sprinkle"
+                        android:textColor="@color/orange"
+                        app:layout_constraintBottom_toBottomOf="@id/etSprinkleValue"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/etSprinkleValue" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/etSprinkleValue"
+                        style="@style/et_regular_14_light_black"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_marginTop="20dp"
+                        android:gravity="top"
+                        android:hint="@string/hint_count"
+                        android:imeOptions="actionNext"
+                        android:inputType="number"
+                        android:maxLength="3"
+                        app:layout_constraintLeft_toRightOf="@+id/tvSprinkle"
+                        app:layout_constraintTop_toBottomOf="@+id/clDifficultyLevel" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvSpray"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/txt_spray"
+                        android:textColor="@color/orange"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="@id/etSprayValue"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/etSprayValue" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/etSprayValue"
+                        style="@style/et_regular_14_light_black"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_marginTop="20dp"
+                        android:gravity="top"
+                        android:hint="@string/hint_ml"
+                        android:imeOptions="actionNext"
+                        android:inputType="number"
+                        android:maxLength="3"
+                        android:visibility="gone"
+                        app:layout_constraintLeft_toRightOf="@+id/tvSpray"
+                        app:layout_constraintTop_toBottomOf="@+id/etSprinkleValue" />
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guidelineCommon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.5"/>
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/imgStirrerPower"
+                        android:layout_width="@dimen/quick_start_icon_size"
+                        android:layout_height="@dimen/quick_start_icon_size"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:padding="@dimen/quick_start_icon_padding"
+                        android:src="@drawable/ic_start"
+                        app:layout_constraintBottom_toBottomOf="@id/tvStirrer"
+                        app:layout_constraintLeft_toRightOf="@id/guidelineCommon"
+                        app:layout_constraintTop_toTopOf="@id/tvStirrer" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/imgSprinklePower"
+                        android:layout_width="@dimen/quick_start_icon_size"
+                        android:layout_height="@dimen/quick_start_icon_size"
+                        android:layout_marginStart="@dimen/dp_10"
+                        android:padding="@dimen/quick_start_icon_padding"
+                        android:src="@drawable/ic_start"
+                        app:layout_constraintBottom_toBottomOf="@id/etSprinkleValue"
+                        app:layout_constraintStart_toEndOf="@id/guidelineCommon"
+                        app:layout_constraintTop_toTopOf="@id/etSprinkleValue" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/imgSprayPower"
+                        android:layout_width="@dimen/quick_start_icon_size"
+                        android:layout_height="@dimen/quick_start_icon_size"
+                        android:layout_marginStart="@dimen/dp_10"
+                        android:padding="@dimen/quick_start_icon_padding"
+                        android:src="@drawable/ic_start"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="@id/etSprayValue"
+                        app:layout_constraintStart_toEndOf="@id/guidelineCommon"
+                        app:layout_constraintTop_toTopOf="@id/etSprayValue" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clQuickFryMode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_20"
+                    app:layout_constraintTop_toBottomOf="@id/clModes">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvQuickFryMode"
+                        style="@style/regular_17_dark_gey_6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_quick_fry_mode"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <View
+                        android:layout_width="@dimen/dp_0"
+                        android:layout_height="@dimen/dp_1"
+                        android:layout_marginStart="@dimen/dp_10"
+                        android:background="@color/dark_grey5"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvQuickFryMode"
+                        app:layout_constraintLeft_toRightOf="@+id/tvQuickFryMode"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvQuickFryMode" />
+
+                    <!--As of now this feature(Oil volume level) is removed by client-->
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:visibility="gone"
+                        android:id="@+id/clFryModeOilLevel"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/dp_50"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/ic_round_corner_white"
+                        android:padding="6dp"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvQuickFryMode">
+
+                        <belka.us.androidtoggleswitch.widgets.ToggleSwitch
+                            android:id="@+id/toggleSwitchFryModeOilLevel"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:allowClickWhenDisabled="false"
+                            android:textSize="@dimen/sp_14"
+                            android:textStyle="bold"
+                            app:activeBgColor="@color/orange"
+                            app:activeTextColor="@android:color/white"
+                            app:inactiveBgColor="@color/dark_grey"
+                            app:inactiveTextColor="@color/light_black"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:separatorColor="@color/gray_very_light"
+                            app:toggleWidth="0dp" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvFryMode"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_20"
+                        android:gravity="center"
+                        android:text="@string/txt_fry_mode"
+                        android:textColor="@color/orange"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/clFryModeOilLevel" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvFryModeTime"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/dp_10"
+                        android:text="00 : 00"
+                        app:layout_constraintBottom_toBottomOf="@id/tvFryMode"
+                        app:layout_constraintStart_toEndOf="@id/tvFryMode"
+                        app:layout_constraintTop_toTopOf="@id/tvFryMode" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/imgFryModeOnOff"
+                        android:layout_width="@dimen/quick_start_icon_size"
+                        android:layout_height="@dimen/quick_start_icon_size"
+                        android:layout_marginStart="@dimen/dp_20"
+                        android:padding="@dimen/quick_start_icon_padding"
+                        android:src="@drawable/ic_start"
+                        app:layout_constraintBottom_toBottomOf="@id/tvFryMode"
+                        app:layout_constraintStart_toEndOf="@id/tvFryModeTime"
+                        app:layout_constraintTop_toTopOf="@id/tvFryMode" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/imgFryModePauseResume"
+                        android:layout_width="@dimen/quick_start_icon_size"
+                        android:layout_height="@dimen/quick_start_icon_size"
+                        android:layout_marginStart="@dimen/dp_20"
+                        android:padding="@dimen/quick_start_icon_padding"
+                        android:src="@drawable/ic_pause"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="@id/tvFryMode"
+                        app:layout_constraintStart_toEndOf="@id/imgFryModeOnOff"
+                        app:layout_constraintTop_toTopOf="@id/tvFryMode" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvFryModeInduction"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/dp_10"
+                        android:layout_marginTop="@dimen/dp_30"
+                        android:text="@string/txt_start_ind"
+                        android:textColor="@color/orange"
+                        app:layout_constraintTop_toBottomOf="@+id/tvFryMode"
+                        tools:ignore="MissingConstraints" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clFryModeInductionPower"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvFryModeInduction"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvFryModeInduction">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeInductionPlusPower"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginStart="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="@string/txt_sign_plus"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeInductionPowerCount"
+                            style="@style/regular_15_dark_gey_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/dp_34"
+                            android:gravity="center"
+                            android:paddingHorizontal="@dimen/dp_10"
+                            android:text=" 100 %"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@id/tvFryModeInductionPlusPower"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeInductionMinusPower"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginEnd="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="@string/txt_sign_minus"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@+id/tvFryModeInductionPowerCount"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvFryModeThreshold"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_30"
+                        android:text="@string/txt_threshold"
+                        android:textColor="@color/orange"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/clFryModeInductionPower" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clFryModeThresholdChange"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvFryModeThreshold"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvFryModeThreshold">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeThresholdPlus"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginStart="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="@string/txt_sign_plus"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeThresholdCount"
+                            style="@style/regular_15_dark_gey_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/dp_34"
+                            android:gravity="center"
+                            android:paddingHorizontal="@dimen/dp_10"
+                            android:text=" 200 "
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@id/tvFryModeThresholdPlus"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeThresholdMinus"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginEnd="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="@string/txt_sign_minus"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@+id/tvFryModeThresholdCount"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvFryModeMicrowave"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_30"
+                        android:text="@string/txt_microwave"
+                        android:textColor="@color/orange"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/clFryModeThresholdChange" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clFryModeMicrowavePower"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvFryModeMicrowave"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvFryModeMicrowave">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeMicrowavePlusPower"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginStart="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="@string/txt_sign_plus"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeMicrowavePowerCount"
+                            style="@style/regular_15_dark_gey_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/dp_34"
+                            android:gravity="center"
+                            android:paddingHorizontal="@dimen/dp_10"
+                            android:text=" 100 %"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@id/tvFryModeMicrowavePlusPower"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeMicrowaveMinusPower"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginEnd="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="@string/txt_sign_minus"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@+id/tvFryModeMicrowavePowerCount"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clFryModeMicrowaveTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_10"
+                        app:layout_constraintTop_toBottomOf="@id/clFryModeMicrowavePower">
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeMicrowavePlusTime"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginStart="@dimen/dp_10"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="@string/txt_sign_plus"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeMicrowaveTimeCount"
+                            style="@style/regular_15_dark_gey_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="@dimen/dp_34"
+                            android:gravity="center"
+                            android:paddingHorizontal="@dimen/dp_10"
+                            android:text=" 30 "
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@id/tvFryModeMicrowavePlusTime"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeMicrowaveMinusTime"
+                            style="@style/regular_25_dark_grey_10"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:gravity="center"
+                            android:text="@string/txt_sign_minus"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toEndOf="@+id/tvFryModeMicrowaveTimeCount"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <androidx.appcompat.widget.AppCompatTextView
+                            android:id="@+id/tvFryModeMicrowaveTime"
+                            style="@style/regular_15_dark_gey_3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="@dimen/dp_10"
+                            android:text="00 : 30"
+                            app:layout_constraintBottom_toBottomOf="@id/tvFryModeMicrowaveMinusTime"
+                            app:layout_constraintStart_toEndOf="@id/tvFryModeMicrowaveMinusTime"
+                            app:layout_constraintTop_toTopOf="@id/tvFryModeMicrowaveMinusTime" />
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/imgFryModeMicrowaveOnOff"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginStart="@dimen/dp_20"
+                            android:padding="@dimen/quick_start_icon_padding"
+                            android:src="@drawable/ic_start"
+                            app:layout_constraintBottom_toBottomOf="@id/tvFryModeMicrowaveTime"
+                            app:layout_constraintStart_toEndOf="@id/tvFryModeMicrowaveTime"
+                            app:layout_constraintTop_toTopOf="@id/tvFryModeMicrowaveTime" />
+
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/imgFryModeMicrowavePauseResume"
+                            android:layout_width="@dimen/quick_start_icon_size"
+                            android:layout_height="@dimen/quick_start_icon_size"
+                            android:layout_marginStart="@dimen/dp_20"
+                            android:padding="@dimen/quick_start_icon_padding"
+                            android:src="@drawable/ic_pause"
+                            android:visibility="gone"
+                            app:layout_constraintBottom_toBottomOf="@id/imgFryModeMicrowaveOnOff"
+                            app:layout_constraintStart_toEndOf="@id/imgFryModeMicrowaveOnOff"
+                            app:layout_constraintTop_toTopOf="@id/imgFryModeMicrowaveOnOff" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvFryModeStirrer"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_30"
+                        android:text="@string/txt_stirrer"
+                        android:textColor="@color/orange"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/clFryModeMicrowaveTime" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:id="@+id/imgFryModeStirrerOnOff"
+                        android:layout_width="@dimen/quick_start_icon_size"
+                        android:layout_height="@dimen/quick_start_icon_size"
+                        android:layout_marginStart="@dimen/dp_10"
+                        android:padding="@dimen/quick_start_icon_padding"
+                        android:src="@drawable/ic_start"
+                        app:layout_constraintBottom_toBottomOf="@id/tvFryModeStirrer"
+                        app:layout_constraintStart_toEndOf="@id/tvFryModeStirrer"
+                        app:layout_constraintTop_toTopOf="@id/tvFryModeStirrer" />
+
+                    <com.airbnb.lottie.LottieAnimationView
+                        android:id="@+id/lottieAnimationFryModeStirrer"
+                        android:layout_width="@dimen/dp_40"
+                        android:layout_height="@dimen/dp_40"
+                        android:background="@drawable/ic_three_round_corner_white"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="@id/tvFryModeStirrer"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="@id/tvFryModeStirrer"
+                        app:lottie_autoPlay="false"
+                        app:lottie_loop="true"
+                        app:lottie_rawRes="@raw/boiling_pot" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clFryModeStirrerLevel"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/dp_50"
+                        android:layout_marginTop="@dimen/dp_20"
+                        android:background="@drawable/ic_round_corner_white"
+                        android:padding="6dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvFryModeStirrer">
+
+                        <belka.us.androidtoggleswitch.widgets.ToggleSwitch
+                            android:id="@+id/toggleSwitchFryModeStirrerLevel"
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:allowClickWhenDisabled="false"
+                            android:textSize="@dimen/sp_14"
+                            android:textStyle="bold"
+                            app:activeBgColor="@color/orange"
+                            app:activeTextColor="@android:color/white"
+                            app:inactiveBgColor="@color/dark_grey"
+                            app:inactiveTextColor="@color/light_black"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:separatorColor="@color/gray_very_light"
+                            app:toggleWidth="0dp" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvFryModePowerSavingTime"
+                        style="@style/regular_15_dark_gey_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_30"
+                        android:text="@string/txt_power_saving_time"
+                        android:textColor="@color/orange"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/clFryModeStirrerLevel" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/etFryModePowerSavingTime"
+                        style="@style/et_regular_14_light_black"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/dp_10"
+                        android:layout_marginTop="20dp"
+                        android:gravity="top"
+                        android:hint="@string/txt_sign_min"
+                        android:imeOptions="actionNext"
+                        android:inputType="number"
+                        android:maxLength="2"
+                        android:text="30"
+                        app:layout_constraintStart_toEndOf="@+id/tvFryModePowerSavingTime"
+                        app:layout_constraintTop_toBottomOf="@+id/clFryModeStirrerLevel" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnApplyPowerSavingTime"
+                        style="@style/semi_bole_14_dark_grey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="45dp"
+                        android:layout_marginStart="@dimen/dp_15"
+                        android:background="@drawable/ic_round_corner_button_orange_deselect"
+                        android:enabled="false"
+                        android:paddingHorizontal="@dimen/dp_15"
+                        android:text="@string/txt_apply"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        app:layout_constraintBottom_toBottomOf="@id/etFryModePowerSavingTime"
+                        app:layout_constraintStart_toEndOf="@+id/etFryModePowerSavingTime"
+                        app:layout_constraintTop_toTopOf="@id/etFryModePowerSavingTime" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clRecommend"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_20"
+                    android:visibility="gone"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clQuickFryMode">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvRecommend"
+                        style="@style/regular_17_dark_gey_6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_recommended"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_marginRight="@dimen/dp_10"
+                        android:background="@color/dark_grey5"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvRecommend"
+                        app:layout_constraintLeft_toRightOf="@+id/tvRecommend"
+                        app:layout_constraintRight_toLeftOf="@+id/tvSeeAllRecommend"
+                        app:layout_constraintTop_toTopOf="@+id/tvRecommend" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvSeeAllRecommend"
+                        style="@style/regular_10_dark_gey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_see_all"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvRecommend"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvRecommend"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/reRecommend"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_8"
+                        android:nestedScrollingEnabled="false"
+                        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvRecommend"
+                        app:spanCount="2"
+                        tools:itemCount="2" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clAllRecipe"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_20"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clRecommend">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvAllRecipe"
+                        style="@style/regular_17_dark_gey_6"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/all_recipes"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_marginRight="@dimen/dp_10"
+                        android:background="@color/dark_grey5"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvAllRecipe"
+                        app:layout_constraintLeft_toRightOf="@+id/tvAllRecipe"
+                        app:layout_constraintRight_toLeftOf="@+id/tvSeeAllRecipes"
+                        app:layout_constraintTop_toTopOf="@+id/tvAllRecipe" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvSeeAllRecipes"
+                        style="@style/regular_10_dark_gey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/txt_see_all"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvAllRecipe"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvAllRecipe"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/reAllRecipe"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_8"
+                        android:nestedScrollingEnabled="false"
+                        app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+                        android:orientation="vertical"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvAllRecipe"
+                        app:spanCount="2"
+                        tools:itemCount="2"
+                        tools:listitem="@layout/item_recommend_item_list" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.Group
+                    android:id="@+id/weekGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"
+                    app:constraint_referenced_ids="clAddNewRecipe,clCreateNewRecipe,clShareAllRecipe,clInsertRecipe" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <ProgressBar
+            android:id="@+id/progressBarAllRecipePagination"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"
+            android:indeterminateTintMode="src_atop"
+            android:indeterminateTint="@color/black"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clRecipeSearch"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:paddingHorizontal="@dimen/dp_20"
+            android:paddingTop="@dimen/dp_10"
+            android:paddingBottom="@dimen/dp_20"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guidelineSearchView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintGuide_percent="0.06"/>
+
+            <com.arlib.floatingsearchview.FloatingSearchView
+                android:id="@+id/floatingSearchView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                app:floatingSearch_backgroundColor="@color/white"
+                app:floatingSearch_close_search_on_keyboard_dismiss="true"
+                app:floatingSearch_dimBackground="false"
+                app:floatingSearch_leftActionMode="showSearch"
+                app:floatingSearch_searchHint="Recipe Name"
+                app:floatingSearch_showSearchKey="false"
+                app:floatingSearch_suggestionsListAnimDuration="250"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </com.arlib.floatingsearchview.FloatingSearchView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayoutMenuBackground"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnAction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/dp_35"
+            android:layout_marginBottom="@dimen/dp_40"
+            android:importantForAccessibility="no"
+            app:backgroundTint="@android:color/white"
+            app:fabSize="auto"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_add_new_white"
+            app:tint="@color/dark_grey4" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/dp_10"
+            android:paddingStart="@dimen/dp_10"
+            android:paddingEnd="@dimen/dp_10"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/btnAction"
+            app:layout_constraintEnd_toEndOf="@+id/btnAction">
+
+            <!--This is a parent Floating Action Button-->
+            <!-- When this FAB Button is been pressed/clicked the following two button will get pop-up with animation -->
+            <!-- the Functionality is been done in MainActivity.java file -->
+            <!-- The other two FAB button is been set to InVisible so when user click on this button those 2 will get visible-->
+
+            <!--This act a child Floating Action Button-->
+            <!-- The visibility is been set to INVISIBLE -->
+
+
+            <!--This act a child Floating Action Button-->
+            <!-- The visibility is been set to INVISIBLE -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clUploadRecipe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@+id/clCreateRecipe">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnUpload"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    android:src="@drawable/ic_upload"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvUploadRecipe"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_upload_recipe"
+                    app:layout_constraintBottom_toBottomOf="@id/btnUpload"
+                    app:layout_constraintEnd_toStartOf="@id/btnUpload"
+                    app:layout_constraintTop_toTopOf="@id/btnUpload" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clUploadAudio"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@+id/clUploadRecipe">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnUploadAudio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    android:src="@drawable/ic_upload"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvUploadAudio"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_upload_audio"
+                    app:layout_constraintBottom_toBottomOf="@id/btnUploadAudio"
+                    app:layout_constraintEnd_toStartOf="@id/btnUploadAudio"
+                    app:layout_constraintTop_toTopOf="@id/btnUploadAudio" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clOn2CookAI"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnOn2CookAI"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:srcCompat="@drawable/ic_qr_code_scanner"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvOn2CookAI"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_On2cook_AI"
+                    app:layout_constraintBottom_toBottomOf="@id/btnOn2CookAI"
+                    app:layout_constraintEnd_toStartOf="@id/btnOn2CookAI"
+                    app:layout_constraintTop_toTopOf="@id/btnOn2CookAI" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Existing "Create Fry Recipe" Button -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clCreateFryRecipe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@id/clOn2CookAI">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnCreateFryRecipe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:srcCompat="@drawable/ic_recipe_logo"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvCreateFryRecipe"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_create_fry_recipe"
+                    app:layout_constraintBottom_toBottomOf="@id/btnCreateFryRecipe"
+                    app:layout_constraintEnd_toStartOf="@id/btnCreateFryRecipe"
+                    app:layout_constraintTop_toTopOf="@id/btnCreateFryRecipe" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Existing "Create Recipe" Button -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clCreateRecipe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@id/clCreateFryRecipe">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnCreate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:srcCompat="@drawable/ic_recipe_logo"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvCreateRecipe"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_create_recipe"
+                    app:layout_constraintBottom_toBottomOf="@id/btnCreate"
+                    app:layout_constraintEnd_toStartOf="@id/btnCreate"
+                    app:layout_constraintTop_toTopOf="@id/btnCreate" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clShareRecipe"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:layout_marginBottom="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/clSetUpDevice">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnShare"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="false"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:fabSize="mini"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:srcCompat="@drawable/ic_share"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvShareRecipe"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_share_recipe"
+                    app:layout_constraintBottom_toBottomOf="@id/btnShare"
+                    app:layout_constraintEnd_toStartOf="@id/btnShare"
+                    app:layout_constraintTop_toTopOf="@id/btnShare" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clSetUpDevice"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:layout_marginBottom="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@+id/clUploadAudio">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnSetUp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="false"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:fabSize="mini"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:srcCompat="@drawable/ic_smart_device"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvSetUp"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_device_set_up"
+                    app:layout_constraintBottom_toBottomOf="@id/btnSetUp"
+                    app:layout_constraintEnd_toStartOf="@id/btnSetUp"
+                    app:layout_constraintTop_toTopOf="@id/btnSetUp" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

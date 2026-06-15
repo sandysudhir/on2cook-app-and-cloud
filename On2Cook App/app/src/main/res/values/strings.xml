@@ -1,0 +1,360 @@
+<resources>
+    <string name="app_name">On2Cook</string>
+    <string name="content">A Revolutionary Smart Cooking Device with Combination Cooking Technology. ◉ World\'s Fastest ◉ Proven to be the Healthiest ◉ Cost &amp; Energy Saving.</string>
+    <string name="txt_cooking">Cooking</string>
+    <string name="text_something">Something..</string>
+    <string name="txt_home">Home</string>
+    <string name="txt_select_audio">Please select record to record audio.</string>
+    <string name="txt_warn_utc">Utc configuration failed</string>
+    <string name="txt_busy">Device is Busy</string>
+    <string name="txt_alerts">Alerts</string>
+    <string name="txt_logs">Logs</string>
+    <string name="txt_already_exits">Already exists</string>
+    <string name="txt_done">Done</string>
+    <string name="txt_week">Week</string>
+    <string name="txt_like_to">Cook with world\'s fastest cooking device</string>
+    <string name="txt_cook">Cook</string>
+    <string name="txt_shop">Shop</string>
+    <string name="txt_inventory">Inventory</string>
+    <string name="txt_explore">Explore</string>
+    <string name="txt_plan">Plan</string>
+    <string name="txt_ordering">Ordering</string>
+
+
+    <string name="log_viewer_waiting">Waiting\u2026</string>
+    <string name="log_viewer_sending">Sending READLOG=%1$s\u2026</string>
+    <string name="log_viewer_ack">Command acknowledged, waiting for data\u2026</string>
+    <string name="log_viewer_receiving">Receiving data\u2026</string>
+    <string name="log_viewer_parsing">Parsing\u2026</string>
+    <string name="log_viewer_done_csv">&#10003; %1$d rows (%2$s)</string>
+    <string name="log_viewer_done_raw">&#10003; Raw data (%1$s)</string>
+    <string name="log_viewer_empty_state">File received but contained no data</string>
+    <string name="log_viewer_empty_file">— file is empty —</string>
+    <string name="log_viewer_bytes_zero">0 B</string>
+    <string name="log_viewer_export_csv">Export as CSV</string>
+    <string name="log_viewer_copy_raw">Copy Raw</string>
+    <string name="log_viewer_no_data">No data to export</string>
+    <string name="log_viewer_copied">Copied to clipboard</string>
+
+
+
+    <!-- Connect Devices Activity -->
+    <string name="text_view_paired_devices">Paired Devices</string>
+    <string name="text_view_new_devices">Available Devices</string>
+    <string name="text_view_connected_devices">Connected Devices</string>
+    <string name="button_scan_for_new_devices">Scan For New Devices</string>
+    <string name="label_devices">Bluetooth Devices</string>
+
+    <!-- Toast and waring messages -->
+    <string name="does_not_have_bluetooth">This Device Does not Support Bluetooth</string>
+    <string name="no_paired_devices">No Paired Bluetooth Devices Found</string>
+    <string name="label_searching">Searching…</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="device_disconnect">Device Disconnected</string>
+    <string name="title_activity_bluetooth_auto_pair">BluetoothAutoPairActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+    <string name="please_stop_fry_mode_for_Stop_oil_level">Please stop fry mode for change oil level</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="txt_flames">Flames</string>
+    <string name="txt_microwave">Microwave</string>
+    <string name="txt_recent_activity">Recently Played Recipes</string>
+    <string name="txt_recent_added">Added Recipe</string>
+    <string name="txt_see_all">See all</string>
+    <string name="txt_medium">Medium</string>
+    <string name="txt_quick_access">Quick Access</string>
+    <string name="txt_action">Action</string>
+    <string name="txt_feedback">Feedback</string>
+    <string name="txt_modes">Modes</string>
+    <string name="txt_manual">Manual</string>
+    <string name="txt_recommended">Recommended</string>
+    <string name="txt_quick_fry_mode">Quick Fry Mode</string>
+    <string name="txt_fry_mode">Fry Mode</string>
+    <string name="txt_sign_plus">+</string>
+    <string name="txt_sign_minus">-</string>
+    <string name="txt_sign_min">Min</string>
+    <string name="txt_threshold">Threshold</string>
+    <string name="txt_select_all">Select All</string>
+
+    <!-- Ble scan error messages -->
+    <string name="error_bluetooth_not_available">Bluetooth is not available</string>
+    <string name="error_bluetooth_disabled">Enable bluetooth and try again</string>
+    <string name="error_location_permission_missing">On Android 6.0 location permission is required. Please enable it in phone settings</string>
+    <string name="error_location_services_disabled">Location services need to be enabled on Android 6.0</string>
+    <string name="error_scan_failed_already_started">Scan with the same filters is already started</string>
+    <string name="error_scan_failed_application_registration_failed">Failed to register application for bluetooth scan</string>
+    <string name="error_scan_failed_feature_unsupported">Scan with specified parameters is not supported</string>
+    <string name="error_scan_failed_internal_error">Scan failed due to internal error</string>
+    <string name="error_scan_failed_out_of_hardware_resources">Scan cannot start due to limited hardware resources</string>
+    <string name="error_undocumented_scan_throttle">Android 7+ does not allow more scans.</string>
+    <string name="error_undocumented_scan_throttle_retry">Try in %d seconds</string>
+    <string name="error_bluetooth_cannot_start">Unable to start scanning</string>
+    <string name="error_unknown_error">Unknown error</string>
+    <string name="error_no_message">No message found for reason=%d. Consider adding one.</string>
+
+    <string name="txt_back">Back</string>
+    <string name="txt_sos">SOS</string>
+    <string name="txt_start_ind">Induction</string>
+    <string name="txt_started">Recipe Already Started</string>
+    <string name="txt_recipe_delete_successfully">Recipe Deleted successfully</string>
+    <string name="txt_delete_successfully">Deleted successfully</string>
+    <string name="txt_sent_successfully">Sent successfully</string>
+    <string name="txt_start_mag">Microwave</string>
+    <string name="txt_stirrer">Stirrer</string>
+    <string name="txt_sprinkle">Sprinkle</string>
+    <string name="txt_spray">Spray</string>
+    <string name="txt_power_saving_time">Power saving time</string>
+    <string name="txt_mag_started">Magnetron Started</string>
+    <string name="txt_mag_paused">Magnetron Paused</string>
+    <string name="txt_ind_paused">Induction paused</string>
+    <string name="txt_ind_started">Induction Started</string>
+    <string name="txt_overcook">Food is Overcooked Please Take </string>
+    <string name="txt_cooked">Food is Cooked</string>
+    <string name="strShortSec">Second is too short for update</string>
+    <string name="strMaxTimeForFryModeMicrowave">Reached maximum time</string>
+    <string name="strPleaseResumeMicrowave">Please resume microwave</string>
+    <string name="strStartMag">Please start Magnetron</string>
+    <string name="strConnect">Please connect to device</string>
+    <string name="strOn2cookai">You have pressed on2cook ai button</string>
+    <string name="strSelectedDeviceIsNotConnected">Selected device is not connected</string>
+    <string name="strEditRecipe">Recipe name too long!</string>
+    <string name="strNameLong">Name too long!</string>
+    <string name="strNoRecipes">Please create recipe or import recipe</string>
+    <string name="strPump">Please add count to start pump</string>
+    <string name="strPleaseAddMlToStartSpray">Please add ml to start spray</string>
+    <string name="strPleaseEnterMinimumTenMlToStartSpray">Please enter minimum 10 ml to start spray</string>
+    <string name="strPowerMin">Reached minimum power</string>
+    <string name="strPowerMax">Reached maximum power</string>
+    <string name="strStartInd">Please start induction</string>
+    <string name="strStartIndOrMag">Please start induction or microwave</string>
+    <string name="all_recipes">All Recipes</string>
+    <string name="strRecipeCopied">Recipe Copied</string>
+    <string name="strPleaseStartFryMode">Please start fry mode</string>
+    <string name="strSprinkleIsAlreadyRunning">Sprinkle is already running</string>
+    <string name="strSprayIsAlreadyRunning">Spray is already running</string>
+
+    <!-- Permissions-->
+    <string name="need_permissions">Need Permissions</string>
+    <string name="go_to_settings">GO TO SETTINGS</string>
+    <string name="error_occured">Error occurred! </string>
+    <string name="this_app_need_permissions">This app needs permission to use this feature. You can grant them in app settings.</string>
+    <string name="this_app_need_location_permissions">This app needs location permission to use this feature. You can grant them in app settings.</string>
+    <string name="this_app_need_precise_location_permissions">This app needs precise location permission to use this feature. You can grant them in app settings.</string>
+    <string name="this_app_need_nearby_devices_permissions">This app needs scan nearby devices permission to use this feature. You can grant them in app settings.</string>
+    <string name="this_app_need_nearby_devices_location_permissions">This app needs location and scan nearby devices permission to use this feature. You can grant them in app settings.</string>
+    <string name="this_app_need_nearby_devices_precise_location_permissions">This app needs precise location and scan nearby devices permission to use this feature. You can grant them in app settings.</string>
+    <string name="this_app_need_gps_permissions">This app needs device location, which uses Google\'s location service. You can grant them in settings.</string>
+    <string name="no_ble">Device doesn\'t have BLE support!</string>
+    <string name="cancel">cancel</string>
+    <string name="txt_quickstart">Device is in QuickStart Mode</string>
+    <string name="txt_recipemode">Device is in Cooking Mode</string>
+
+    <string name="txt_prep">Add Preparation Steps</string>
+    <string name="txt_instr">Add Instruction Steps</string>
+    <string name="txt_recipe_detail">Recipe Detail</string>
+    <string name="title_activity_create_recipe_main">CreateRecipeActivityMain</string>
+    <string name="title_recipe">Detail</string>
+    <string name="title_ingredients">Ingredients</string>
+    <string name="title_instructions">Instructions</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">{"category":"","description":"ah","difficulty":"Easy","imageUrl":"","ingredients":[{"app_audio":"Ah Ha 46 gm","audio":"Ah","audioI":"Ha","audioP":"Ah","audioQ":"46","audioU":"gm","id":1,"image":"","text":"Ja","title":"Ha","weight":"46 gm"}],"instruction":[{"Audio":"Q","Indtime_lid_con":"","Induction_on_time":"0","Induction_power":"0","Magnetron_on_time":"1","Magnetron_power":"1","Text":"One","Weight":"1 gm","app_audio":"Q One","audioI":"One","audioP":"Q","audioQ":"wait","audioU":"1","durationInSec":0,"id":1,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","warm_time":""},{"Audio":"Teo","Indtime_lid_con":"","Induction_on_time":"0","Induction_power":"0","Magnetron_on_time":"2","Magnetron_power":"2","Text":"Two","Weight":"2 gm","app_audio":"Teo Two","audioI":"Two","audioP":"Teo","audioQ":"wait","audioU":"2","durationInSec":0,"id":2,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","warm_time":""},{"Audio":"U","Indtime_lid_con":"","Induction_on_time":"0","Induction_power":"0","Magnetron_on_time":"3","Magnetron_power":"3","Text":"Three","Weight":"3 gm","app_audio":"U Three","audioI":"Three","audioP":"U","audioQ":"wait","audioU":"3","durationInSec":0,"id":3,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","warm_time":""},{"Audio":"Four","Indtime_lid_con":"","Induction_on_time":"0","Induction_power":"0","Magnetron_on_time":"4","Magnetron_power":"4","Text":"Four","Weight":"4 gm","app_audio":"Four Four","audioI":"Four","audioP":"Four","audioQ":"wait","audioU":"4","durationInSec":0,"id":4,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","warm_time":""},{"Audio":"Fty","Indtime_lid_con":"","Induction_on_time":"0","Induction_power":"0","Magnetron_on_time":"6","Magnetron_power":"6","Text":"Five","Weight":"5 gm","app_audio":"Fty Five","audioI":"Five","audioP":"Fty","audioQ":"wait","audioU":"6","durationInSec":0,"id":5,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","warm_time":""},{"Audio":"Siz","Indtime_lid_con":"","Induction_on_time":"0","Induction_power":"0","Magnetron_on_time":"6","Magnetron_power":"7","Text":"Six","Weight":"6 gm","app_audio":"Siz Six","audioI":"Six","audioP":"Siz","audioQ":"wait","audioU":"6","durationInSec":0,"id":6,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","warm_time":""},{"Audio":"Z","Indtime_lid_con":"","Induction_on_time":"0","Induction_power":"0","Magnetron_on_time":"7","Magnetron_power":"7","Text":"Sevn","Weight":"7 gm","app_audio":"Z Sevn","audioI":"Sevn","audioP":"Z","audioQ":"wait","audioU":"7","durationInSec":0,"id":7,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","warm_time":""},{"Audio":"Gu","Indtime_lid_con":"","Induction_on_time":"63","Induction_power":"63","Magnetron_on_time":"0","Magnetron_power":"0","Text":"Ji","Weight":"58 gm","app_audio":"Gu Ji","audioI":"Ji","audioP":"Gu","audioQ":"wait","audioU":"63","durationInSec":0,"id":8,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","warm_time":""},{"Audio":"Ct","Indtime_lid_con":"","Induction_on_time":"0","Induction_power":"0","Magnetron_on_time":"5","Magnetron_power":"5","Text":"Vh","Weight":"55 gm","app_audio":"Ct Vh","audioI":"Vh","audioP":"Ct","audioQ":"wait","audioU":"5","durationInSec":0,"id":9,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","warm_time":""},{"Audio":"Qgh","Indtime_lid_con":"","Induction_on_time":"0","Induction_power":"0","Magnetron_on_time":"63","Magnetron_power":"46","Text":"Ten","Weight":"10 gm","app_audio":"Qgh Ten","audioI":"Ten","audioP":"Qgh","audioQ":"wait","audioU":"63","durationInSec":0,"id":10,"image":"","lid":"close","mag_severity":"high","pump_on":"","skip":"","stirrer_on":"","wait_time":"","wa</string>
+    <string name="scan">Scan</string>
+    <string name="warn_file">Please select Bin file to Update On2Cook Device.</string>
+    <string name="txt_ota_sucess">OTA Updated Successfully</string>
+    <string name="txt_ota_fail">OTA uploaded fail</string>
+
+    /*NAV GRAPH PARAM*/
+    <string name="mac_address">MAC_ADDRESS</string>
+    <string name="backpress_msg">Please click BACK again to exit</string>
+
+
+    <string name="label_take_photo">Take Photo</string>
+    <string name="label_open_gallery">Open Gallery</string>
+    <string name="label_select_picture">Select Picture</string>
+
+    <string name="label_software_version">Software Version</string>
+    <string name="label_dynamic_software_version">Software Version: %1$s</string>
+    <string name="label_choose_device_for_setup">Choose Device for Setup</string>
+
+    <string name="dynamic_message_disconnected_device_no">Disconnected Device no. %1$s</string>
+    <string name="dynamic_message_device_connected">Device %1$s Connected</string>
+    <string name="dynamic_message_previously_paired_device_not_found">Previously Paired Device %1$s Not Found</string>
+    <string name="dynamic_message_recipe_not_found_in_this_device">%1$s Recipe Not Found in this device</string>
+    <string name="dynamic_message_recipe_already_added">Recipe %1$s Already Added</string>
+
+    <string name="title_permission">Permission Is Required</string>
+    <string name="message_storage_camera_permission">Please provide camera and storage permission</string>
+    <string name="button_cancel">Cancel</string>
+    <string name="button_setting">Setting</string>
+    <string name="title_permission_open_settings">Open Settings</string>
+    <string name="txt_no_device_connected">No Device Connected</string>
+    <string name="txt_not_connected">It seems that app is not connected with device.</string>
+    <string name="title_privacy_policy">Privacy Policy</string>
+    <string name="txt_upload_from_storage">Upload From Storage</string>
+    <string name="txt_share_all_recipe">Share All Recipe</string>
+    <string name="txt_connect">Connect</string>
+    <string name="txt_create_recipe">Create recipe</string>
+    <string name="txt_create_fry_recipe">FRY recipe</string>
+    <string name="txt_share_recipe">Share all recipes</string>
+    <string name="txt_upload_recipe">Upload recipes</string>
+    <string name="txt_upload_audio">Upload audio</string>
+    <string name="txt_upload">Upload</string>
+    <string name="txt_set_up">Send recipes</string>
+    <string name="txt_delete_recipe">Delete recipes</string>
+    <string name="txt_device_set_up">Device Setup</string>
+    <string name="txt_recipe_in_device">Recipe in Device</string>
+    <string name="txt_audio_in_device">Audio in Device</string>
+    <string name="txt_On2cook_AI">Qr Scanner</string>
+
+
+    <string name="button_yes">Yes</string>
+    <string name="button_retry">Retry</string>
+    <string name="button_no">No</string>
+    <string name="txt_delete_device">Delete Device</string>
+    <string name="txt_to_enable_ftp_connection_please_turn_off_wifi">To Enable FTP connection please turn off wifi</string>
+    <string name="txt_delete">Delete</string>
+    <string name="txt_send_rcipe">Please Send Recipe To Device</string>
+    <string name="txt_send">Send</string>
+    <string name="txt_device_on_counter">Device On Time</string>
+
+    <string name="title_current">CURRENT</string>
+    <string name="title_filter">FILTER</string>
+    <string name="title_temp">TEMP</string>
+    <string name="title_time">TIME</string>
+
+    <string name="text_microwave">Microwave</string>
+    <string name="text_induction">Induction</string>
+    <string name="text_magnetron">Magnetron</string>
+    <string name="text_coil">Coil</string>
+    <string name="text_ambient">Ambient</string>
+    <string name="text_pan">Pan</string>
+    <string name="text_pcb">PCB</string>
+    <string name="text_oil">Oil</string>
+    <string name="text_device_on">Device ON</string>
+    <string name="text_device_of">Device OFF</string>
+    <string name="text_induction_on">Induction \nON</string>
+    <string name="text_microwave_on">Microwave \nON</string>
+    <string name="text_to">to</string>
+    <string name="txt_reset">Reset</string>
+    <string name="txt_apply">Apply</string>
+
+    //LogData
+    <string name="text_total_device_on_counter">Total Device \nON Counter</string>
+    <string name="text_total_time_induction_on">Total Time \nInduction ON</string>
+    <string name="text_total_time_microwave_on">Total Time \nMicrowave ON</string>
+    <string name="text_maximum_induction_on">Maximum \nInduction ON</string>
+    <string name="text_maximum_microwave_on">Maximum \nMicrowave ON</string>
+    <string name="hint_search_date_by_text">Search date by text</string>
+
+    <string name="hint_sec">Sec</string>
+    <string name="hint_ml">ml</string>
+    <string name="hint_count">count</string>
+
+    <string name="txt_temp">Temperature</string>
+    <string name="txt_current">Current</string>
+    <string name="txt_time">Time</string>
+    <string name="txt_recipe">Recipe</string>
+    <string name="txt_audio">Audio</string>
+    <string name="txt_audio_type">Select audio type</string>
+    <string name="txt_audio_type_content">Choose the appropriate category for the audio:</string>
+    <string name="txt_device">Device</string>
+    <string name="txt_application">Application</string>
+    <string name="txt_both">Both</string>
+    <string name="txt_on2cook">On2cook</string>
+    <string name="txt_device_audio">Device audio</string>
+    <string name="txt_device_name">Enter device name</string>
+    <string name="txt_error">Error</string>
+    <string name="txt_quantity">Quantity</string>
+    <string name="message_camera_permission">This app requires camera access to scan QR codes or capture images for AI processing. Please grant the permission in settings.</string>
+
+    //ftp
+    <string name="txt_uploading_recipe_device">Uploading recipes to on2cook</string>
+    <string name="txt_uploading_audio_device">Uploading audios to on2cook</string>
+    <string name="txt_deleting_recipe_device">Deleting recipes from on2cook</string>
+    <string name="txt_deleting_audio_device">Deleting audios from on2cook</string>
+    <string name="txt_fetching_recipe_device">Fetching recipes from on2cook</string>
+    <string name="txt_fetching_audio_device">Fetching audios from on2cook</string>
+    <string name="txt_connecting">Connecting</string>
+    <string name="txt_name_on2cook">Name an On2Cook Device</string>
+    <string name="txt_already_added">Already added with this name please rename an on2cook device</string>
+    <string name="txt_description">Description</string>
+    <string name="txt_record">Record</string>
+    <string name="txt_ftp_size">Ftp size full</string>
+    <string name="strPleaseEnterName">Please enter name</string>
+    <string name="strPleaseEnterType">Please enter type</string>
+    <string name="strPleaseEnterQty">Please enter qty</string>
+
+
+    <string name="dummy_device_name">HC-05</string>
+
+    <string-array name="fruits_array">
+        <item>Apples</item>
+        <item>Apricots</item>
+        <item>Avocado</item>
+        <item>Annona</item>
+        <item>Banana</item>
+        <item>Bilberry</item>
+        <item>Blackberry</item>
+        <item>Custard Apple</item>
+        <item>Clementine</item>
+        <item>Cantalope</item>
+        <item>Coconut</item>
+        <item>Currant</item>
+        <item>Cherry</item>
+        <item>Cherimoya</item>
+        <item>Date</item>
+        <item>Damson</item>
+        <item>Durian</item>
+        <item>Elderberry</item>
+        <item>Fig</item>
+        <item>Feijoa</item>
+        <item>Grapefruit</item>
+        <item>Grape</item>
+        <item>Gooseberry</item>
+        <item>Guava</item>
+        <item>Honeydew melon</item>
+        <item>Huckleberry</item>
+        <item>Jackfruit</item>
+        <item>Juniper Berry</item>
+        <item>Jambul</item>
+        <item>Jujube</item>
+        <item>Kiwi</item>
+        <item>Kumquat</item>
+        <item>Lemons</item>
+        <item>Limes</item>
+        <item>Lychee</item>
+        <item>Mango</item>
+        <item>Mandarin</item>
+        <item>Mangostine</item>
+        <item>Nectaraine</item>
+        <item>Orange</item>
+        <item>Olive</item>
+        <item>Prunes</item>
+        <item>Pears</item>
+        <item>Plum</item>
+        <item>Pineapple</item>
+        <item>Peach</item>
+        <item>Papaya</item>
+        <item>Passionfruit</item>
+        <item>Pomegranate</item>
+        <item>Pomelo</item>
+        <item>Raspberries</item>
+        <item>Rock melon</item>
+        <item>Rambutan</item>
+        <item>Strawberries</item>
+        <item>Sweety</item>
+        <item>Salmonberry</item>
+        <item>Satsuma</item>
+        <item>Tangerines</item>
+        <item>Tomato</item>
+        <item>Ugli</item>
+        <item>Watermelon</item>
+        <item>Woodapple</item>
+    </string-array>
+</resources>

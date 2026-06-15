@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        tools:context=".multiple_connection.ui.LiveLogFragment">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dp_10"
+            android:background="@drawable/ic_top_round_corner_white"
+            android:paddingTop="@dimen/dp_10"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/open_sans_semibold"
+                android:gravity="left"
+                android:visibility="gone"
+                android:paddingStart="@dimen/dp_10"
+                android:textColor="@color/dark_gray"
+                android:textSize="@dimen/sp_14"
+                app:layout_constraintBottom_toBottomOf="@id/tvDeviceOnCounter"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/tvDeviceOnCounter"
+                app:layout_constraintTop_toTopOf="@id/tvDeviceOnCounter" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvDeviceOnCounter"
+                android:visibility="gone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:fontFamily="@font/open_sans_bold"
+                android:paddingEnd="@dimen/dp_10"
+                android:textColor="@color/dark_gray"
+                android:textSize="@dimen/sp_16"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cvCurrent"
+                card_view:background="@color/dark_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/dp_10"
+                android:layout_marginTop="@dimen/dp_10"
+                android:paddingHorizontal="8dp"
+                app:layout_constraintBottom_toTopOf="@+id/cvTemp"
+                app:layout_constraintTop_toBottomOf="@id/tvDeviceOnCounter">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center">
+
+                    <TextView
+                        android:id="@+id/device_name_textView"
+                        card_view:drawableStartCompat="@drawable/ic_electric"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:drawablePadding="5dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp"
+                        android:text="@string/txt_current"
+                        android:textSize="16sp"
+                        tools:text="Current" />
+
+                    <TextView
+                        android:id="@+id/tvCurrent"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="5dp"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/device_name_textView"
+                        tools:text="Voltage 100 , Ind 5 Amps,Mag 60 Amps" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cvTemp"
+                card_view:background="@color/dark_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/dp_10"
+                android:layout_marginTop="@dimen/dp_10"
+                android:paddingHorizontal="8dp"
+                app:layout_constraintBottom_toTopOf="@+id/cvTime"
+                app:layout_constraintTop_toBottomOf="@id/cvCurrent">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center">
+
+                    <TextView
+                        android:id="@+id/tvTempTitle"
+                        card_view:drawableStartCompat="@drawable/ic_temperature"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:drawablePadding="5dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp"
+                        android:text="@string/txt_temp"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/tvTemp"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="5dp"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvTempTitle"
+                        tools:text="Mag 5.00°C , Coil 6.0°C ,Ambient 60°C,Pan 60°C,Pcb 60°C,Oil 60°C,Pcb 60°C" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cvTime"
+                card_view:background="@color/dark_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/dp_10"
+                android:layout_marginTop="@dimen/dp_10"
+                android:layout_marginBottom="@dimen/dp_10"
+                android:paddingHorizontal="8dp"
+                app:layout_constraintBottom_toTopOf="@+id/cvRecipe"
+                app:layout_constraintTop_toBottomOf="@id/cvTemp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center">
+
+                    <TextView
+                        android:id="@+id/tvTimeTitle"
+                        card_view:drawableStartCompat="@drawable/ic_time"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:drawablePadding="5dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp"
+                        android:text="@string/txt_time"
+                        android:textSize="16sp"
+                        tools:text="Time " />
+
+                    <TextView
+                        android:id="@+id/tvTime"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="5dp"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvTimeTitle"
+                        tools:text="Device On 40 , Ind 30 , Mag 46 , Device Off 40" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cvRecipe"
+                card_view:background="@color/dark_grey"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="@dimen/dp_10"
+                android:layout_marginBottom="@dimen/dp_10"
+                android:paddingHorizontal="8dp"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/cvTime">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center">
+
+                    <TextView
+                        android:id="@+id/tvRecipeTitle"
+                        card_view:drawableStartCompat="@drawable/ic_recipe_logo"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:drawablePadding="5dp"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="5dp"
+                        android:text="@string/txt_recipe"
+                        android:textSize="16sp"
+                        tools:text="Recipe" />
+
+                    <TextView
+                        android:id="@+id/tvRecipe"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:gravity="center"
+                        android:paddingHorizontal="20dp"
+                        android:paddingVertical="5dp"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvRecipeTitle"
+                        tools:text="Name:- Butter Vadapav , StepNo:- 2 , StepName:- Add Oil , TotalSteps:- 10 , RecipeTime:- 200 , TimeRemains:- 40" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.cardview.widget.CardView>
+
+            <TableLayout
+                android:id="@+id/table1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/tvDeviceOnCounter">
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:weightSum="3">
+
+                    <TextView
+                        android:id="@+id/tvPower"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Power 3258W" />
+
+                    <TextView
+                        android:id="@+id/tvIndPower"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text=" I 7.2amps " />
+
+                    <TextView
+                        android:id="@+id/tvMagPower"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="M  7.5amps" />
+
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:weightSum="3">
+
+                    <TextView
+                        android:id="@+id/tvMagTemp"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Team" />
+
+                    <TextView
+                        android:id="@+id/tvCoilTemp"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Rank" />
+
+                    <TextView
+                        android:id="@+id/tvAmbientTemp"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Player" />
+
+
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:weightSum="3">
+
+                    <TextView
+                        android:id="@+id/tvPanTemp"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Player" />
+
+                    <TextView
+                        android:id="@+id/tvPcbTemp"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Rank" />
+
+                    <TextView
+                        android:id="@+id/tvOilTemp"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Player" />
+
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:weightSum="3">
+
+                    <TextView
+                        android:id="@+id/tvDeviceOnTime"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Player" />
+
+                    <TextView
+                        android:id="@+id/tvIndTime"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Rank" />
+
+                    <TextView
+                        android:id="@+id/tvMagTime"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Player" />
+
+                </TableRow>
+
+
+            </TableLayout>
+
+            <TableLayout
+                android:id="@+id/recipeDetail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/ic_round_log"
+                android:backgroundTint="@color/light_pink"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/table1">
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:weightSum="3">
+
+                    <TextView
+                        android:id="@+id/tvRecipeName"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Player" />
+
+                    <TextView
+                        android:id="@+id/tvStepNo"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Rank" />
+
+                    <TextView
+                        android:id="@+id/tvTimeRemains"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Player" />
+
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:weightSum="3">
+
+                    <TextView
+                        android:id="@+id/tvStepName"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Player" />
+
+                    <TextView
+                        android:id="@+id/tvTotalSteps"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Rank" />
+
+                    <TextView
+                        android:id="@+id/tvRecipeTime"
+                        style="@style/textview_log"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:text="Player" />
+
+                </TableRow>
+            </TableLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

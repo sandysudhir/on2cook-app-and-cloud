@@ -1,0 +1,17 @@
+apply plugin: 'java'
+//apply from: rootProject.file('gradle/jfrog-uploader.gradle')
+//apply plugin: 'me.tatarka.retrolambda'
+//apply plugin: 'com.android.library'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+
+dependencies {
+    testImplementation group: 'junit', name: 'junit', version: '4.11'
+}
+
+test {
+    exclude 'com/nobigsoftware/**'
+}
+

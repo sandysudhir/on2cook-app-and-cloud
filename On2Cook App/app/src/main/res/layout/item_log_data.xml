@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvDate"
+            style="@style/textview_log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/dp_5"
+            android:layout_marginTop="@dimen/dp_4"
+            android:layout_marginBottom="@dimen/dp_4"
+            android:background="@drawable/ic_round_log_yellow"
+            android:gravity="center"
+            android:paddingVertical="@dimen/dp_5"
+            android:text="12 March 2023"
+            android:textColor="@color/black"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/clData"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clData"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dp_5"
+            android:background="@drawable/ic_top_round_corner_white"
+            app:layout_constraintTop_toBottomOf="@id/tvDate">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/open_sans_semibold"
+                android:gravity="left"
+                android:paddingStart="@dimen/dp_10"
+                android:text="@string/txt_device_on_counter"
+                android:textColor="@color/dark_gray"
+                android:textSize="@dimen/sp_12"
+                app:layout_constraintBottom_toBottomOf="@id/tvDeviceOnCounter"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toLeftOf="@id/tvDeviceOnCounter"
+                app:layout_constraintTop_toTopOf="@id/tvDeviceOnCounter" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvDeviceOnCounter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:fontFamily="@font/open_sans_bold"
+                android:paddingEnd="@dimen/dp_10"
+                android:text=""
+                android:textColor="@color/dark_gray"
+                android:textSize="@dimen/sp_14"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/llLog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="vertical"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvDeviceOnCounter">
+
+                <TextView
+                    android:id="@+id/tvCurrent"
+                    style="@style/textview_log"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="2dp"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/device_name_textView"
+                    tools:text="Voltage 100 , Ind 5 Amps,Mag 60 Amps" />
+                <!--
+                                card_view:drawableStartCompat="@drawable/ic_electric"
+                -->
+
+                <TextView
+                    android:id="@+id/tvTemp"
+                    style="@style/textview_log"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="2dp"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvTempTitle"
+                    tools:text="Mag 5.00°C , Coil 6.0°C ,Ambient 60°C,Pan 60°C,Pcb 60°C,Oil 60°C,Pcb 60°C" />
+                <!--
+                                card_view:drawableStartCompat="@drawable/ic_temperature"
+                -->
+
+                <TextView
+                    android:id="@+id/tvTime"
+                    style="@style/textview_log"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="2dp"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvTimeTitle"
+                    tools:text="Device On 40 , Ind 30 , Mag 46 , Device Off 40" />
+                <!--
+                                card_view:drawableStartCompat="@drawable/ic_time"
+                -->
+
+                <TextView
+                    android:id="@+id/tvRecipe"
+                    style="@style/textview_log"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="2dp"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:text="Name:- Butter Vadapav , StepNo:- 2 , StepName:- Add Oil , TotalSteps:- 10 , RecipeTime:- 200 , TimeRemains:- 40" />
+                <!--
+                                card_view:drawableStartCompat="@drawable/ic_recipe_logo"
+                -->
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

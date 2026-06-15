@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/clItem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:background="@drawable/ic_round_corner_white"
+        android:padding="@dimen/dp_10">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvItemName"
+            style="@style/bold_16_dark_grey_4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:lines="1"
+            android:textColor="@color/black"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@id/checkBox"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/checkBox"
+            android:layout_width="@dimen/dp_35"
+            android:layout_height="@dimen/dp_35"
+            android:theme="@style/Check"
+            android:layout_marginStart="@dimen/dp_10"
+            android:padding="8dp"
+            android:checked="false"
+            app:layout_constraintBottom_toBottomOf="@+id/tvItemName"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tvItemName" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvLocalRecipe"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dp_8"
+            android:nestedScrollingEnabled="false"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvItemName"
+            app:spanCount="2"
+            tools:itemCount="2"
+            tools:listitem="@layout/item_files" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

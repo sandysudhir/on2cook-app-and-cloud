@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/dp_10"
+        android:background="@drawable/ic_top_round_corner_white"
+        android:paddingTop="@dimen/dp_10">
+
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/open_sans_semibold"
+            android:paddingStart="@dimen/dp_10"
+            android:gravity="left"
+            android:text="@string/txt_device_on_counter"
+            android:textColor="@color/dark_gray"
+            android:textSize="@dimen/sp_14"
+            app:layout_constraintBottom_toBottomOf="@id/tvDeviceOnCounter"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@id/tvDeviceOnCounter"
+            app:layout_constraintTop_toTopOf="@id/tvDeviceOnCounter" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvDeviceOnCounter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:fontFamily="@font/open_sans_bold"
+            android:paddingEnd="@dimen/dp_10"
+            android:text="18:32:12"
+            android:textColor="@color/dark_gray"
+            android:textSize="@dimen/sp_16"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <TableLayout
+            android:id="@+id/table1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dp_10"
+            app:layout_constraintTop_toBottomOf="@id/tvDeviceOnCounter">
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:weightSum="3">
+
+                <TextView
+                    android:id="@+id/tvPower"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Power 3258W" />
+
+                <TextView
+                    android:id="@+id/tvIndPower"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text=" I 7.2amps " />
+
+                <TextView
+                    android:id="@+id/tvMagPower"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="M  7.5amps" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:weightSum="3">
+
+                <TextView
+                    android:id="@+id/tvMagTemp"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Team" />
+
+                <TextView
+                    android:id="@+id/tvCoilTemp"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Rank" />
+
+                <TextView
+                    android:id="@+id/tvAmbientTemp"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Player" />
+
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:weightSum="3">
+
+                <TextView
+                    android:id="@+id/tvPanTemp"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Player" />
+
+                <TextView
+                    android:id="@+id/tvPcbTemp"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Rank" />
+
+                <TextView
+                    android:id="@+id/tvOilTemp"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Player" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:weightSum="3">
+
+                <TextView
+                    android:id="@+id/tvDeviceOnTime"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Player" />
+
+                <TextView
+                    android:id="@+id/tvIndTime"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Rank" />
+
+                <TextView
+                    android:id="@+id/tvMagTime"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Player" />
+
+            </TableRow>
+
+
+        </TableLayout>
+
+        <TableLayout
+            android:id="@+id/recipeDetail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_round_log"
+            android:backgroundTint="@color/light_pink"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/table1">
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:weightSum="3">
+
+                <TextView
+                    android:id="@+id/tvRecipeName"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Player" />
+
+                <TextView
+                    android:id="@+id/tvStepNo"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Rank" />
+
+                <TextView
+                    android:id="@+id/tvTimeRemains"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Player" />
+
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:weightSum="3">
+
+                <TextView
+                    android:id="@+id/tvStepName"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Player" />
+
+                <TextView
+                    android:id="@+id/tvTotalSteps"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Rank" />
+
+                <TextView
+                    android:id="@+id/tvRecipeTime"
+                    style="@style/textview_log"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:text="Player" />
+
+            </TableRow>
+        </TableLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

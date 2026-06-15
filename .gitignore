@@ -1,0 +1,38 @@
+# OS / editor
+desktop.ini
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Git / local metadata
+*.log
+.git.backup-codex
+**/.git.backup-codex
+
+# Android / Gradle build outputs
+.gradle/
+**/build/
+**/captures/
+**/.externalNativeBuild/
+**/.cxx/
+local.properties
+
+# Android artifacts
+*.apk
+*.aab
+
+# Node / web local outputs
+node_modules/
+dist/
+coverage/
+
+# Local env / secrets
+.env
+.env.local
+.env.*
+!.env.example
+
+# Python cache
+__pycache__/
+*.pyc

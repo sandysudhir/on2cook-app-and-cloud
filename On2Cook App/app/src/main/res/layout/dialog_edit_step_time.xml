@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#AA000000">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:background="@drawable/ic_round_corner_dark_grey"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            style="@style/semi_bole_14_dark_grey_4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="15dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginRight="20dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:singleLine="true"
+            android:text="Edit Time"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </TextView>
+
+        <View
+            android:id="@+id/viewLine"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="16dp"
+            android:background="#3E3E3E"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvTitle"></View>
+
+        <TextView
+            android:id="@+id/tvMagTime"
+            style="@style/regular_14_light_black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Magnetron Time"
+            android:layout_marginLeft="20dp"
+            app:layout_constraintBottom_toBottomOf="@+id/etMagnetronTime"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/etMagnetronTime"></TextView>
+
+        <TextView
+            android:id="@+id/tvMagPlusMinus"
+            style="@style/bold_18_dark_grey_4"
+            android:text="+"
+            android:gravity="center"
+            android:layout_marginLeft="10dp"
+            android:visibility="gone"
+            app:layout_constraintLeft_toRightOf="@+id/tvMagTime"
+            android:background="@drawable/ic_round_corner_white"
+            app:layout_constraintTop_toTopOf="@+id/etMagnetronTime"
+            app:layout_constraintBottom_toBottomOf="@+id/etMagnetronTime"
+            android:layout_width="30dp"
+            android:layout_height="30dp">
+
+        </TextView>
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etMagnetronTime"
+            style="@style/et_regular_14_light_black"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:inputType="number"
+            android:gravity="top"
+            android:lines="1"
+            android:hint="Time"
+            app:layout_constraintLeft_toRightOf="@+id/tvMagPlusMinus"
+            app:layout_constraintRight_toLeftOf="@+id/tvMagSec"
+            app:layout_constraintTop_toBottomOf="@+id/viewLine">
+
+        </androidx.appcompat.widget.AppCompatEditText>
+
+        <TextView
+            android:id="@+id/tvMagSec"
+            style="@style/regular_14_light_black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="20dp"
+            android:text="Sec."
+            app:layout_constraintBottom_toBottomOf="@+id/etMagnetronTime"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/etMagnetronTime"></TextView>
+
+        <TextView
+            android:id="@+id/tvInductionTime"
+            style="@style/regular_14_light_black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Induction Time"
+            android:layout_marginLeft="20dp"
+            app:layout_constraintBottom_toBottomOf="@+id/etInductionTime"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/etInductionTime"></TextView>
+
+        <TextView
+            android:id="@+id/tvInducPlusMinus"
+            style="@style/bold_18_dark_grey_4"
+            android:text="+"
+            android:gravity="center"
+            android:layout_marginLeft="10dp"
+            android:visibility="gone"
+            app:layout_constraintLeft_toRightOf="@+id/tvInductionTime"
+            android:background="@drawable/ic_round_corner_white"
+            app:layout_constraintTop_toTopOf="@+id/etInductionTime"
+            app:layout_constraintBottom_toBottomOf="@+id/etInductionTime"
+            android:layout_width="30dp"
+            android:layout_height="30dp">
+
+        </TextView>
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etInductionTime"
+            style="@style/et_regular_14_light_black"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:inputType="number"
+            android:lines="1"
+            android:gravity="top"
+            android:hint="Time"
+            app:layout_constraintLeft_toRightOf="@+id/tvInducPlusMinus"
+            app:layout_constraintRight_toLeftOf="@+id/tvInductionSec"
+            app:layout_constraintTop_toBottomOf="@+id/etMagnetronTime">
+
+        </androidx.appcompat.widget.AppCompatEditText>
+
+        <TextView
+            android:id="@+id/tvInductionSec"
+            style="@style/regular_14_light_black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="20dp"
+            android:text="Sec."
+            app:layout_constraintBottom_toBottomOf="@+id/etInductionTime"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/etInductionTime"></TextView>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSubmit"
+            style="@style/semi_bold_12_dark_grey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/ic_round_corner_button_white"
+            android:paddingLeft="25dp"
+            android:paddingTop="8dp"
+            android:paddingRight="25dp"
+            android:paddingBottom="8dp"
+            android:text="Submit"
+            android:textAllCaps="false"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/btnCancel"
+            app:layout_constraintTop_toBottomOf="@+id/etInductionTime"></androidx.appcompat.widget.AppCompatButton>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnCancel"
+            style="@style/semi_bold_12_dark_grey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/ic_round_corner_button_white"
+            android:paddingLeft="25dp"
+            android:paddingTop="8dp"
+            android:paddingRight="25dp"
+            android:paddingBottom="8dp"
+            android:text="Cancel"
+            android:textAllCaps="false"
+            app:layout_constraintBottom_toBottomOf="@+id/btnSubmit"
+            app:layout_constraintLeft_toRightOf="@+id/btnSubmit"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/btnSubmit"></androidx.appcompat.widget.AppCompatButton>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

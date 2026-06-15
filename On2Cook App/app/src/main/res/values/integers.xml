@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="sequence_step_duration">300</integer>
+    <integer name="sequence_pulse_duration">1000</integer>
+    <integer name="sequence_pulse_repeat_pause">2000</integer>
+</resources>

@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/layout/activity_log_viewer.xml
+    Full-screen viewer opened when the user taps a log file name.
+    All hardcoded strings/colors replaced with resource references.
+    Both buttons use minHeight="48dp" to satisfy the touch-target lint rule.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_grey">
+
+    <!-- ── TOOLBAR ───────────────────────────────────────────────────────── -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/dark_grey"
+        app:navigationIcon="@drawable/ic_back"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Title set programmatically to the file display name -->
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvToolbarTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"
+            tools:text="S3W_D_17/02/26_14" />
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- ── DIVIDER ───────────────────────────────────────────────────────── -->
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="@color/divider_white"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- ── TRANSFER PROGRESS STRIP ───────────────────────────────────────── -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layoutProgress"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:background="@color/progress_bg"
+        android:visibility="visible"
+        app:layout_constraintTop_toBottomOf="@+id/divider"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Status message (left) -->
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvTransferStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:text="@string/log_viewer_waiting"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"  app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvBytesReceived"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Indeterminate progress bar below the text -->
+        <ProgressBar
+            android:id="@+id/progressTransfer"
+            style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="0dp"
+            android:layout_height="6dp"
+            android:layout_marginTop="6dp"
+            android:indeterminate="true"
+            android:progressTint="@color/white"
+            android:progressBackgroundTint="@color/white_26"
+            app:layout_constraintTop_toBottomOf="@+id/tvTransferStatus"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- ── EMPTY / ERROR STATE ───────────────────────────────────────────── -->
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvEmptyState"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white_54"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:padding="24dp"
+        android:visibility="gone"
+        android:text="@string/log_viewer_empty_state"
+        app:layout_constraintTop_toBottomOf="@+id/layoutProgress"
+        app:layout_constraintBottom_toTopOf="@+id/layoutActions"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- ── PARSED CSV ROWS ────────────────────────────────────────────────── -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvLogContent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:clipToPadding="false"
+        android:visibility="gone"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintTop_toBottomOf="@+id/layoutProgress"
+        app:layout_constraintBottom_toTopOf="@+id/layoutActions"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:itemCount="6"
+        tools:listitem="@layout/item_log_row" />
+
+    <!-- ── RAW TEXT FALLBACK ──────────────────────────────────────────────── -->
+    <ScrollView
+        android:id="@+id/scrollRaw"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/white"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@+id/layoutProgress"
+        app:layout_constraintBottom_toTopOf="@+id/layoutActions"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvRawContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:textColor="@color/black"
+            android:textSize="12sp"
+            android:fontFamily="monospace"
+            tools:text="RAW LOG DATA" />
+
+    </ScrollView>
+
+    <!-- ── ACTION BAR ────────────────────────────────────────────────────── -->
+    <!--
+        LinearLayout is used so wrap_content height on each button is
+        unconstrained, allowing minHeight="48dp" to satisfy the
+        accessibility touch-target requirement without clipping.
+    -->
+    <LinearLayout
+        android:id="@+id/layoutActions"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
+        android:background="@color/dark_grey"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnExportCsv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:minHeight="48dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:text="@string/log_viewer_export_csv"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:background="@drawable/ic_round_corner_button_orange_deselect" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnCopyRaw"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:minWidth="88dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="@string/log_viewer_copy_raw"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:background="@drawable/ic_round_corner_tab" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

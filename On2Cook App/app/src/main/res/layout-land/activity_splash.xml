@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        tools:context=".multiple_connection.SplashActivity">
+
+        <com.comix.rounded.RoundedCornerImageView
+            android:id="@+id/ivAppIcon"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:scaleType="fitXY"
+            android:src="@mipmap/ic_launcher"
+            app:cornerColor="@color/dark_grey"
+            app:cornerRadius="3dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="h, 1:1"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintHeight_percent="0.3" />
+
+        <TextView
+            style="@style/semi_bole_16_dark_grey_3"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_width="0dp"
+            app:layout_constraintWidth_percent="0.6"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/pageMargin"
+            android:gravity="center"
+            android:padding="@dimen/dp_20"
+            android:text="@string/content"
+            app:layout_constraintTop_toBottomOf="@id/ivAppIcon" />
+
+        <TextView
+            android:id="@+id/tvVersion"
+            style="@style/regular_14_dark_gey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/pageMargin"
+            android:layout_marginEnd="@dimen/pageMargin"
+            android:gravity="center"
+            android:padding="@dimen/dp_10"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        tools:context=".multiple_connection.ui.OtaFragment">
+
+        <TextView
+            android:id="@+id/tvSubTitle"
+            style="@style/regular_12_dark_gey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:text="Upload Firmware Bin to device"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clSelectFile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/dp_20"
+            android:background="@drawable/ic_round_corner_white"
+            android:padding="@dimen/dp_10"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvSubTitle">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnSelectFile"
+                style="@style/semi_bold_12_white"
+                android:layout_width="wrap_content"
+                android:layout_height="@dimen/dp_40"
+                android:background="@drawable/ic_round_corner_button_orange"
+                android:text="Choose File"
+                android:textAllCaps="false"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </androidx.appcompat.widget.AppCompatButton>
+
+            <TextView
+                android:id="@+id/tvFileName"
+                style="@style/regular_12_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/dp_10"
+                android:lines="1"
+                android:text=""
+                app:layout_constraintBottom_toBottomOf="@+id/btnSelectFile"
+                app:layout_constraintLeft_toRightOf="@+id/btnSelectFile"
+                app:layout_constraintTop_toTopOf="@+id/btnSelectFile" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnUploadFile"
+            style="@style/semi_bold_12_white"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/dp_40"
+            android:layout_marginTop="30dp"
+            android:background="@drawable/ic_round_corner_button_orange"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="Upload File"
+            android:textAllCaps="false"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/clSelectFile">
+
+        </androidx.appcompat.widget.AppCompatButton>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/dp_20"
+            android:layout_marginTop="@dimen/dp_30"
+            app:layout_constraintTop_toBottomOf="@id/btnUploadFile"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:background="@drawable/ic_round_corner_white">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/textViewSoftwareVersion"
+                android:layout_width="@dimen/dp_0"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:layout_marginStart="@dimen/dp_10"
+                android:text="@string/label_software_version"
+                android:textColor="@color/dark_grey4"
+                android:textSize="@dimen/sp_14"
+                app:layout_constraintEnd_toStartOf="@id/imageViewFetchSoftwareVersion"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imageViewFetchSoftwareVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_refresh_square"
+                android:paddingVertical="@dimen/dp_6"
+                android:paddingHorizontal="@dimen/dp_10"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

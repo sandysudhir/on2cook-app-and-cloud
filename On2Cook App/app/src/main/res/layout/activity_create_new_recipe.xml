@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        tools:context=".create_recipe.CreateNewRecipe">
+
+        <include
+            android:id="@+id/viewHeader"
+            layout="@layout/view_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <View
+            android:id="@+id/viewLine"
+            android:layout_width="match_parent"
+            android:layout_height="0.01dp"
+            android:background="@color/dark_grey9"
+            app:layout_constraintTop_toBottomOf="@+id/viewHeader" />
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabHome"
+            android:layout_width="match_parent"
+            android:layout_height="?actionBarSize"
+            android:animateLayoutChanges="true"
+            android:animationCache="true"
+            android:background="@android:color/transparent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/viewLine"
+            app:tabGravity="fill"
+            app:tabIconTint="@color/white"
+            app:tabIndicatorAnimationDuration="1"
+            app:tabIndicatorColor="@android:color/transparent"
+            app:tabMode="fixed"
+            app:tabRippleColor="@android:color/transparent"
+            app:tabTextAppearance="@style/regular_17_dark_gey_6">
+
+            <com.google.android.material.tabs.TabItem
+                android:id="@+id/itemDetail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/title_recipe" />
+
+            <com.google.android.material.tabs.TabItem
+                android:id="@+id/itemIngredients"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/title_ingredients" />
+
+            <com.google.android.material.tabs.TabItem
+                android:id="@+id/itemInstructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/title_instructions" />
+
+        </com.google.android.material.tabs.TabLayout>
+
+        <View
+            android:id="@+id/viewLine2"
+            android:layout_width="match_parent"
+            android:layout_height="0.01dp"
+            android:background="@color/dark_grey9"
+            app:layout_constraintTop_toBottomOf="@+id/tabHome" />
+
+        <FrameLayout
+            android:id="@+id/nav_host_fragment"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/viewLine2" />
+
+        <params.com.stepview.StatusViewScroller
+            android:id="@+id/statusViewScroller"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:entries="@array/status"
+            android:layerType="none"
+            android:paddingHorizontal="10dp"
+            android:visibility="gone"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/viewHeader" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -1,0 +1,16 @@
+include ':dfalex'
+include ':apex'
+include ':english-nlp'
+include ':vertical-stepper-form'
+include ':step-progress'
+include ':waveformseekbar'
+include ':rangeseekbar'
+include ':quantity-view'
+include ':bluetoothstate'
+include ':androidtoggleswitch'
+include ':bottomsheetlayout'
+include ':stepview'
+include ':androidtagview'
+include ':app'
+
+rootProject.name = "OnToCook"

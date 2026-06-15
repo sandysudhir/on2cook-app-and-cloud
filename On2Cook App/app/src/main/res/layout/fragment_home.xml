@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".multiple_connection.ui.HomeFragment">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/homeContentRoot"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/dark_grey">
+
+            <androidx.core.widget.NestedScrollView
+                android:id="@+id/legacyHomeContent"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:fillViewport="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:context=".MainActivity">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvTitle"
+                        style="@style/bold_18_dark_gey_4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:text="@string/txt_like_to"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toTopOf="@+id/clRow1"
+                        app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+                        app:layout_constraintRight_toRightOf="@+id/guidelineRight"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_chainStyle="packed" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clRow1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="28dp"
+                        app:layout_constraintBottom_toTopOf="@+id/clRow2"
+                        app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+                        app:layout_constraintRight_toRightOf="@+id/guidelineRight"
+                        app:layout_constraintTop_toBottomOf="@+id/tvTitle"
+                        app:layout_constraintVertical_chainStyle="packed">
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/clCook"
+                            android:layout_width="0dp"
+                            android:layout_height="140dp"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:elevation="2dp"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/ivCook"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_cook"
+                                app:layout_constraintBottom_toTopOf="@+id/tvCook"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintRight_toRightOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintVertical_chainStyle="packed" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvCook"
+                                style="@style/bold_18_dark_grey_4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="Cook"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintRight_toRightOf="parent"
+                                app:layout_constraintTop_toBottomOf="@+id/ivCook" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clRow2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:layout_constraintBottom_toTopOf="@+id/clRow3"
+                        app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+                        app:layout_constraintRight_toRightOf="@+id/guidelineRight"
+                        app:layout_constraintTop_toBottomOf="@+id/clRow1">
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/clShop"
+                            android:layout_width="0dp"
+                            android:layout_height="140dp"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:elevation="2dp"
+                            android:visibility="visible"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/ivShop"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_order_mode"
+                                app:layout_constraintBottom_toTopOf="@+id/tvShop"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintRight_toRightOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintVertical_chainStyle="packed" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvShop"
+                                style="@style/bold_18_dark_grey_4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="Orders"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintRight_toRightOf="parent"
+                                app:layout_constraintTop_toBottomOf="@+id/ivShop" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clRow3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+                        app:layout_constraintRight_toRightOf="@+id/guidelineRight"
+                        app:layout_constraintTop_toBottomOf="@id/clRow2"
+                        app:layout_constraintBottom_toTopOf="@id/constraintCalendar">
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/clFryMode"
+                            android:layout_width="0dp"
+                            android:layout_height="140dp"
+                            android:background="@drawable/ic_round_corner_white"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:elevation="2dp"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <androidx.appcompat.widget.AppCompatImageView
+                                android:id="@+id/ivFryMode"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:src="@drawable/ic_fry_mode_cook"
+                                app:layout_constraintBottom_toTopOf="@+id/tvFryMode"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintRight_toRightOf="parent"
+                                app:layout_constraintTop_toTopOf="parent"
+                                app:layout_constraintVertical_chainStyle="packed" />
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvFryMode"
+                                style="@style/bold_18_dark_grey_4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="Fry"
+                                app:layout_constraintBottom_toBottomOf="parent"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintRight_toRightOf="parent"
+                                app:layout_constraintTop_toBottomOf="@+id/ivFryMode" />
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:visibility="gone"
+                        android:id="@+id/constraintCalendar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/dp_20"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="@+id/guidelineRight"
+                        app:layout_constraintStart_toStartOf="@+id/guidelineLeft"
+                        app:layout_constraintTop_toBottomOf="@+id/clRow3">
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/clTopBar"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/ic_top_round_corner_white"
+                            android:padding="8dp"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvOrdering"
+                                style="@style/regular_10_dark_gey_4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Ordering"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintRight_toRightOf="parent"
+                                app:layout_constraintTop_toTopOf="parent">
+
+                            </androidx.appcompat.widget.AppCompatTextView>
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvMonth"
+                                style="@style/regular_9_dark_gey_4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Feb"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintTop_toTopOf="parent">
+
+                            </androidx.appcompat.widget.AppCompatTextView>
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvYear"
+                                style="@style/regular_9_dark_gey_4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="2021"
+                                app:layout_constraintRight_toRightOf="parent"
+                                app:layout_constraintTop_toTopOf="parent">
+
+                            </androidx.appcompat.widget.AppCompatTextView>
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                        <com.github.sundeepk.compactcalendarview.CompactCalendarView
+                            android:id="@+id/calendar"
+                            android:layout_width="0dp"
+                            android:layout_height="@dimen/dp_160"
+                            android:layout_marginTop="@dimen/dp_10"
+                            android:background="@drawable/ic_round_border_grey"
+                            app:compactCalendarBackgroundColor="#fff"
+                            app:compactCalendarCurrentDayBackgroundColor="#B71C1C"
+                            app:compactCalendarCurrentSelectedDayBackgroundColor="#E57373"
+                            app:compactCalendarMultiEventIndicatorColor="@color/black"
+                            app:compactCalendarTargetHeight="@dimen/dp_160"
+                            app:compactCalendarTextColor="@color/black"
+                            app:compactCalendarTextSize="@dimen/sp_10"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/clTopBar" />
+
+                        <androidx.constraintlayout.widget.ConstraintLayout
+                            android:id="@+id/clBottomBar"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="@dimen/dp_10"
+                            android:background="@drawable/ic_bottom_round_corner_white"
+                            android:padding="8dp"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/calendar">
+
+                            <androidx.appcompat.widget.AppCompatTextView
+                                android:id="@+id/tvPlan"
+                                style="@style/bold_12_dark_gey_4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Plan"
+                                app:layout_constraintLeft_toLeftOf="parent"
+                                app:layout_constraintRight_toRightOf="parent"
+                                app:layout_constraintTop_toTopOf="parent">
+
+                            </androidx.appcompat.widget.AppCompatTextView>
+
+                        </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guidelineLeft"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.20" />
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guidelineRight"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.80" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.core.widget.NestedScrollView>
+
+
+
+            <FrameLayout
+                android:id="@+id/orderModuleHost"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                android:background="#FAFAFA"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/homeBottomNavigation"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/homeBottomNavigation"
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:visibility="gone"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="@color/white"
+                android:elevation="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <LinearLayout
+                    android:id="@+id/bottomTabOrders"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tvBottomOrdersIcon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="▤"
+                        android:textSize="22sp"
+                        android:textColor="#FF6B35" />
+                    <TextView
+                        android:id="@+id/tvBottomOrders"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Orders"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:textColor="#FF6B35" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/bottomTabDevices"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tvBottomDevicesIcon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="▦"
+                        android:textSize="22sp"
+                        android:textColor="#6E6E6E" />
+                    <TextView
+                        android:id="@+id/tvBottomDevices"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Devices"
+                        android:textSize="11sp"
+                        android:textColor="#6E6E6E" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/bottomTabRecipes"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tvBottomRecipesIcon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="▱"
+                        android:textSize="22sp"
+                        android:textColor="#6E6E6E" />
+                    <TextView
+                        android:id="@+id/tvBottomRecipes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Recipes"
+                        android:textSize="11sp"
+                        android:textColor="#6E6E6E" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/bottomTabMore"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tvBottomMoreIcon"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="•••"
+                        android:textSize="22sp"
+                        android:textColor="#6E6E6E" />
+                    <TextView
+                        android:id="@+id/tvBottomMore"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="More"
+                        android:textSize="11sp"
+                        android:textColor="#6E6E6E" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFtp"
+                style="@style/semi_bold_12_white"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="@dimen/dp_50"
+                android:background="@drawable/ic_round_corner_button_orange_deselect"
+                android:text="fTP"
+                android:textAllCaps="false"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@id/btnFtpStop"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnPolly"
+                style="@style/semi_bold_12_white"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                android:layout_marginBottom="@dimen/dp_50"
+                android:background="@drawable/ic_round_corner_button_orange_deselect"
+                android:text="Polly"
+                android:textAllCaps="false"
+                app:layout_constraintBottom_toTopOf="@id/btnFtp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFtpStop"
+                style="@style/semi_bold_12_white"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="@dimen/dp_50"
+                android:background="@drawable/ic_round_corner_button_orange_deselect"
+                android:text="Stop"
+                android:textAllCaps="false"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/llBleConnect"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <!--                <eo.view.bluetoothstate.BluetoothStateView-->
+                <!--                    android:id="@+id/bleStateView"-->
+                <!--                    android:layout_width="40dp"-->
+                <!--                    android:layout_height="40dp"-->
+                <!--                    android:layout_margin="10dp"-->
+                <!--                    app:bluetoothAnimateStateChanges="true"-->
+                <!--                    app:bluetoothColor="@color/yellow"-->
+                <!--                    app:bluetoothState="off"-->
+                <!--                    app:bluetoothTheme="rounded" />-->
+
+            </LinearLayout>
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

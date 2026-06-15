@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#AA000000">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:background="@drawable/ic_round_corner_dark_grey"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            style="@style/semi_bole_16_black"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginRight="20dp"
+            android:gravity="center"
+            android:singleLine="true"
+            android:text="Paused"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+        </TextView>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/ivPlayPause"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvTitle"
+            android:layout_marginTop="10dp"
+            android:src="@drawable/ic_play_red"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+        </androidx.appcompat.widget.AppCompatImageView>
+
+        <ImageView
+            android:id="@+id/ivMWProgress"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_round_induction"
+            app:layout_constraintLeft_toRightOf="@+id/ivPlayPause"
+            app:layout_constraintTop_toBottomOf="@+id/ivPlayPause">
+
+        </ImageView>
+
+        <androidx.appcompat.widget.AppCompatCheckedTextView
+            android:id="@+id/tvMWProgress"
+            style="@style/bold_16_orange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="10"
+            app:layout_constraintBottom_toBottomOf="@+id/ivMWProgress"
+            app:layout_constraintLeft_toRightOf="@+id/ivMWProgress"
+            app:layout_constraintTop_toTopOf="@+id/ivMWProgress">
+
+        </androidx.appcompat.widget.AppCompatCheckedTextView>
+
+        <ImageView
+            android:id="@+id/ivInductionProgress"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_round_megnetron"
+            app:layout_constraintRight_toLeftOf="@+id/ivPlayPause"
+            app:layout_constraintTop_toBottomOf="@+id/ivPlayPause">
+
+        </ImageView>
+
+        <androidx.appcompat.widget.AppCompatCheckedTextView
+            android:id="@+id/tvInductionProgress"
+            style="@style/bold_16_yellow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:text="0"
+            app:layout_constraintBottom_toBottomOf="@+id/ivInductionProgress"
+            app:layout_constraintRight_toLeftOf="@+id/ivInductionProgress"
+            app:layout_constraintTop_toTopOf="@+id/ivInductionProgress">
+
+        </androidx.appcompat.widget.AppCompatCheckedTextView>
+
+
+        <TextView
+            android:id="@+id/tvKeepWarm"
+            style="@style/regular_14_dark_gey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:singleLine="true"
+            android:text="Keeping warm"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivInductionProgress">
+        </TextView>
+
+        <View
+            android:id="@+id/viewSeparator"
+            app:layout_constraintTop_toBottomOf="@+id/tvKeepWarm"
+            android:layout_width="match_parent"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginTop="10dp"
+            android:background="#DADADA"
+            android:layout_height="1dp">
+        </View>
+
+        <TextView
+            android:id="@+id/tvRecipeCancelIn"
+            style="@style/semi_bole_14_black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:gravity="center"
+            android:singleLine="true"
+            android:text="The recipe will cancel in"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/viewSeparator">
+        </TextView>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvCancelInTime"
+            style="@style/semi_bole_18_violet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_round_corner_white"
+            android:padding="12dp"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            android:text="00 : 50"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvRecipeCancelIn">
+
+        </androidx.appcompat.widget.AppCompatTextView>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

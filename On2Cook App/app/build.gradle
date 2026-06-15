@@ -1,0 +1,262 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'com.google.firebase.crashlytics'
+    id 'kotlin-android-extensions'
+    id 'com.google.gms.google-services'
+    id 'androidx.navigation.safeargs.kotlin'
+}
+
+def on2cookKeystoreFile = file('../ProjectData/ontocook_keystore.jks')
+def on2cookStorePassword = System.getenv('ON2COOK_ANDROID_STORE_PASSWORD') ?: project.findProperty('ON2COOK_ANDROID_STORE_PASSWORD')
+def on2cookKeyAlias = System.getenv('ON2COOK_ANDROID_KEY_ALIAS') ?: project.findProperty('ON2COOK_ANDROID_KEY_ALIAS')
+def on2cookKeyPassword = System.getenv('ON2COOK_ANDROID_KEY_PASSWORD') ?: project.findProperty('ON2COOK_ANDROID_KEY_PASSWORD')
+def hasOn2CookSigning = on2cookKeystoreFile.exists() && on2cookStorePassword && on2cookKeyAlias && on2cookKeyPassword
+
+android {
+    signingConfigs {
+        on2cook {
+            if (hasOn2CookSigning) {
+                storeFile on2cookKeystoreFile
+                storePassword on2cookStorePassword
+                keyAlias on2cookKeyAlias
+                keyPassword on2cookKeyPassword
+            }
+        }
+    }
+    compileSdkVersion 33
+//    buildToolsVersion "33.0.0"
+
+    defaultConfig {
+        applicationId "com.invent.ontocook"
+        minSdkVersion 26
+        targetSdkVersion 33
+        multiDexEnabled true
+        versionCode 2
+        //for Client
+        versionName "26.2"
+        // for Dev
+//        versionName "1.0"
+        renderscriptTargetApi 33
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+//        externalNativeBuild {
+//            cmake {
+//                cppFlags ""
+//            }
+//        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            manifestPlaceholders = [crashlyticsEnabled: true]
+            if (hasOn2CookSigning) {
+                signingConfig signingConfigs.on2cook
+            }
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            manifestPlaceholders = [crashlyticsEnabled: false]
+
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+//    externalNativeBuild {
+//        cmake {
+//            path "src/main/cpp/CMakeLists.txt"
+//            version "3.10.2"
+//        }
+//    }
+    packagingOptions {
+        pickFirst '**/*.so'
+    }
+    buildFeatures {
+        dataBinding true
+        viewBinding true
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            def buildType = variant.name
+            def versionCode = defaultConfig.versionCode
+            def versionName = defaultConfig.versionName
+            def formattedDate = new Date().format('yyyy_MM_dd')
+            outputFileName = "OnToCook" + "_v" + versionName +/* "_" + buildType +*/"_" + formattedDate + ".apk"
+        }
+    }
+
+    //    splits {
+//        abi {
+//            // Enables building multiple APKs per ABI.
+//            enable true
+//            reset()
+//            // Specifies a list of ABIs that Gradle should create APKs for.
+//            include "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
+//        }
+//    }
+}
+
+dependencies {
+
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.6.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.5.3'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.5.3'
+    implementation 'android.arch.lifecycle:extensions:1.1.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+
+//    implementation 'com.squareup.retrofit2:retrofit:2.7.0'
+//    implementation 'com.squareup.retrofit2:converter-gson:2.7.0'
+//    implementation 'com.squareup.okhttp3:okhttp:4.3.1'
+
+    //implementation 'com.github.haytham-c01:CurveView:0.1.0'
+
+
+
+    //Ripple Device Scan Effect
+    implementation 'com.skyfishjy.ripplebackground:library:1.0.1'
+
+    //BLE With RxJava...
+    implementation "com.polidea.rxandroidble2:rxandroidble:1.17.2"
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation 'com.jakewharton.rx:replaying-share:2.0.0'
+
+    implementation 'com.github.zjywill:roundedcornerimageview:1.1.0'
+
+    //WaveformSeek bar
+    implementation project(':waveformseekbar')
+    implementation project(':step-progress')
+    implementation project(':vertical-stepper-form')
+
+    implementation project(':apex')
+    implementation project(':dfalex')
+    implementation project(':english-nlp')
+
+    implementation project(':rangeseekbar')
+    implementation project(':quantity-view')
+    implementation project(':bluetoothstate')
+    implementation project(':androidtoggleswitch')
+    implementation project(':bottomsheetlayout')
+    implementation project(':stepview')
+    implementation project(':androidtagview')
+
+
+    implementation 'com.github.Ficat:EasyBle:v2.0.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+
+    //implementation 'com.github.mardous:DiscreteSeekBar:1.1.3'
+
+    //bluetooth BLE scanner
+//    implementation 'no.nordicsemi.android.support.v18:scanner:1.4.2'
+//    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+
+    implementation 'com.mapzen.android:speakerbox:1.4.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1'
+
+    implementation files('libs\\commons-net-3.3.jar')
+
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+
+    testImplementation 'junit:junit:4.+'
+
+    implementation 'com.github.sundeepk:compact-calendar-view:3.0.0'
+    //implementation 'com.github.transferwise:sequence-layout:1.1.1'
+    implementation 'com.github.OpenCraft:VerticalSeekBar:v1.0.10'
+
+    implementation 'com.google.firebase:firebase-auth:22.1.2'
+    implementation platform('com.google.firebase:firebase-bom:26.8.0')
+//crashlytics
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
+
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+    implementation 'com.google.firebase:firebase-storage-ktx'
+    implementation 'com.github.FrangSierra:RxFirebase:1.5.7'
+
+    implementation 'com.github.mabbas007:TagsEditText:1.0.5'
+//    implementation 'com.llollox:androidtoggleswitch:2.0.1'
+
+
+    implementation 'com.jakewharton.rxbinding4:rxbinding:4.0.0'
+    implementation 'com.github.arimorty:floatingsearchview:2.1.1'
+    implementation 'com.github.amitshekhariitbhu.Fast-Android-Networking:rx2-android-networking:1.0.4'
+
+    implementation 'com.github.TutorialsAndroid:FilePicker:v8.0.19'
+    //implementation 'com.arthenica:mobile-ffmpeg-min:4.4.LTS'
+    //implementation 'com.arthenica:mobile-ffmpeg-full:4.4'
+    //implementation 'com.github.adrielcafe:AndroidAudioConverter:0.0.8'
+    //implementation 'com.writingminds:FFmpegAndroid:0.3.2'
+
+    implementation 'com.github.bumptech.glide:glide:4.13.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.13.0'
+    //implementation 'com.github.MohammedAlaaMorsi:RangeSeekBar:1.0.6'
+
+    implementation 'cat.ereza:customactivityoncrash:2.3.0'
+
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    //dexter for manage runtime permissions
+    implementation 'com.karumi:dexter:6.2.3'
+    implementation 'com.google.android.gms:play-services-wearable:18.0.0'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    implementation 'androidx.activity:activity-ktx:1.6.1'
+    implementation 'androidx.fragment:fragment-ktx:1.5.5'
+    implementation "com.amazonaws:aws-android-sdk-s3:2.17.1"
+//    implementation "com.amazonaws:aws-android-sdk-polly:2.71.1"
+
+    implementation "androidx.room:room-runtime:2.5.1"
+    kapt "androidx.room:room-compiler:2.5.1"
+    implementation "androidx.room:room-ktx:2.5.1"
+
+    /*ViewModel*/
+    implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.5.1"
+    implementation "androidx.room:room-rxjava3:2.5.1"
+
+
+    implementation 'com.opencsv:opencsv:4.6'
+
+    implementation 'com.github.yuriy-budiyev:code-scanner:2.3.2'
+
+//crop
+
+    implementation 'com.github.yalantis:ucrop:2.2.6'
+//    implementation 'com.writingminds:FFmpegAndroid:0.3.2'
+//    implementation 'com.github.adrielcafe:AndroidAudioConverter:0.0.8'
+//    implementation 'com.theartofdev.edmodo:android-image-cropper:2.8.0'
+
+    implementation("com.vanniktech:android-image-cropper:4.3.3")
+    implementation("androidx.core:core-splashscreen:1.0.1")
+//lottie
+    implementation 'com.airbnb.android:lottie:3.5.0'
+
+
+
+
+    // paging-3 library
+    def paging_version = "3.1.1"
+    implementation "androidx.paging:paging-runtime:$paging_version"
+
+    implementation 'com.squareup.okhttp3:okhttp:4.9.3'
+    implementation 'com.amazonaws:aws-android-sdk-polly:2.16.8'
+    implementation 'com.amazonaws:aws-android-sdk-core:2.16.8'
+
+//Mp3encoding Library
+    implementation 'com.github.naman14:TAndroidLame:1.1'
+//    implementation 'com.mpatric:mp3agic:0.9.1'
+//    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+//    implementation 'com.github.adrielcafe:AndroidAudioConverter:0.0.8'
+
+}

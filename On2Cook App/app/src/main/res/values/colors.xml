@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="light_black">#333333</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="light_black1">#44000000</color>
+
+    <color name="orange">#F97E00</color>
+    <color name="dark_red">#D40000</color>
+
+    <color name="yellow">#FFC700</color>
+    <color name="grey">#EEEEEE</color>
+
+    <color name="colorPrimary">#00bcd4</color>
+    <color name="colorPrimaryDark">#0097a7</color>
+    <color name="colorAccent">#ffb300</color>
+
+    <color name="colorMWColor">#FFB80E</color>
+
+    <color name="colorFlamColor">#FF611D</color>
+
+    <color name="white_a26">#42ffffff</color>
+    <color name="black_a85">#D9000000</color>
+    <color name="light_black_1">#383B41</color>
+
+    <color name="shadow_view_foreground_color_light">#33ffffff</color>
+    <color name="shadow_view_default_shadow_color">#DCDDE0</color>
+    <color name="shadow_view_foreground_color_dark">#1f000000</color>
+
+    <color name="light_yellow">#2EFFC700</color>
+    <color name="dark_yellow">@color/yellow</color>
+    <color name="violet">#4E5FC2</color>
+
+    <color name="textColorDarkGreyOp60">#99191217</color>
+    <color name="textColorBlack">#191217</color>
+    <color name="textColorBlackOp15">#26191217</color>
+    <color name="textColorBlackOp80">#CC191217</color>
+
+    <color name="dark_grey">#EEF2F5</color>
+    <color name="dark_slat_grey">#196376</color>
+    <color name="dark_grey2">#9AAAAE</color>
+    <color name="dark_grey3">#5E6A6C</color>
+    <color name="dark_grey4">#566265</color>
+    <color name="dark_grey5">#E6E6E6</color>
+    <color name="dark_grey6">#636363</color>
+    <color name="dark_grey7">#767676</color>
+    <color name="tab_color">@color/dark_gray</color>
+    <color name="dark_grey8">#AFAFAF</color>
+    <color name="dark_grey9">#556164</color>
+    <color name="dark_grey10">#697376</color>
+    <color name="light_pink">@color/white</color>
+    <color name="transpernt_gray">@color/dark_grey7</color>
+    <color name="filter_bg">@color/dark_grey10</color>
+
+    <color name="divider_white">#33FFFFFF</color>   <!-- 20 % white — divider line -->
+    <color name="progress_bg">#1AFFFFFF</color>     <!-- 10 % white — progress strip background & card bg -->
+    <color name="white_26">#44FFFFFF</color>        <!-- 27 % white — progress bar track -->
+    <color name="white_54">#88FFFFFF</color>        <!-- 53 % white — empty-state text & row index -->
+    <color name="white_60">#99FFFFFF</color>
+
+</resources>

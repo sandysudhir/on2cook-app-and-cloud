@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        android:paddingBottom="@dimen/dp_10"
+        app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+        app:layout_constraintRight_toRightOf="@+id/guidelineRight">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideLineStart"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            app:layout_constraintGuide_begin="@dimen/dp_24" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideLineEnd"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            app:layout_constraintGuide_end="@dimen/dp_24" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideLineBottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_end="@dimen/dp_14" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideLineTop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_begin="@dimen/dp_24" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/imageViewBack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/dp_minus_10"
+            android:layout_marginTop="@dimen/dp_minus_10"
+            android:padding="@dimen/dp_10"
+            app:layout_constraintStart_toStartOf="@+id/guideLineStart"
+            app:layout_constraintTop_toTopOf="@id/guideLineTop"
+            app:srcCompat="@drawable/ic_back" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/textViewTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/open_sans_bold"
+            android:gravity="center_vertical"
+            android:text="@string/label_choose_device_for_setup"
+            android:textColor="@color/textColorBlack"
+            android:textSize="16sp"
+            app:layout_constraintBottom_toBottomOf="@id/imageViewBack"
+            app:layout_constraintEnd_toEndOf="@+id/guideLineEnd"
+            app:layout_constraintStart_toEndOf="@id/guideLineStart"
+            app:layout_constraintTop_toTopOf="@id/imageViewBack" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewChooseDeviceForSetup"
+            android:layout_width="@dimen/dp_0"
+            android:layout_height="@dimen/dp_0"
+            android:layout_marginTop="@dimen/dp_20"
+            android:orientation="vertical"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toTopOf="@id/guideLineBottom"
+            app:layout_constraintEnd_toStartOf="@id/guideLineEnd"
+            app:layout_constraintStart_toEndOf="@id/guideLineStart"
+            app:layout_constraintTop_toBottomOf="@id/imageViewBack"
+            tools:listitem="@layout/item_choose_device_for_setup" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

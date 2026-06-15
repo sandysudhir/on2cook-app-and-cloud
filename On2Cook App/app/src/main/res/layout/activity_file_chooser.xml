@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_grey"
+    tools:context=".FileChooserActivity">
+
+    <include
+        android:id="@+id/viewHeader"
+        layout="@layout/view_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tvSubTitle"
+        style="@style/regular_12_dark_gey_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="Upload recipe json to device"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/viewHeader" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clSelectFile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:background="@drawable/ic_round_corner_white"
+        android:padding="10dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvSubTitle">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSelectFile"
+            style="@style/semi_bold_12_white"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:background="@drawable/ic_round_corner_button_orange"
+            android:text="Choose File"
+            android:textAllCaps="false"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </androidx.appcompat.widget.AppCompatButton>
+
+        <TextView
+            android:id="@+id/tvFileName"
+            style="@style/regular_12_dark_gey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:lines="1"
+            android:text=""
+            app:layout_constraintBottom_toBottomOf="@+id/btnSelectFile"
+            app:layout_constraintLeft_toRightOf="@+id/btnSelectFile"
+            app:layout_constraintTop_toTopOf="@+id/btnSelectFile" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnUploadFile"
+        style="@style/semi_bold_12_white"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/ic_round_corner_button_orange"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="Upload File"
+        android:textAllCaps="false"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/clSelectFile">
+
+    </androidx.appcompat.widget.AppCompatButton>
+
+    <TextView
+        android:id="@+id/tvSubTitle2"
+        style="@style/regular_12_dark_gey_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="Upload sound file to device"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnUploadFile" />
+
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/etSoundText"
+        style="@style/et_regular_14_light_black"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:gravity="top"
+        android:hint="Enter text for sound file"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvSubTitle2">
+
+    </androidx.appcompat.widget.AppCompatEditText>
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnUploadSound"
+        style="@style/semi_bold_12_white"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/ic_round_corner_button_orange"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="Generate Sound File &amp; Upload"
+        android:textAllCaps="false"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etSoundText">
+
+    </androidx.appcompat.widget.AppCompatButton>
+
+    <TextView
+        android:id="@+id/tvSubTitle3"
+        style="@style/regular_12_dark_gey_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="Check Firmware Version"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnUploadSound" />
+
+    <androidx.appcompat.widget.AppCompatButton
+        android:id="@+id/btnCheck"
+        style="@style/semi_bold_12_white"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/ic_round_corner_button_orange"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:text="Check"
+        android:textAllCaps="false"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvSubTitle3">
+
+    </androidx.appcompat.widget.AppCompatButton>
+</androidx.constraintlayout.widget.ConstraintLayout>

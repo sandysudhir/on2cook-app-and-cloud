@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/java"
+        android:title="Java" />
+    <item
+        android:id="@+id/addDevice"
+        android:icon="@drawable/add"
+        android:title="Add Device" />
+
+    <item
+        android:id="@+id/log"
+        android:icon="@drawable/log"
+        android:title="Log " />
+
+    <item
+        android:id="@+id/liveLog"
+        android:title="Live Log" />
+    <item
+        android:id="@+id/ota"
+        android:title="OTA" />
+</menu>

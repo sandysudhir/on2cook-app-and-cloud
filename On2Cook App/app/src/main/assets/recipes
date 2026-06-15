@@ -1,0 +1,1504 @@
+{
+    "vegetarian": true,
+    "vegan": true,
+    "glutenFree": true,
+    "dairyFree": true,
+    "veryHealthy": false,
+    "cheap": false,
+    "veryPopular": false,
+    "sustainable": false,
+    "weightWatcherSmartPoints": 4,
+    "gaps": "no",
+    "lowFodmap": false,
+    "preparationMinutes": 5,
+    "cookingMinutes": 10,
+    "aggregateLikes": 1,
+    "spoonacularScore": 69,
+    "healthScore": 26,
+    "creditsText": "Healing Tomato",
+    "sourceName": "Healing Tomato",
+    "pricePerServing": 179.59,
+    "extendedIngredients": [
+        {
+            "id": 4513,
+            "aisle": "Oil, Vinegar, Salad Dressing",
+            "image": "vegetable-oil.jpg",
+            "consistency": "liquid",
+            "name": "vegetable oil",
+            "nameClean": "vegetable oil",
+            "original": "2 tsp vegetable oil",
+            "originalString": "2 tsp vegetable oil",
+            "originalName": "vegetable oil",
+            "amount": 2,
+            "unit": "tsp",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 2,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                },
+                "metric": {
+                    "amount": 2,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                }
+            }
+        },
+        {
+            "id": 2014,
+            "aisle": "Spices and Seasonings",
+            "image": "ground-cumin.jpg",
+            "consistency": "solid",
+            "name": "cumin seeds",
+            "nameClean": "cumin seeds",
+            "original": "1 tsp cumin seeds",
+            "originalString": "1 tsp cumin seeds",
+            "originalName": "cumin seeds",
+            "amount": 1,
+            "unit": "tsp",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                }
+            }
+        },
+        {
+            "id": 10111962,
+            "aisle": "Produce;Ethnic Foods;Spices and Seasonings",
+            "image": "dried-arbol-chiles.jpg",
+            "consistency": "solid",
+            "name": "dried chili",
+            "nameClean": "dried chili pepper",
+            "original": "1 dried chili",
+            "originalString": "1 dried chili",
+            "originalName": "dried chili",
+            "amount": 1,
+            "unit": "",
+            "meta": [
+                "dried"
+            ],
+            "metaInformation": [
+                "dried"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "",
+                    "unitLong": ""
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "",
+                    "unitLong": ""
+                }
+            }
+        },
+        {
+            "id": 11215,
+            "aisle": "Produce",
+            "image": "garlic.png",
+            "consistency": "solid",
+            "name": "garlic",
+            "nameClean": "garlic",
+            "original": "3 cloves garlic thinly sliced",
+            "originalString": "3 cloves garlic thinly sliced",
+            "originalName": "garlic thinly sliced",
+            "amount": 3,
+            "unit": "cloves",
+            "meta": [
+                "thinly sliced"
+            ],
+            "metaInformation": [
+                "thinly sliced"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 3,
+                    "unitShort": "cloves",
+                    "unitLong": "cloves"
+                },
+                "metric": {
+                    "amount": 3,
+                    "unitShort": "cloves",
+                    "unitLong": "cloves"
+                }
+            }
+        },
+        {
+            "id": 2009,
+            "aisle": "Spices and Seasonings",
+            "image": "chili-powder.jpg",
+            "consistency": "solid",
+            "name": "chili powder",
+            "nameClean": "chili powder",
+            "original": "1/2 tsp red chili powder add more red chili powder later in the cooking process if you like it spicy",
+            "originalString": "1/2 tsp red chili powder add more red chili powder later in the cooking process if you like it spicy",
+            "originalName": "red chili powder add more red chili powder later in the cooking process if you like it spicy",
+            "amount": 0.5,
+            "unit": "tsp",
+            "meta": [
+                "red"
+            ],
+            "metaInformation": [
+                "red"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 0.5,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                },
+                "metric": {
+                    "amount": 0.5,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                }
+            }
+        },
+        {
+            "id": 2043,
+            "aisle": "Spices and Seasonings",
+            "image": "turmeric.jpg",
+            "consistency": "solid",
+            "name": "turmeric",
+            "nameClean": "turmeric",
+            "original": "1/2 tsp turmeric",
+            "originalString": "1/2 tsp turmeric",
+            "originalName": "turmeric",
+            "amount": 0.5,
+            "unit": "tsp",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 0.5,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                },
+                "metric": {
+                    "amount": 0.5,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                }
+            }
+        },
+        {
+            "id": 11278,
+            "aisle": "Produce",
+            "image": "okra.png",
+            "consistency": "solid",
+            "name": "okra",
+            "nameClean": "okra",
+            "original": "8 oz okra about 8-10 pieces of okra",
+            "originalString": "8 oz okra about 8-10 pieces of okra",
+            "originalName": "okra about 8-10 pieces of okra",
+            "amount": 8,
+            "unit": "oz",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 8,
+                    "unitShort": "oz",
+                    "unitLong": "ounces"
+                },
+                "metric": {
+                    "amount": 226.796,
+                    "unitShort": "g",
+                    "unitLong": "grams"
+                }
+            }
+        },
+        {
+            "id": 11352,
+            "aisle": "Produce",
+            "image": "potatoes-yukon-gold.png",
+            "consistency": "solid",
+            "name": "baby potatoes",
+            "nameClean": "potato",
+            "original": "2 baby potatoes",
+            "originalString": "2 baby potatoes",
+            "originalName": "baby potatoes",
+            "amount": 2,
+            "unit": "",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 2,
+                    "unitShort": "",
+                    "unitLong": ""
+                },
+                "metric": {
+                    "amount": 2,
+                    "unitShort": "",
+                    "unitLong": ""
+                }
+            }
+        },
+        {
+            "id": 2047,
+            "aisle": "Spices and Seasonings",
+            "image": "salt.jpg",
+            "consistency": "solid",
+            "name": "salt",
+            "nameClean": "salt",
+            "original": "1 tsp salt adjust to taste",
+            "originalString": "1 tsp salt adjust to taste",
+            "originalName": "salt adjust to taste",
+            "amount": 1,
+            "unit": "tsp",
+            "meta": [
+                "to taste"
+            ],
+            "metaInformation": [
+                "to taste"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                }
+            }
+        },
+        {
+            "id": 1002014,
+            "aisle": "Spices and Seasonings",
+            "image": "ground-cumin.jpg",
+            "consistency": "solid",
+            "name": "cumin powder",
+            "nameClean": "cumin",
+            "original": "1.5 tsp cumin powder",
+            "originalString": "1.5 tsp cumin powder",
+            "originalName": "cumin powder",
+            "amount": 1.5,
+            "unit": "tsp",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 1.5,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                },
+                "metric": {
+                    "amount": 1.5,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                }
+            }
+        },
+        {
+            "id": 98964,
+            "aisle": "Spices and Seasonings",
+            "image": "amchoor.jpg",
+            "consistency": "solid",
+            "name": "amchur",
+            "nameClean": "amchoor",
+            "original": "1 tsp amchur powder",
+            "originalString": "1 tsp amchur powder",
+            "originalName": "amchur powder",
+            "amount": 1,
+            "unit": "tsp",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                }
+            }
+        },
+        {
+            "id": 11549,
+            "aisle": "Canned and Jarred",
+            "image": "tomato-sauce-or-pasta-sauce.jpg",
+            "consistency": "solid",
+            "name": "tomato sauce",
+            "nameClean": "tomato sauce",
+            "original": "2 tsp tomato sauce optional",
+            "originalString": "2 tsp tomato sauce optional",
+            "originalName": "tomato sauce optional",
+            "amount": 2,
+            "unit": "tsp",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 2,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                },
+                "metric": {
+                    "amount": 2,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                }
+            }
+        }
+    ],
+    "id": 1132336,
+    "title": "Bhindi Fry with Aloo (Dry)",
+    "readyInMinutes": 15,
+    "servings": 2,
+    "sourceUrl": "https://www.healingtomato.com/aloo-bhindi-fry/",
+    "image": "https://spoonacular.com/recipeImages/1132336-556x370.jpg",
+    "imageType": "jpg",
+    "summary": "Bhindi Fry with Aloo (Dry) is a side dish that serves 2. For <b>$1.8 per serving</b>, this recipe <b>covers 17%</b> of your daily requirements of vitamins and minerals. One serving contains <b>160 calories</b>, <b>5g of protein</b>, and <b>5g of fat</b>. If you have vegetable oil, chili powder add more chili powder later in the cooking process if you like it spicy, chili, and a few other ingredients on hand, you can make it. 1 person found this recipe to be flavorful and satisfying. From preparation to the plate, this recipe takes approximately <b>15 minutes</b>. It is brought to you by Healing Tomato. It is a good option if you're following a <b>gluten free, dairy free, lacto ovo vegetarian, and whole 30</b> diet. Taking all factors into account, this recipe <b>earns a spoonacular score of 0%</b>, which is improvable. If you like this recipe, you might also like recipes such as <a href=\"https://spoonacular.com/recipes/aloo-bhindi-how-to-make-aloo-bhindi-sabzi-dry-aloo-bhindi-488190\">Aloo Bhindi , How to make Aloo Bhindi Sabzi | Dry Aloo Bhindi</a>, <a href=\"https://spoonacular.com/recipes/bhindi-fry-or-kurkuri-bhindi-how-to-make-bhindi-fry-okra-fry-487935\">Bhindi Fry or Kurkuri Bhindi, How to make Bhindi Fry | Okra Fry</a>, and <a href=\"https://spoonacular.com/recipes/kurkuri-bhindi-crispy-bhindi-okra-fry-564725\">Kurkuri Bhindi – Crispy Bhindi (Okra) Fry</a>.",
+    "cuisines": [],
+    "dishTypes": [
+        "side dish"
+    ],
+    "diets": [
+        "gluten free",
+        "dairy free",
+        "lacto ovo vegetarian",
+        "vegan"
+    ],
+    "occasions": [],
+    "winePairing": {},
+    "instructions": "Instructions\n\nCut the okra into large pieces (3-4 pieces per okra)\n\nPeel and cut the baby potatoes in the same size as the okra\n\nHeat a pan on high heat for 30 sec and keep it on that level for the whole cooking process\n\nAdd oil and cumin seeds to the pan\n\n(Optional) Add dried whole chili. I like to roughly tear it up and add to the oil.\n\nCook until cumin has browned slightly\n\nAdd 3 cloves of garlic (thinly sliced) and cook it for 30 seconds\n\nAdd 1/2 tsp of red chili powder\n\nAdd 1/2 tsp of turmeric powder\n\nAdd the cut okra to the pan but do not stir immediately\n\nAfter 30 sec, use the toss method to mix it not a stirring spoon to prevent slime\n\nCook the bhindi for 3 minutes by themselves and tossing them only once\n\nAdd the cubed potatoes to the pan\n\nAdd cumin powder, salt and a little more of the red chili powder (chili powder is optional)\n\nAdd amchur powder (dried mango powder)\n\nAdd 1-2 tsp of tomato sauce. This is optional and helps prevent drying of the bhindi fry\n\nCook the bhindi fry for another 5 minutes or until the potatoes are fully cooked\n\nIf you have the urge to stir, resist it.  Always use the tossing method to mix the ingredients",
+    "analyzedInstructions": [
+        {
+            "name": "",
+            "steps": [
+                {
+                    "number": 1,
+                    "step": "Cut the okra into large pieces (3-4 pieces per okra)",
+                    "ingredients": [
+                        {
+                            "id": 11278,
+                            "name": "okra",
+                            "localizedName": "okra",
+                            "image": "okra.png"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 2,
+                    "step": "Peel and cut the baby potatoes in the same size as the okra",
+                    "ingredients": [
+                        {
+                            "id": 10211352,
+                            "name": "new potato",
+                            "localizedName": "new potato",
+                            "image": "new-potatoes.jpg"
+                        },
+                        {
+                            "id": 11278,
+                            "name": "okra",
+                            "localizedName": "okra",
+                            "image": "okra.png"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 3,
+                    "step": "Heat a pan on high heat for 30 sec and keep it on that level for the whole cooking process",
+                    "ingredients": [],
+                    "equipment": [
+                        {
+                            "id": 404645,
+                            "name": "frying pan",
+                            "localizedName": "frying pan",
+                            "image": "pan.png"
+                        }
+                    ]
+                },
+                {
+                    "number": 4,
+                    "step": "Add oil and cumin seeds to the pan",
+                    "ingredients": [
+                        {
+                            "id": 2014,
+                            "name": "cumin seeds",
+                            "localizedName": "cumin seeds",
+                            "image": "ground-cumin.jpg"
+                        },
+                        {
+                            "id": 4582,
+                            "name": "cooking oil",
+                            "localizedName": "cooking oil",
+                            "image": "vegetable-oil.jpg"
+                        }
+                    ],
+                    "equipment": [
+                        {
+                            "id": 404645,
+                            "name": "frying pan",
+                            "localizedName": "frying pan",
+                            "image": "pan.png"
+                        }
+                    ]
+                },
+                {
+                    "number": 5,
+                    "step": "(Optional)",
+                    "ingredients": [],
+                    "equipment": []
+                },
+                {
+                    "number": 6,
+                    "step": "Add dried whole chili. I like to roughly tear it up and add to the oil.",
+                    "ingredients": [
+                        {
+                            "id": 11819,
+                            "name": "chili pepper",
+                            "localizedName": "chili pepper",
+                            "image": "red-chili.jpg"
+                        },
+                        {
+                            "id": 4582,
+                            "name": "cooking oil",
+                            "localizedName": "cooking oil",
+                            "image": "vegetable-oil.jpg"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 7,
+                    "step": "Cook until cumin has browned slightly",
+                    "ingredients": [
+                        {
+                            "id": 1002014,
+                            "name": "cumin",
+                            "localizedName": "cumin",
+                            "image": "ground-cumin.jpg"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 8,
+                    "step": "Add 3 cloves of garlic (thinly sliced) and cook it for 30 seconds",
+                    "ingredients": [
+                        {
+                            "id": 1002011,
+                            "name": "clove",
+                            "localizedName": "clove",
+                            "image": "cloves.jpg"
+                        },
+                        {
+                            "id": 11215,
+                            "name": "garlic",
+                            "localizedName": "garlic",
+                            "image": "garlic.png"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 9,
+                    "step": "Add 1/2 tsp of red chili powder",
+                    "ingredients": [
+                        {
+                            "id": 2009,
+                            "name": "chili powder",
+                            "localizedName": "chili powder",
+                            "image": "chili-powder.jpg"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 10,
+                    "step": "Add 1/2 tsp of turmeric powder",
+                    "ingredients": [
+                        {
+                            "id": 2043,
+                            "name": "turmeric",
+                            "localizedName": "turmeric",
+                            "image": "turmeric.jpg"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 11,
+                    "step": "Add the cut okra to the pan but do not stir immediately",
+                    "ingredients": [
+                        {
+                            "id": 11278,
+                            "name": "okra",
+                            "localizedName": "okra",
+                            "image": "okra.png"
+                        }
+                    ],
+                    "equipment": [
+                        {
+                            "id": 404645,
+                            "name": "frying pan",
+                            "localizedName": "frying pan",
+                            "image": "pan.png"
+                        }
+                    ]
+                },
+                {
+                    "number": 12,
+                    "step": "After 30 sec, use the toss method to mix it not a stirring spoon to prevent slime",
+                    "ingredients": [],
+                    "equipment": []
+                },
+                {
+                    "number": 13,
+                    "step": "Cook the bhindi for 3 minutes by themselves and tossing them only once",
+                    "ingredients": [],
+                    "equipment": [],
+                    "length": {
+                        "number": 3,
+                        "unit": "minutes"
+                    }
+                },
+                {
+                    "number": 14,
+                    "step": "Add the cubed potatoes to the pan",
+                    "ingredients": [
+                        {
+                            "id": 11352,
+                            "name": "potato",
+                            "localizedName": "potato",
+                            "image": "potatoes-yukon-gold.png"
+                        }
+                    ],
+                    "equipment": [
+                        {
+                            "id": 404645,
+                            "name": "frying pan",
+                            "localizedName": "frying pan",
+                            "image": "pan.png"
+                        }
+                    ]
+                },
+                {
+                    "number": 15,
+                    "step": "Add cumin powder, salt and a little more of the red chili powder (chili powder is optional)",
+                    "ingredients": [
+                        {
+                            "id": 2009,
+                            "name": "chili powder",
+                            "localizedName": "chili powder",
+                            "image": "chili-powder.jpg"
+                        },
+                        {
+                            "id": 1012014,
+                            "name": "ground cumin",
+                            "localizedName": "ground cumin",
+                            "image": "ground-cumin.jpg"
+                        },
+                        {
+                            "id": 2047,
+                            "name": "salt",
+                            "localizedName": "salt",
+                            "image": "salt.jpg"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 16,
+                    "step": "Add amchur powder (dried mango powder)",
+                    "ingredients": [
+                        {
+                            "id": 98964,
+                            "name": "amchoor",
+                            "localizedName": "amchoor",
+                            "image": "amchoor.jpg"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 17,
+                    "step": "Add 1-2 tsp of tomato sauce. This is optional and helps prevent drying of the bhindi fry",
+                    "ingredients": [
+                        {
+                            "id": 11549,
+                            "name": "tomato sauce",
+                            "localizedName": "tomato sauce",
+                            "image": "tomato-sauce-or-pasta-sauce.jpg"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 18,
+                    "step": "Cook the bhindi fry for another 5 minutes or until the potatoes are fully cooked",
+                    "ingredients": [
+                        {
+                            "id": 11352,
+                            "name": "potato",
+                            "localizedName": "potato",
+                            "image": "potatoes-yukon-gold.png"
+                        }
+                    ],
+                    "equipment": [],
+                    "length": {
+                        "number": 5,
+                        "unit": "minutes"
+                    }
+                },
+                {
+                    "number": 19,
+                    "step": "If you have the urge to stir, resist it.  Always use the tossing method to mix the ingredients",
+                    "ingredients": [],
+                    "equipment": []
+                }
+            ]
+        }
+    ],
+    "originalId": null
+}
+
+
+
+
+
+
+------------------
+
+
+
+
+
+
+
+{
+    "vegetarian": true,
+    "vegan": false,
+    "glutenFree": true,
+    "dairyFree": false,
+    "veryHealthy": false,
+    "cheap": false,
+    "veryPopular": false,
+    "sustainable": false,
+    "weightWatcherSmartPoints": 7,
+    "gaps": "no",
+    "lowFodmap": false,
+    "preparationMinutes": 10,
+    "cookingMinutes": 25,
+    "aggregateLikes": 137,
+    "spoonacularScore": 35,
+    "healthScore": 2,
+    "creditsText": "Veg Recipes of India",
+    "sourceName": "Veg Recipes of India",
+    "pricePerServing": 67.5,
+    "extendedIngredients": [
+        {
+            "id": 98964,
+            "aisle": "Spices and Seasonings",
+            "image": "amchoor.jpg",
+            "consistency": "solid",
+            "name": "amchur",
+            "nameClean": "amchoor",
+            "original": "1 tsp amchur (dried mango powder)",
+            "originalString": "1 tsp amchur (dried mango powder)",
+            "originalName": "amchur (dried mango powder)",
+            "amount": 1,
+            "unit": "tsp",
+            "meta": [
+                "dried",
+                "( mango powder)"
+            ],
+            "metaInformation": [
+                "dried",
+                "( mango powder)"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                }
+            }
+        },
+        {
+            "id": 2009,
+            "aisle": "Spices and Seasonings",
+            "image": "chili-powder.jpg",
+            "consistency": "solid",
+            "name": "chilly powder",
+            "nameClean": "chili powder",
+            "original": "1 tsp red chilly powder",
+            "originalString": "1 tsp red chilly powder",
+            "originalName": "red chilly powder",
+            "amount": 1,
+            "unit": "tsp",
+            "meta": [
+                "red"
+            ],
+            "metaInformation": [
+                "red"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                }
+            }
+        },
+        {
+            "id": 93663,
+            "aisle": "Ethnic Foods;Spices and Seasonings",
+            "image": "garam-masala.jpg",
+            "consistency": "solid",
+            "name": "garam masala",
+            "nameClean": "garam masala",
+            "original": "½ tsp garam masala powder",
+            "originalString": "½ tsp garam masala powder",
+            "originalName": "garam masala powder",
+            "amount": 0.5,
+            "unit": "tsp",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 0.5,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                },
+                "metric": {
+                    "amount": 0.5,
+                    "unitShort": "tsps",
+                    "unitLong": "teaspoons"
+                }
+            }
+        },
+        {
+            "id": 93632,
+            "aisle": "Ethnic Foods",
+            "image": "ghee.jpg",
+            "consistency": "solid",
+            "name": "ghee",
+            "nameClean": "clarified butter",
+            "original": "2 tbsp ghee or oil",
+            "originalString": "2 tbsp ghee or oil",
+            "originalName": "ghee or oil",
+            "amount": 2,
+            "unit": "tbsp",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 2,
+                    "unitShort": "Tbsps",
+                    "unitLong": "Tbsps"
+                },
+                "metric": {
+                    "amount": 2,
+                    "unitShort": "Tbsps",
+                    "unitLong": "Tbsps"
+                }
+            }
+        },
+        {
+            "id": 11282,
+            "aisle": "Produce",
+            "image": "brown-onion.png",
+            "consistency": "solid",
+            "name": "onions",
+            "nameClean": "onion",
+            "original": "4 medium onions or 2 large onions",
+            "originalString": "4 medium onions or 2 large onions",
+            "originalName": "onions or 2 large onions",
+            "amount": 4,
+            "unit": "medium",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 4,
+                    "unitShort": "medium",
+                    "unitLong": "mediums"
+                },
+                "metric": {
+                    "amount": 4,
+                    "unitShort": "medium",
+                    "unitLong": "mediums"
+                }
+            }
+        },
+        {
+            "id": 2047,
+            "aisle": "Spices and Seasonings",
+            "image": "salt.jpg",
+            "consistency": "solid",
+            "name": "salt",
+            "nameClean": "salt",
+            "original": "salt",
+            "originalString": "salt",
+            "originalName": "salt",
+            "amount": 3,
+            "unit": "servings",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 3,
+                    "unitShort": "servings",
+                    "unitLong": "servings"
+                },
+                "metric": {
+                    "amount": 3,
+                    "unitShort": "servings",
+                    "unitLong": "servings"
+                }
+            }
+        },
+        {
+            "id": 2043,
+            "aisle": "Spices and Seasonings",
+            "image": "turmeric.jpg",
+            "consistency": "solid",
+            "name": "turmeric powder",
+            "nameClean": "turmeric",
+            "original": "1 tsp Turmeric (Haldi) powder",
+            "originalString": "1 tsp Turmeric (Haldi) powder",
+            "originalName": "Turmeric (Haldi) powder",
+            "amount": 1,
+            "unit": "tsp",
+            "meta": [
+                "(Haldi)"
+            ],
+            "metaInformation": [
+                "(Haldi)"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                }
+            }
+        },
+        {
+            "id": null,
+            "aisle": "?",
+            "image": null,
+            "consistency": null,
+            "name": "bhindi",
+            "nameClean": null,
+            "original": "250 g Bhindi ( Okra)",
+            "originalString": "250 g Bhindi ( Okra)",
+            "originalName": "Bhindi ( Okra)",
+            "amount": 250,
+            "unit": "g",
+            "meta": [
+                "( Okra)"
+            ],
+            "metaInformation": [
+                "( Okra)"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 8.818,
+                    "unitShort": "oz",
+                    "unitLong": "ounces"
+                },
+                "metric": {
+                    "amount": 250,
+                    "unitShort": "g",
+                    "unitLong": "grams"
+                }
+            }
+        }
+    ],
+    "id": 488168,
+    "title": "Bhindi Do Pyaza , How to make Bhindi Do Pyaza",
+    "readyInMinutes": 35,
+    "servings": 3,
+    "sourceUrl": "http://www.vegrecipesofindia.com/bhindi-do-pyaza-okra-with-onions-recipe/",
+    "image": "https://spoonacular.com/recipeImages/488168-556x370.jpg",
+    "imageType": "jpg",
+    "summary": "Bhindi Do Pyaza , How to make Bhindi Do Pyaza might be just the side dish you are searching for. One portion of this dish contains roughly <b>2g of protein</b>, <b>10g of fat</b>, and a total of <b>157 calories</b>. This recipe serves 3 and costs 87 cents per serving. Plenty of people made this recipe, and 137 would say it hit the spot. A mixture of turmeric powder, bhindi, ghee, and a handful of other ingredients are all it takes to make this recipe so scrumptious. It is a good option if you're following a <b>gluten free, whole 30, and vegetarian</b> diet. From preparation to the plate, this recipe takes approximately <b>35 minutes</b>. All things considered, we decided this recipe <b>deserves a spoonacular score of 34%</b>. This score is rather bad. Try <a href=\"https://spoonacular.com/recipes/bhindi-do-pyaza-600615\">Bhindi do pyaza</a>, <a href=\"https://spoonacular.com/recipes/bhindi-fry-or-kurkuri-bhindi-how-to-make-bhindi-fry-okra-fry-487935\">Bhindi Fry or Kurkuri Bhindi, How to make Bhindi Fry | Okra Fry</a>, and <a href=\"https://spoonacular.com/recipes/paneer-do-pyaza-how-to-make-paneer-do-pyaza-617061\">paneer do pyaza , how to make paneer do pyaza</a> for similar recipes.",
+    "cuisines": [],
+    "dishTypes": [
+        "side dish"
+    ],
+    "diets": [
+        "gluten free",
+        "lacto ovo vegetarian"
+    ],
+    "occasions": [],
+    "winePairing": {},
+    "instructions": "Firstly wash the bhindi in running water. Then wipe them with a kitchen napkin.Chop the bhindis into half inch pieces.Slice the onions thinly.In a pan or wok, add ghee or oil. Then add the chopped bhindis. Fry them on a medium flame till the bhindis become slightly tender.Add all the dry masala powders except garam masala powder and amchur and mix well. Add salt too.Now add the sliced onions.Mix the bhindis well with the onions.Cook on a slow flame till the bhindi is soft and cooked. Don’t overcook as the bhindis will get mushy.Lastly, add the garam masala powder and amchur.Mix the garam masala powder and amchur powder with the bhindi and onions.Serve Bhindi Do Pyaza with rotis or phulkas. It can also be served as a side dish.",
+    "analyzedInstructions": [
+        {
+            "name": "",
+            "steps": [
+                {
+                    "number": 1,
+                    "step": "Firstly wash the bhindi in running water. Then wipe them with a kitchen napkin.Chop the bhindis into half inch pieces.Slice the onions thinly.In a pan or wok, add ghee or oil. Then add the chopped bhindis. Fry them on a medium flame till the bhindis become slightly tender.",
+                    "ingredients": [
+                        {
+                            "id": 11282,
+                            "name": "onion",
+                            "localizedName": "onion",
+                            "image": "brown-onion.png"
+                        },
+                        {
+                            "id": 14412,
+                            "name": "water",
+                            "localizedName": "water",
+                            "image": "water.png"
+                        },
+                        {
+                            "id": 93632,
+                            "name": "ghee",
+                            "localizedName": "ghee",
+                            "image": "ghee.jpg"
+                        },
+                        {
+                            "id": 4582,
+                            "name": "cooking oil",
+                            "localizedName": "cooking oil",
+                            "image": "vegetable-oil.jpg"
+                        }
+                    ],
+                    "equipment": [
+                        {
+                            "id": 404645,
+                            "name": "frying pan",
+                            "localizedName": "frying pan",
+                            "image": "pan.png"
+                        },
+                        {
+                            "id": 404666,
+                            "name": "wok",
+                            "localizedName": "wok",
+                            "image": "wok.png"
+                        }
+                    ]
+                },
+                {
+                    "number": 2,
+                    "step": "Add all the dry masala powders except garam masala powder and amchur and mix well.",
+                    "ingredients": [
+                        {
+                            "id": 93663,
+                            "name": "garam masala",
+                            "localizedName": "garam masala",
+                            "image": "garam-masala.jpg"
+                        },
+                        {
+                            "id": 98964,
+                            "name": "amchoor",
+                            "localizedName": "amchoor",
+                            "image": "amchoor.jpg"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 3,
+                    "step": "Add salt too.Now add the sliced onions.",
+                    "ingredients": [
+                        {
+                            "id": 11282,
+                            "name": "onion",
+                            "localizedName": "onion",
+                            "image": "brown-onion.png"
+                        },
+                        {
+                            "id": 2047,
+                            "name": "salt",
+                            "localizedName": "salt",
+                            "image": "salt.jpg"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 4,
+                    "step": "Mix the bhindis well with the onions.Cook on a slow flame till the bhindi is soft and cooked. Don’t overcook as the bhindis will get mushy.Lastly, add the garam masala powder and amchur.",
+                    "ingredients": [
+                        {
+                            "id": 93663,
+                            "name": "garam masala",
+                            "localizedName": "garam masala",
+                            "image": "garam-masala.jpg"
+                        },
+                        {
+                            "id": 98964,
+                            "name": "amchoor",
+                            "localizedName": "amchoor",
+                            "image": "amchoor.jpg"
+                        },
+                        {
+                            "id": 11282,
+                            "name": "onion",
+                            "localizedName": "onion",
+                            "image": "brown-onion.png"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 5,
+                    "step": "Mix the garam masala powder and amchur powder with the bhindi and onions.",
+                    "ingredients": [
+                        {
+                            "id": 93663,
+                            "name": "garam masala",
+                            "localizedName": "garam masala",
+                            "image": "garam-masala.jpg"
+                        },
+                        {
+                            "id": 98964,
+                            "name": "amchoor",
+                            "localizedName": "amchoor",
+                            "image": "amchoor.jpg"
+                        },
+                        {
+                            "id": 11282,
+                            "name": "onion",
+                            "localizedName": "onion",
+                            "image": "brown-onion.png"
+                        }
+                    ],
+                    "equipment": []
+                },
+                {
+                    "number": 6,
+                    "step": "Serve Bhindi Do Pyaza with rotis or phulkas. It can also be served as a side dish.",
+                    "ingredients": [],
+                    "equipment": []
+                }
+            ]
+        }
+    ],
+    "originalId": null
+}
+
+
+
+
+----------------------------
+
+
+
+
+{
+    "vegetarian": true,
+    "vegan": true,
+    "glutenFree": true,
+    "dairyFree": true,
+    "veryHealthy": false,
+    "cheap": false,
+    "veryPopular": false,
+    "sustainable": false,
+    "weightWatcherSmartPoints": 1,
+    "gaps": "no",
+    "lowFodmap": false,
+    "preparationMinutes": 20,
+    "cookingMinutes": 15,
+    "aggregateLikes": 41,
+    "spoonacularScore": 92,
+    "healthScore": 34,
+    "creditsText": "Allrecipes",
+    "sourceName": "Allrecipes",
+    "pricePerServing": 103.95,
+    "extendedIngredients": [
+        {
+            "id": 2014,
+            "aisle": "Spices and Seasonings",
+            "image": "ground-cumin.jpg",
+            "consistency": "solid",
+            "name": "cumin seeds",
+            "nameClean": "cumin seeds",
+            "original": "1 teaspoon cumin seeds",
+            "originalString": "1 teaspoon cumin seeds",
+            "originalName": "cumin seeds",
+            "amount": 1,
+            "unit": "teaspoon",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                }
+            }
+        },
+        {
+            "id": 2015,
+            "aisle": "Spices and Seasonings",
+            "image": "curry-powder.jpg",
+            "consistency": "solid",
+            "name": "curry powder",
+            "nameClean": "curry powder",
+            "original": "1 teaspoon curry powder",
+            "originalString": "1 teaspoon curry powder",
+            "originalName": "curry powder",
+            "amount": 1,
+            "unit": "teaspoon",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                }
+            }
+        },
+        {
+            "id": 11278,
+            "aisle": "Produce",
+            "image": "okra.png",
+            "consistency": "solid",
+            "name": "okra",
+            "nameClean": "okra",
+            "original": "4 cups okra, cut into 1-inch pieces",
+            "originalString": "4 cups okra, cut into 1-inch pieces",
+            "originalName": "okra, cut into 1-inch pieces",
+            "amount": 4,
+            "unit": "cups",
+            "meta": [
+                "cut into 1-inch pieces"
+            ],
+            "metaInformation": [
+                "cut into 1-inch pieces"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 4,
+                    "unitShort": "cups",
+                    "unitLong": "cups"
+                },
+                "metric": {
+                    "amount": 946.352,
+                    "unitShort": "ml",
+                    "unitLong": "milliliters"
+                }
+            }
+        },
+        {
+            "id": 4053,
+            "aisle": "Oil, Vinegar, Salad Dressing",
+            "image": "olive-oil.jpg",
+            "consistency": "liquid",
+            "name": "olive oil",
+            "nameClean": "olive oil",
+            "original": "1 tablespoon olive oil",
+            "originalString": "1 tablespoon olive oil",
+            "originalName": "olive oil",
+            "amount": 1,
+            "unit": "tablespoon",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "Tbsp",
+                    "unitLong": "Tbsp"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "Tbsp",
+                    "unitLong": "Tbsp"
+                }
+            }
+        },
+        {
+            "id": 11282,
+            "aisle": "Produce",
+            "image": "brown-onion.png",
+            "consistency": "solid",
+            "name": "onion",
+            "nameClean": "onion",
+            "original": "1 onion, chopped",
+            "originalString": "1 onion, chopped",
+            "originalName": "onion, chopped",
+            "amount": 1,
+            "unit": "",
+            "meta": [
+                "chopped"
+            ],
+            "metaInformation": [
+                "chopped"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "",
+                    "unitLong": ""
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "",
+                    "unitLong": ""
+                }
+            }
+        },
+        {
+            "id": 2047,
+            "aisle": "Spices and Seasonings",
+            "image": "salt.jpg",
+            "consistency": "solid",
+            "name": "salt",
+            "nameClean": "salt",
+            "original": "1 teaspoon salt",
+            "originalString": "1 teaspoon salt",
+            "originalName": "salt",
+            "amount": 1,
+            "unit": "teaspoon",
+            "meta": [],
+            "metaInformation": [],
+            "measures": {
+                "us": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                },
+                "metric": {
+                    "amount": 1,
+                    "unitShort": "tsp",
+                    "unitLong": "teaspoon"
+                }
+            }
+        },
+        {
+            "id": 11529,
+            "aisle": "Produce",
+            "image": "tomato.png",
+            "consistency": "solid",
+            "name": "tomatoes",
+            "nameClean": "tomato",
+            "original": "2 tomatoes, diced",
+            "originalString": "2 tomatoes, diced",
+            "originalName": "tomatoes, diced",
+            "amount": 2,
+            "unit": "",
+            "meta": [
+                "diced"
+            ],
+            "metaInformation": [
+                "diced"
+            ],
+            "measures": {
+                "us": {
+                    "amount": 2,
+                    "unitShort": "",
+                    "unitLong": ""
+                },
+                "metric": {
+                    "amount": 2,
+                    "unitShort": "",
+                    "unitLong": ""
+                }
+            }
+        }
+    ],
+    "id": 472445,
+    "title": "Bhindi Masala (Spicy Okra Curry)",
+    "readyInMinutes": 35,
+    "servings": 4,
+    "sourceUrl": "http://allrecipes.com/Recipe/Bhindi-Masala-Spicy-Okra-Curry/Detail.aspx?src=rss",
+    "image": "https://spoonacular.com/recipeImages/472445-556x370.jpg",
+    "imageType": "jpg",
+    "summary": "Bhindi Masala (Spicy Okra Curry) might be just the side dish you are searching for. For <b>$1.04 per serving</b>, this recipe <b>covers 13%</b> of your daily requirements of vitamins and minerals. One portion of this dish contains approximately <b>3g of protein</b>, <b>4g of fat</b>, and a total of <b>90 calories</b>. This recipe serves 4. Head to the store and pick up salt, tomatoes, okra, and a few other things to make it today. A few people made this recipe, and 41 would say it hit the spot. From preparation to the plate, this recipe takes approximately <b>35 minutes</b>. This recipe is typical of Indian cuisine. It is a good option if you're following a <b>caveman, gluten free, primal, and whole 30</b> diet. All things considered, we decided this recipe <b>deserves a spoonacular score of 92%</b>. This score is outstanding. Try <a href=\"https://spoonacular.com/recipes/bhindi-masala-how-to-make-bhindi-masala-okra-s-600841\">Bhindi Masala| How to make bhindi masala | Okra s</a>, <a href=\"https://spoonacular.com/recipes/bhindi-nariyal-sabzi-or-okra-coconut-curry-bhindi-s-488317\">bhindi nariyal sabzi or okra coconut curry | bhindi s</a>, and <a href=\"https://spoonacular.com/recipes/bhindi-masala-lets-talk-okra-34596\">Bhindi Masala: Let's Talk Okra</a> for similar recipes.",
+    "cuisines": [
+        "Indian",
+        "Asian"
+    ],
+    "dishTypes": [
+        "side dish"
+    ],
+    "diets": [
+        "gluten free",
+        "dairy free",
+        "lacto ovo vegetarian",
+        "vegan"
+    ],
+    "occasions": [],
+    "winePairing": {
+        "pairedWines": [
+            "gewurztraminer",
+            "riesling",
+            "chenin blanc"
+        ],
+        "pairingText": "Asian on the menu? Try pairing with Gewurztraminer, Riesling, and Chenin Blanc. The best wine for Asian food depends on the cuisine and dish - of course - but these acidic whites pair with a number of traditional meals, spicy or not. You could try Lawson's Dry Hills Gewurztraminer. Reviewers quite like it with a 4.2 out of 5 star rating and a price of about 15 dollars per bottle.",
+        "productMatches": [
+            {
+                "id": 444941,
+                "title": "Lawson's Dry Hills Gewurztraminer",
+                "description": "The nose has a lovely array of rose petal, orange blossom and lychee aromas, whilst the palate is rich, round and succulent with a lovely weight and concentration. This wine is off-dry and could be cellared for three to eight years.Enjoy in moderation with strong rich flavours or with something a little spicy.",
+                "price": "$14.99",
+                "imageUrl": "https://spoonacular.com/productImages/444941-312x231.jpg",
+                "averageRating": 0.8400000000000001,
+                "ratingCount": 6,
+                "score": 0.7873684210526317,
+                "link": "https://click.linksynergy.com/deeplink?id=*QCiIS6t4gA&mid=2025&murl=https%3A%2F%2Fwww.wine.com%2Fproduct%2Flawsons-dry-hills-gewurztraminer-2013%2F166258"
+            }
+        ]
+    },
+    "instructions": "Place the okra in a large, microwave-safe dish; cook in microwave on High for 6 minutes.                            Heat the olive oil and cumin seeds together in a large skillet over medium heat until the cumin seeds swell and turn golden brown. Fry the onions in the heated oil for 3 minutes. Add the tomatoes to the mixture and cook another 3 minutes. Stir the okra into the mixture; season with the curry powder and salt. Cook and stir the mixture until hot, about 3 minutes more. Serve hot.                                                Kitchen-Friendly View",
+    "analyzedInstructions": [
+        {
+            "name": "",
+            "steps": [
+                {
+                    "number": 1,
+                    "step": "Place the okra in a large, microwave-safe dish; cook in microwave on High for 6 minutes.",
+                    "ingredients": [
+                        {
+                            "id": 11278,
+                            "name": "okra",
+                            "localizedName": "okra",
+                            "image": "okra.png"
+                        }
+                    ],
+                    "equipment": [
+                        {
+                            "id": 404762,
+                            "name": "microwave",
+                            "localizedName": "microwave",
+                            "image": "microwave.jpg"
+                        }
+                    ],
+                    "length": {
+                        "number": 6,
+                        "unit": "minutes"
+                    }
+                },
+                {
+                    "number": 2,
+                    "step": "Heat the olive oil and cumin seeds together in a large skillet over medium heat until the cumin seeds swell and turn golden brown. Fry the onions in the heated oil for 3 minutes.",
+                    "ingredients": [
+                        {
+                            "id": 2014,
+                            "name": "cumin seeds",
+                            "localizedName": "cumin seeds",
+                            "image": "ground-cumin.jpg"
+                        },
+                        {
+                            "id": 4053,
+                            "name": "olive oil",
+                            "localizedName": "olive oil",
+                            "image": "olive-oil.jpg"
+                        },
+                        {
+                            "id": 11282,
+                            "name": "onion",
+                            "localizedName": "onion",
+                            "image": "brown-onion.png"
+                        },
+                        {
+                            "id": 4582,
+                            "name": "cooking oil",
+                            "localizedName": "cooking oil",
+                            "image": "vegetable-oil.jpg"
+                        }
+                    ],
+                    "equipment": [
+                        {
+                            "id": 404645,
+                            "name": "frying pan",
+                            "localizedName": "frying pan",
+                            "image": "pan.png"
+                        }
+                    ],
+                    "length": {
+                        "number": 3,
+                        "unit": "minutes"
+                    }
+                },
+                {
+                    "number": 3,
+                    "step": "Add the tomatoes to the mixture and cook another 3 minutes. Stir the okra into the mixture; season with the curry powder and salt. Cook and stir the mixture until hot, about 3 minutes more.",
+                    "ingredients": [
+                        {
+                            "id": 2015,
+                            "name": "curry powder",
+                            "localizedName": "curry powder",
+                            "image": "curry-powder.jpg"
+                        },
+                        {
+                            "id": 11529,
+                            "name": "tomato",
+                            "localizedName": "tomato",
+                            "image": "tomato.png"
+                        },
+                        {
+                            "id": 11278,
+                            "name": "okra",
+                            "localizedName": "okra",
+                            "image": "okra.png"
+                        },
+                        {
+                            "id": 2047,
+                            "name": "salt",
+                            "localizedName": "salt",
+                            "image": "salt.jpg"
+                        }
+                    ],
+                    "equipment": [],
+                    "length": {
+                        "number": 6,
+                        "unit": "minutes"
+                    }
+                },
+                {
+                    "number": 4,
+                    "step": "Serve hot.",
+                    "ingredients": [],
+                    "equipment": []
+                }
+            ]
+        }
+    ],
+    "originalId": null
+}

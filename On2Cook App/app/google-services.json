@@ -1,0 +1,63 @@
+{
+  "project_info": {
+    "project_number": "59603256455",
+    "project_id": "on2cook",
+    "storage_bucket": "on2cook.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:59603256455:android:575ec40cf6d41ad1246422",
+        "android_client_info": {
+          "package_name": "com.invent.ontocook"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "59603256455-4fddsc899s0nhd7kh9h0j03sigch19ji.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.invent.ontocook",
+            "certificate_hash": "0df048b0be0f7b6a44f9b8aa0d1ec245f70c215e"
+          }
+        },
+        {
+          "client_id": "59603256455-7635ut0nv7tdpuk1bngvtlttt623afn2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.invent.ontocook",
+            "certificate_hash": "44f5706c51bae434fccb51bc4ff0ebab3e8287a5"
+          }
+        },
+        {
+          "client_id": "59603256455-j6onspotrjpc4cm83vav06b8snm88kdv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.invent.ontocook",
+            "certificate_hash": "b1f6fb3a5d32918190d1df80e834ce56b3b26b4d"
+          }
+        },
+        {
+          "client_id": "59603256455-ncbah61nfmo08hosic281klds3m5496k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQKrpT6eV34oEI7dFnFR3ssYqNo6tH8Cc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "59603256455-ncbah61nfmo08hosic281klds3m5496k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

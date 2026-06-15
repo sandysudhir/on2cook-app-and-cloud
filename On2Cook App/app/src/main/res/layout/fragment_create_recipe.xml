@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        tools:context=".create_recipe.CreateRecipeFragment">
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:fillViewport="true"
+            android:padding="@dimen/pageMargin"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tvName"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Recipe name"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginLeft="20dp"
+                    android:background="#D9D9D9"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvName"
+                    app:layout_constraintLeft_toRightOf="@+id/tvName"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/tvName" />
+
+                <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                    android:id="@+id/etName"
+                    style="@style/et_regular_14_light_black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="top"
+                    android:hint="Recipe name"
+                    android:digits="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890_- "
+                    android:imeOptions="actionNext"
+                    android:inputType="textCapWords"
+                    android:maxLength="40"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvName" />
+
+                <TextView
+                    android:id="@+id/tvAbout"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="About"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/etName" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginStart="20dp"
+                    android:background="#D9D9D9"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvAbout"
+                    app:layout_constraintLeft_toRightOf="@+id/tvAbout"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/tvAbout" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/etAbout"
+                    style="@style/et_regular_14_light_black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="top"
+                    android:hint="Tell us more about your recipe..."
+                    android:imeOptions="actionDone"
+                    android:lines="3"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvAbout">
+
+                </androidx.appcompat.widget.AppCompatEditText>
+
+                <TextView
+                    android:id="@+id/tvAddImage"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Add Image"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/etAbout" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginLeft="20dp"
+                    android:background="#D9D9D9"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvAddImage"
+                    app:layout_constraintLeft_toRightOf="@+id/tvAddImage"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/tvAddImage" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clSelectImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:padding="10dp"
+                    app:layout_constraintHorizontal_bias="0.0"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvAddImage">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnChooseImage"
+                        style="@style/semi_bold_12_white"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:background="@drawable/ic_round_corner_button_orange"
+                        android:text="Selects"
+                        android:textAllCaps="false"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                    </androidx.appcompat.widget.AppCompatButton>
+
+                    <TextView
+                        android:id="@+id/tvImageName"
+                        style="@style/regular_12_dark_gey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:text="Add Image"
+                        app:layout_constraintBottom_toBottomOf="@+id/btnChooseImage"
+                        app:layout_constraintLeft_toRightOf="@+id/btnChooseImage"
+                        app:layout_constraintTop_toTopOf="@+id/btnChooseImage" />
+
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <TextView
+                    android:id="@+id/tvDifficultyLevel"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Difficulty Level"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clSelectImage" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginLeft="20dp"
+                    android:background="#D9D9D9"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvDifficultyLevel"
+                    app:layout_constraintLeft_toRightOf="@+id/tvDifficultyLevel"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/tvDifficultyLevel" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clDifficultyLevel"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:padding="6dp"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvDifficultyLevel">
+
+                    <belka.us.androidtoggleswitch.widgets.ToggleSwitch
+                        android:id="@+id/toggleDifficultyLevel"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:textSize="14dp"
+                        android:textStyle="bold"
+                        app:activeBgColor="@color/orange"
+                        app:activeTextColor="@android:color/white"
+                        app:inactiveBgColor="@color/dark_grey"
+                        app:inactiveTextColor="@color/light_black"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:separatorColor="@color/gray_very_light"
+                        app:toggleWidth="0dp">
+
+                    </belka.us.androidtoggleswitch.widgets.ToggleSwitch>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+                <TextView
+                    android:id="@+id/tvPan"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Pan Type"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clDifficultyLevel" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginLeft="20dp"
+                    android:background="#D9D9D9"
+                    app:layout_constraintBottom_toBottomOf="@+id/clDifficultyLevel"
+                    app:layout_constraintLeft_toRightOf="@+id/clDifficultyLevel"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/clDifficultyLevel" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clPan"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:padding="6dp"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvPan">
+
+                    <belka.us.androidtoggleswitch.widgets.ToggleSwitch
+                        android:id="@+id/togglePan"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:textSize="14dp"
+                        android:textStyle="bold"
+                        app:activeBgColor="@color/orange"
+                        app:activeTextColor="@android:color/white"
+                        app:inactiveBgColor="@color/dark_grey"
+                        app:inactiveTextColor="@color/light_black"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:separatorColor="@color/gray_very_light"
+                        app:toggleWidth="0dp">
+
+                    </belka.us.androidtoggleswitch.widgets.ToggleSwitch>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <TextView
+                    android:id="@+id/tvCategories"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="Categories"
+                    android:visibility="gone"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clPan" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginLeft="20dp"
+                    android:background="#D9D9D9"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvCategories"
+                    app:layout_constraintLeft_toRightOf="@+id/tvCategories"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/tvCategories" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clCategories"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:padding="6dp"
+                    android:visibility="gone"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvCategories">
+
+                    <belka.us.androidtoggleswitch.widgets.ToggleSwitch
+                        android:id="@+id/toggleCategories"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:textSize="14dp"
+                        android:textStyle="bold"
+                        app:activeBgColor="@color/orange"
+                        app:activeTextColor="@android:color/white"
+                        app:inactiveBgColor="@color/dark_grey"
+                        app:inactiveTextColor="@color/light_black"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:separatorColor="@color/gray_very_light"
+                        app:toggleWidth="0dp">
+
+                    </belka.us.androidtoggleswitch.widgets.ToggleSwitch>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clSubCategories"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:padding="6dp"
+                    android:visibility="gone"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clCategories">
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvSubCategories"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                    </androidx.recyclerview.widget.RecyclerView>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnNext"
+                    style="@style/semi_bold_12_white"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp"
+                    android:layout_marginTop="30dp"
+                    android:background="@drawable/ic_round_corner_button_gradient"
+                    android:text="Next"
+                    android:textAllCaps="false"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/clSubCategories" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

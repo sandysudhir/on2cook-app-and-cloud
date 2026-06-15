@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        android:paddingHorizontal="@dimen/dp_10"
+        android:paddingVertical="@dimen/dp_10"
+        tools:context=".multiple_connection.ui.LogFragment">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/tab"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_round_corner_tab"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvAlert"
+                style="@style/bold_14_dark_grey_4"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/tab_blue_left"
+                android:gravity="center"
+                android:text="@string/txt_logs"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toBottomOf="@+id/ivAdd"
+                app:layout_constraintLeft_toRightOf="@+id/ivAdd"
+                app:layout_constraintTop_toTopOf="@+id/ivAdd" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvWeek"
+                style="@style/bold_14_dark_grey_4"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/tab_round_unselected"
+                android:gravity="center"
+                android:paddingVertical="@dimen/dp_10"
+                android:text="@string/txt_alerts"
+                android:textColor="@color/black"
+                app:layout_constraintBottom_toBottomOf="@+id/ivAdd"
+                app:layout_constraintLeft_toRightOf="@+id/ivAdd"
+                app:layout_constraintTop_toTopOf="@+id/ivAdd" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnReset"
+            style="@style/semi_bold_12_white"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_margin="8dp"
+            android:background="@drawable/ic_round_corner_button_orange_deselect"
+            android:text="@string/txt_reset"
+            android:textAllCaps="false"
+            android:visibility="gone"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tab" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/ivCalender"
+            style="@style/semi_bold_12_white"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:src="@drawable/ic_calendar"
+            android:text="@string/txt_reset"
+            android:textAllCaps="false"
+            android:visibility="gone"
+            app:layout_constraintRight_toLeftOf="@+id/btnReset"
+            app:layout_constraintTop_toBottomOf="@+id/tab" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvAlert"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:paddingTop="@dimen/dp_5"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/btnReset"
+            app:layout_constraintVertical_bias="0.0"
+            tools:itemCount="10"
+            tools:listitem="@layout/item_log_data" />
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/ed_search_date"
+            style="@style/et_search_log_filter"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/dp_20"
+            android:background="@drawable/bg_black_border_corner_10_edittext"
+            android:hint="@string/hint_search_date_by_text"
+            android:maxLength="100"
+            android:padding="12dp"
+            android:textColor="@color/dark_grey4"
+            android:textSize="16sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ivCalender" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_title_week_date"
+            style="@style/regular_14_dark_gey_4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/dp_15"
+            android:layout_marginTop="@dimen/dp_20"
+            android:background="@drawable/ic_round_log_yellow"
+            android:gravity="center"
+            android:padding="@dimen/dp_8"
+            android:singleLine="false"
+            android:text=""
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ed_search_date" />
+
+        <androidx.constraintlayout.widget.Group
+            android:id="@+id/weekGroup"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            app:constraint_referenced_ids="tv_title_week_date,constraintWeekDetails" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintWeekDetails"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/dp_20"
+            android:background="@color/white"
+            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_title_week_date">
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline_divider"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent=".4" />
+
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_label_total_device_on"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_35"
+                android:gravity="center"
+                android:singleLine="false"
+                android:text="@string/text_total_device_on_counter"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_divider"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_value_total_device_on"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="false"
+                android:text=""
+                android:textSize="30sp"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_label_total_device_on"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/guideline_divider"
+                app:layout_constraintTop_toTopOf="@+id/tv_label_total_device_on" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_label_total_time_induction_on"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_25"
+                android:gravity="center"
+                android:singleLine="false"
+                android:text="@string/text_total_time_induction_on"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_divider"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_label_total_device_on" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_value_total_time_induction"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:singleLine="false"
+                android:text=""
+                android:textSize="22sp"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_label_total_time_induction_on"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/guideline_divider"
+                app:layout_constraintTop_toTopOf="@+id/tv_label_total_time_induction_on" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_label_total_time_microwave_on"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_25"
+                android:gravity="center"
+                android:singleLine="false"
+                android:text="@string/text_total_time_microwave_on"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_divider"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_label_total_time_induction_on" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_value_total_time_microwave"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="false"
+                android:text=""
+                android:textSize="22sp"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_label_total_time_microwave_on"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/guideline_divider"
+                app:layout_constraintTop_toTopOf="@+id/tv_label_total_time_microwave_on" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_label_maximum_induction_on"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_25"
+                android:gravity="center"
+                android:singleLine="false"
+                android:text="@string/text_maximum_induction_on"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_divider"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_label_total_time_microwave_on" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_value_maximum_induction_on"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="false"
+                android:text=""
+                android:textSize="22sp"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_label_maximum_induction_on"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/guideline_divider"
+                app:layout_constraintTop_toTopOf="@+id/tv_label_maximum_induction_on" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_label_maximum_microwave_on"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_25"
+                android:gravity="center"
+                android:singleLine="false"
+                android:text="@string/text_maximum_microwave_on"
+                app:layout_constraintEnd_toStartOf="@+id/guideline_divider"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_label_maximum_induction_on" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tv_value_maximum_microwave_on"
+                style="@style/regular_14_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:singleLine="false"
+                android:text=""
+                android:textSize="22sp"
+                app:layout_constraintBottom_toBottomOf="@+id/tv_label_maximum_microwave_on"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/guideline_divider"
+                app:layout_constraintTop_toTopOf="@+id/tv_label_maximum_microwave_on" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnExportCsv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/dp_35"
+            android:layout_marginBottom="@dimen/dp_40"
+            android:elevation="@dimen/dp_10"
+            android:importantForAccessibility="no"
+            app:backgroundTint="@android:color/white"
+            app:fabSize="auto"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_csv"
+            app:tint="@color/dark_grey4" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvWeek"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="@dimen/dp_10"
+            android:visibility="gone"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/ivCalender" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

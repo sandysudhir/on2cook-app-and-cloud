@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph.xml"
+    app:startDestination="@id/homeFragment">
+    <!--    app:startDestination="@id/connectionFragment">-->
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.invent.ontocook.multiple_connection.ui.DashboardFragment"
+        android:label="DashboardFragment"
+        tools:layout="@layout/fragment_dashboard">
+        <action
+            android:id="@+id/action_dashboardFragment_to_cookingFragment"
+            app:destination="@id/cookingFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.invent.ontocook.multiple_connection.ui.HomeFragment"
+        android:label="HomeFragment"
+        tools:layout="@layout/fragment_home">
+        <argument
+            android:name="MAC_ADDRESS"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_homeFragment_to_recipeFragment"
+            app:destination="@id/recipeFragment">
+            <argument
+                android:name="MAC_ADDRESS"
+                app:argType="string" />
+            <argument
+                android:name="recipeFragmentScreenFlowType"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/cookingFragment"
+        android:name="com.invent.ontocook.multiple_connection.ui.CookingFragment"
+        android:label="CookingFragment"
+        tools:layout="@layout/fragment_cooking">
+        <argument
+            android:name="recipeItem"
+            app:argType="com.invent.ontocook.models.RecentItem" />
+        <argument
+            android:name="MAC_ADDRESS"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/recipeFragment"
+        android:name="com.invent.ontocook.multiple_connection.ui.RecipeFragment"
+        android:label="RecipeFragment"
+        tools:layout="@layout/fragment_recipe_list">
+        <argument
+            android:name="MAC_ADDRESS"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_recipeFragment_to_recipeDetailFragment"
+            app:destination="@id/recipeDetailFragment">
+            <argument
+                android:name="MAC_ADDRESS"
+                app:argType="string" />
+            <argument
+                android:name="recipeItem"
+                app:argType="com.invent.ontocook.models.RecentItem" />
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/recipeDetailFragment"
+        android:name="com.invent.ontocook.multiple_connection.ui.RecipeDetailFragment"
+        android:label="RecipeDetailFragment"
+        tools:layout="@layout/fragment_recipe_detail">
+        <argument
+            android:name="MAC_ADDRESS"
+            app:argType="string" />
+        <argument
+            android:name="recipeItem"
+            app:argType="com.invent.ontocook.models.RecentItem" />
+        <action
+            android:id="@+id/action_recipeDetailFragment_to_cookingFragment"
+            app:destination="@id/cookingFragment">
+            <argument
+                android:name="recipeItem"
+                app:argType="com.invent.ontocook.models.RecentItem" />
+            <argument
+                android:name="MAC_ADDRESS"
+                app:argType="string" />
+        </action>
+        <action
+            android:id="@+id/action_recipeDetailFragment_to_cookingFragment2"
+            app:destination="@id/cookingFragment2">
+            <argument
+                android:name="recipeItem"
+                app:argType="com.invent.ontocook.models.RecentItem" />
+            <argument
+                android:name="MAC_ADDRESS"
+                app:argType="string" />
+        </action>
+    </fragment>
+
+    <fragment
+        android:id="@+id/cookingFragment2"
+        android:name="com.invent.ontocook.multiple_connection.ui.OldCookingFragment"
+        android:label="CookingFragment"
+        tools:layout="@layout/fragment_cooking_old_2" />
+
+    <fragment
+        android:id="@+id/connectionFragment"
+        android:name="com.invent.ontocook.multiple_connection.ui.ConnectionFragment"
+        android:label="ConnectionFragment"
+        tools:layout="@layout/fragment_connection">
+        <argument
+            android:name="MAC_ADDRESS"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_homeFragment_to_recipeFragment"
+            app:destination="@id/recipeFragment">
+            <argument
+                android:name="MAC_ADDRESS"
+                app:argType="string" />
+            <argument
+                android:name="recipeFragmentScreenFlowType"
+                app:argType="string" />
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/logFragment"
+        android:name="com.invent.ontocook.multiple_connection.ui.LogFragment"
+        android:label="LogFragment"
+        tools:layout="@layout/fragment_log">
+        <argument
+            android:name="MAC_ADDRESS"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/liveLogFragment"
+        android:name="com.invent.ontocook.multiple_connection.ui.LiveLogFragment"
+        android:label="LiveLogFragment"
+        tools:layout="@layout/fragment_live_log" />
+    <fragment
+        android:id="@+id/otaFragment"
+        android:name="com.invent.ontocook.multiple_connection.ui.OtaFragment"
+        android:label="OTAFragment"
+        tools:layout="@layout/fragment_ota" />
+
+</navigation>

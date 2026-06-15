@@ -1,0 +1,688 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".multiple_connection.HomeTvActivity">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/toolBar"
+            android:layout_width="match_parent"
+            android:layout_height="?actionBarSize"
+            android:background="@color/dark_grey"
+            android:paddingHorizontal="20dp"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivHome"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_home"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivLeft"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_back"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvPageTitle"
+                style="@style/regular_20_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/app_name"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivAddDevice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/add"
+                android:tint="@color/black"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivScan"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/scan"
+                android:tint="@color/black"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/ivAddDevice"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivStop"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:src="@drawable/stop"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <eo.view.bluetoothstate.BluetoothStateView
+                android:id="@+id/bleStateView1"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_margin="10dp"
+                app:bluetoothAnimateStateChanges="true"
+                app:bluetoothColor="@color/yellow"
+                app:bluetoothState="on"
+                app:bluetoothTheme="rounded"
+                app:layout_constraintBottom_toBottomOf="@id/ivStop"
+                app:layout_constraintLeft_toRightOf="@id/ivLeft"
+                app:layout_constraintRight_toLeftOf="@id/tvPageTitle"
+                app:layout_constraintTop_toTopOf="@id/ivStop" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:id="@+id/clItem"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:weightSum="5"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/toolBar">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clFragment1"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_margin="@dimen/dp_1"
+                android:layout_weight="1">
+
+                <include
+                    android:id="@+id/toolbar1"
+                    layout="@layout/tablet_toolbar" />
+
+                <FrameLayout
+                    android:id="@+id/fragment1"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:background="@color/dark_grey"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar1" />
+
+                <!--Commented by PrinceEWW, because According client's requirement, "disconnected" text will be hide permanently, So no need tom manage visibility-->
+                <!--<androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvPageStatus1"
+                    style="@style/regular_20_dark_gey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/disconnected"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar1" />-->
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clFragment2"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_margin="@dimen/dp_1"
+                android:layout_weight="1"
+                android:visibility="gone">
+
+                <include
+                    android:id="@+id/toolbar2"
+                    layout="@layout/tablet_toolbar" />
+
+                <FrameLayout
+                    android:id="@+id/fragment2"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@color/dark_grey"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar2" />
+
+                <!--Commented by PrinceEWW, because According client's requirement, "disconnected" text will be hide permanently, So no need tom manage visibility-->
+                <!--<androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvPageStatus2"
+                    style="@style/regular_20_dark_gey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/disconnected"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar2" />-->
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clFragment3"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/dp_1"
+                android:layout_weight="1"
+                android:visibility="gone">
+
+                <include
+                    android:id="@+id/toolbar3"
+                    layout="@layout/tablet_toolbar" />
+
+                <FrameLayout
+                    android:id="@+id/fragment3"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@color/dark_grey"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar3" />
+
+                <!--Commented by PrinceEWW, because According client's requirement, "disconnected" text will be hide permanently, So no need tom manage visibility-->
+                <!--<androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvPageStatus3"
+                    style="@style/regular_20_dark_gey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/disconnected"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar3" />-->
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clFragment4"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/dp_1"
+                android:layout_weight="1"
+                android:visibility="gone">
+
+                <include
+                    android:id="@+id/toolbar4"
+                    layout="@layout/tablet_toolbar" />
+
+                <FrameLayout
+                    android:id="@+id/fragment4"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@color/dark_grey"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar4" />
+
+                <!--Commented by PrinceEWW, because According client's requirement, "disconnected" text will be hide permanently, So no need tom manage visibility-->
+                <!--<androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvPageStatus4"
+                    style="@style/regular_20_dark_gey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/disconnected"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar4" />-->
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clFragment5"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_margin="@dimen/dp_1"
+                android:layout_weight="1"
+                android:visibility="gone">
+
+                <include
+                    android:id="@+id/toolbar5"
+                    layout="@layout/tablet_toolbar" />
+
+                <FrameLayout
+                    android:id="@+id/fragment5"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@color/dark_grey"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar5" />
+
+                <!--Commented by PrinceEWW, because According client's requirement, "disconnected" text will be hide permanently, So no need tom manage visibility-->
+                <!--<androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvPageStatus5"
+                    style="@style/regular_20_dark_gey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="@string/disconnected"
+                    android:visibility="gone"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar5" />-->
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clFragment6"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:visibility="gone">
+
+                <include
+                    android:id="@+id/toolbar6"
+                    layout="@layout/tablet_toolbar" />
+
+                <FrameLayout
+                    android:id="@+id/fragment6"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@color/dark_grey"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar6" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clFragment7"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:visibility="gone">
+
+                <include
+                    android:id="@+id/toolbar7"
+                    layout="@layout/tablet_toolbar" />
+
+                <FrameLayout
+                    android:id="@+id/fragment7"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@color/dark_grey"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/toolbar7" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </LinearLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayoutMenuBackground"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnAction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/dp_35"
+            android:layout_marginBottom="@dimen/dp_40"
+            android:importantForAccessibility="no"
+            app:backgroundTint="@android:color/white"
+            app:fabSize="auto"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:srcCompat="@drawable/ic_add_new_white"
+            app:tint="@color/dark_grey4" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/dp_10"
+            android:background="@color/dark_grey"
+            android:paddingStart="@dimen/dp_10"
+            android:paddingEnd="@dimen/dp_10"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/btnAction"
+            app:layout_constraintEnd_toEndOf="@+id/btnAction">
+
+            <!--This is a parent Floating Action Button-->
+            <!-- When this FAB Button is been pressed/clicked the following two button will get pop-up with animation -->
+            <!-- the Functionality is been done in MainActivity.java file -->
+            <!-- The other two FAB button is been set to InVisible so when user click on this button those 2 will get visible-->
+
+            <!--This act a child Floating Action Button-->
+            <!-- The visibility is been set to INVISIBLE -->
+
+
+            <!--This act a child Floating Action Button-->
+            <!-- The visibility is been set to INVISIBLE -->
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clOn2CookAI"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnOn2CookAI"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:srcCompat="@drawable/ic_qr_code_scanner"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvOn2CookAI"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_On2cook_AI"
+                    app:layout_constraintBottom_toBottomOf="@id/btnOn2CookAI"
+                    app:layout_constraintEnd_toStartOf="@id/btnOn2CookAI"
+                    app:layout_constraintTop_toTopOf="@id/btnOn2CookAI" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Existing "Create Fry Recipe" Button -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clCreateFryRecipe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@id/clOn2CookAI">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnCreateFryRecipe"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:srcCompat="@drawable/ic_recipe_logo"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvCreateFryRecipe"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_create_fry_recipe"
+                    app:layout_constraintBottom_toBottomOf="@id/btnCreateFryRecipe"
+                    app:layout_constraintEnd_toStartOf="@id/btnCreateFryRecipe"
+                    app:layout_constraintTop_toTopOf="@id/btnCreateFryRecipe" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Existing "Create Recipe" Button -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clCreateRecipe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@id/clCreateFryRecipe">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnCreate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:srcCompat="@drawable/ic_recipe_logo"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvCreateRecipe"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_create_recipe"
+                    app:layout_constraintBottom_toBottomOf="@id/btnCreate"
+                    app:layout_constraintEnd_toStartOf="@id/btnCreate"
+                    app:layout_constraintTop_toTopOf="@id/btnCreate" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clUploadRecipe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@+id/clCreateRecipe">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnUpload"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    android:src="@drawable/ic_upload"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvUploadRecipe"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_upload_recipe"
+                    app:layout_constraintBottom_toBottomOf="@id/btnUpload"
+                    app:layout_constraintEnd_toStartOf="@id/btnUpload"
+                    app:layout_constraintTop_toTopOf="@id/btnUpload" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clUploadAudio"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@+id/clUploadRecipe">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnUploadAudio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    android:src="@drawable/ic_upload"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvUploadAudio"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_upload_audio"
+                    app:layout_constraintBottom_toBottomOf="@id/btnUploadAudio"
+                    app:layout_constraintEnd_toStartOf="@id/btnUploadAudio"
+                    app:layout_constraintTop_toTopOf="@id/btnUploadAudio" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clSetUpDevice"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintLeft_toLeftOf="@+id/clShareRecipe"
+                app:layout_constraintRight_toRightOf="@id/clShareRecipe"
+                app:layout_constraintTop_toBottomOf="@+id/clUploadAudio">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnSetUp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="false"
+                    android:focusable="true"
+                    android:src="@drawable/ic_smart_device"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvSetUp"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_device_set_up"
+                    app:layout_constraintBottom_toBottomOf="@id/btnSetUp"
+                    app:layout_constraintEnd_toStartOf="@id/btnSetUp"
+                    app:layout_constraintTop_toTopOf="@id/btnSetUp" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clShareRecipe"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_10"
+                android:layout_marginBottom="@dimen/dp_10"
+                android:background="@drawable/ic_three_round_corner_bottom_right_white"
+                android:paddingHorizontal="@dimen/dp_5"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/clSetUpDevice">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/btnShare"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="false"
+                    app:backgroundTint="@color/orange"
+                    app:elevation="0dp"
+                    app:fabCustomSize="@dimen/dp_40"
+                    app:fabSize="mini"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:maxImageSize="@dimen/dp_20"
+                    app:srcCompat="@drawable/ic_share"
+                    app:tint="@color/white" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvShareRecipe"
+                    style="@style/bold_14_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_round_corner_white"
+                    android:paddingHorizontal="@dimen/dp_5"
+                    android:text="@string/txt_share_recipe"
+                    app:layout_constraintBottom_toBottomOf="@id/btnShare"
+                    app:layout_constraintEnd_toStartOf="@id/btnShare"
+                    app:layout_constraintTop_toTopOf="@id/btnShare" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

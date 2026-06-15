@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    res/layout/item_log_row.xml
+
+    Uses the BUILT-IN android.widget.GridLayout (API 14+).
+    No extra Gradle dependency is needed — this is the same class
+    imported in LogViewerActivity.kt as:
+        import android.widget.GridLayout
+-->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginTop="3dp"
+    android:layout_marginBottom="3dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@color/progress_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <!-- Row index (left) ── timestamp (right) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvRowIndex"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white_54"
+                android:textSize="11sp"
+                tools:text="#1" />
+
+            <!-- Flexible spacer -->
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvRowTimestamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white_60"
+                android:textSize="11sp"
+                tools:text="12:34:56" />
+
+        </LinearLayout>
+
+        <!-- Thin divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp"
+            android:background="@color/divider_white" />
+
+        <!--
+            android.widget.GridLayout — the fully-qualified tag avoids any
+            ambiguity between the built-in class and the AndroidX variant.
+            columnCount="2": col 0 = key label, col 1 = value.
+            All child views are added programmatically by LogRowAdapter.
+        -->
+        <android.widget.GridLayout
+            android:id="@+id/gridValues"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:rowOrderPreserved="false" />
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

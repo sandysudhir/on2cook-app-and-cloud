@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/createRecipeFragment"
+        android:title="@string/title_recipe"/>
+
+    <item
+        android:id="@+id/ingredientsFragment"
+        android:title="@string/title_ingredients"/>
+
+    <item
+        android:id="@+id/instructionFragment"
+        android:title="@string/title_instructions"/>
+
+</menu>

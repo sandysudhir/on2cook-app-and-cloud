@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="@dimen/dp_4"
+    android:paddingTop="@dimen/dp_2"
+    android:paddingEnd="@dimen/dp_4"
+    android:paddingBottom="@dimen/dp_2">
+
+    <!-- Hidden image view kept only because IngredientsListAdapter.kt still references binding.ivItem -->
+    <com.comix.rounded.RoundedCornerImageView
+        android:id="@+id/ivItem"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:src="@drawable/placeholder"
+        android:visibility="gone"
+        app:cornerColor="@color/dark_grey"
+        app:cornerRadius="3dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvItemName"
+        style="@style/bold_12_grey_4"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:text="Butter"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toStartOf="@+id/tvQty"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvQty"
+        style="@style/regular_10_dark_gey_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/dp_8"
+        android:gravity="end"
+        android:text="30 gm"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/tvItemName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tvItemName" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvDesc"
+        style="@style/regular_10_dark_gey_2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:gravity="start"
+        android:text="Redefine"
+        android:textSize="10sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/tvItemName"
+        app:layout_constraintTop_toBottomOf="@+id/tvItemName" />
+
+    <View
+        android:id="@+id/viewLine"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/dp_2"
+        android:background="@color/dark_grey5"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvItemName" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

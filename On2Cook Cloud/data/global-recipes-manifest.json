@@ -1,0 +1,3422 @@
+[
+    {
+        "id":  "AALNI BHAAT",
+        "zipName":  "AALNI BHAAT.zip",
+        "recipeName":  "AALNI BHAAT",
+        "zipUrl":  "./data/global-recipe-library/AALNI%20BHAAT.zip"
+    },
+    {
+        "id":  "AFGHANI MUTTON",
+        "zipName":  "AFGHANI MUTTON.zip",
+        "recipeName":  "AFGHANI MUTTON",
+        "zipUrl":  "./data/global-recipe-library/AFGHANI%20MUTTON.zip"
+    },
+    {
+        "id":  "ALFREDO PASTA ",
+        "zipName":  "ALFREDO PASTA .zip",
+        "recipeName":  "ALFREDO PASTA",
+        "zipUrl":  "./data/global-recipe-library/ALFREDO%20PASTA%20.zip"
+    },
+    {
+        "id":  "ALMOND KHEER ",
+        "zipName":  "ALMOND KHEER .zip",
+        "recipeName":  "ALMOND KHEER",
+        "zipUrl":  "./data/global-recipe-library/ALMOND%20KHEER%20.zip"
+    },
+    {
+        "id":  "ALOO GOBI",
+        "zipName":  "ALOO GOBI.zip",
+        "recipeName":  "ALOO GOBI",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20GOBI.zip"
+    },
+    {
+        "id":  "ALOO MATAR RASSA",
+        "zipName":  "ALOO MATAR RASSA.zip",
+        "recipeName":  "ALOO MATAR RASSA",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20MATAR%20RASSA.zip"
+    },
+    {
+        "id":  "ALOO MUTTER 1000G",
+        "zipName":  "ALOO MUTTER 1000G.zip",
+        "recipeName":  "ALOO MUTTER 1000G",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20MUTTER%201000G.zip"
+    },
+    {
+        "id":  "ALOO MUTTER 2000G",
+        "zipName":  "ALOO MUTTER 2000G.zip",
+        "recipeName":  "ALOO MUTTER 2000G",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20MUTTER%202000G.zip"
+    },
+    {
+        "id":  "ALOO MUTTER 3000G",
+        "zipName":  "ALOO MUTTER 3000G.zip",
+        "recipeName":  "ALOO MUTTER 3000G",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20MUTTER%203000G.zip"
+    },
+    {
+        "id":  "ALOO PAKODA ",
+        "zipName":  "ALOO PAKODA .zip",
+        "recipeName":  "ALOO PAKODA",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20PAKODA%20.zip"
+    },
+    {
+        "id":  "ALOO PARATHA",
+        "zipName":  "ALOO PARATHA.zip",
+        "recipeName":  "ALOO PARATHA",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20PARATHA.zip"
+    },
+    {
+        "id":  "ALOO POSTO ",
+        "zipName":  "ALOO POSTO .zip",
+        "recipeName":  "ALOO POSTO",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20POSTO%20.zip"
+    },
+    {
+        "id":  "ALOO PYAZ SABZI",
+        "zipName":  "ALOO PYAZ SABZI.zip",
+        "recipeName":  "ALOO PYAZ SABZI",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20PYAZ%20SABZI.zip"
+    },
+    {
+        "id":  "ALOO RASAWALA",
+        "zipName":  "ALOO RASAWALA.zip",
+        "recipeName":  "ALOO RASAWALA",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20RASAWALA.zip"
+    },
+    {
+        "id":  "ALOO SAMOSA ",
+        "zipName":  "ALOO SAMOSA .zip",
+        "recipeName":  "ALOO SAMOSA",
+        "zipUrl":  "./data/global-recipe-library/ALOO%20SAMOSA%20.zip"
+    },
+    {
+        "id":  "ALUR DUM",
+        "zipName":  "ALUR DUM.zip",
+        "recipeName":  "ALUR DUM",
+        "zipUrl":  "./data/global-recipe-library/ALUR%20DUM.zip"
+    },
+    {
+        "id":  "AMRITSARI FISH",
+        "zipName":  "AMRITSARI FISH.zip",
+        "recipeName":  "AMRITSARI FISH",
+        "zipUrl":  "./data/global-recipe-library/AMRITSARI%20FISH.zip"
+    },
+    {
+        "id":  "AMUL CHEESE CORN",
+        "zipName":  "AMUL CHEESE CORN.zip",
+        "recipeName":  "AMUL CHEESE CORN",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20CHEESE%20CORN.zip"
+    },
+    {
+        "id":  "AMUL DAHI TIKKA(2)",
+        "zipName":  "AMUL DAHI TIKKA(2).zip",
+        "recipeName":  "AMUL DAHI TIKKA(2)",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20DAHI%20TIKKA(2).zip"
+    },
+    {
+        "id":  "AMUL DAHI TIKKA",
+        "zipName":  "AMUL DAHI TIKKA.zip",
+        "recipeName":  "AMUL DAHI TIKKA",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20DAHI%20TIKKA.zip"
+    },
+    {
+        "id":  "AMUL FRENCH FRIES ",
+        "zipName":  "AMUL FRENCH FRIES .zip",
+        "recipeName":  "AMUL FRENCH FRIES",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20FRENCH%20FRIES%20.zip"
+    },
+    {
+        "id":  "AMUL HASH BROWN (2)",
+        "zipName":  "AMUL HASH BROWN (2).zip",
+        "recipeName":  "AMUL HASH BROWN (2)",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20HASH%20BROWN%20(2).zip"
+    },
+    {
+        "id":  "AMUL HASH BROWN ",
+        "zipName":  "AMUL HASH BROWN .zip",
+        "recipeName":  "AMUL HASH BROWN",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20HASH%20BROWN%20.zip"
+    },
+    {
+        "id":  "AMUL ONION PKT",
+        "zipName":  "AMUL ONION PKT.zip",
+        "recipeName":  "AMUL ONION PKT",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20ONION%20PKT.zip"
+    },
+    {
+        "id":  "AMUL PARATHA ",
+        "zipName":  "AMUL PARATHA .zip",
+        "recipeName":  "AMUL PARATHA",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20PARATHA%20.zip"
+    },
+    {
+        "id":  "AMUL PNR NUGGETS ",
+        "zipName":  "AMUL PNR NUGGETS .zip",
+        "recipeName":  "AMUL PNR NUGGETS",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20PNR%20NUGGETS%20.zip"
+    },
+    {
+        "id":  "AMUL POPPONS(2)",
+        "zipName":  "AMUL POPPONS(2).zip",
+        "recipeName":  "AMUL POPPONS(2)",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20POPPONS(2).zip"
+    },
+    {
+        "id":  "AMUL POPPONS",
+        "zipName":  "AMUL POPPONS.zip",
+        "recipeName":  "AMUL POPPONS",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20POPPONS.zip"
+    },
+    {
+        "id":  "AMUL SAMOSA",
+        "zipName":  "AMUL SAMOSA.zip",
+        "recipeName":  "AMUL SAMOSA",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20SAMOSA.zip"
+    },
+    {
+        "id":  "AMUL VEG STIX",
+        "zipName":  "AMUL VEG STIX.zip",
+        "recipeName":  "AMUL VEG STIX",
+        "zipUrl":  "./data/global-recipe-library/AMUL%20VEG%20STIX.zip"
+    },
+    {
+        "id":  "ANDH MSH CURRY",
+        "zipName":  "ANDH MSH CURRY.zip",
+        "recipeName":  "ANDH MSH CURRY",
+        "zipUrl":  "./data/global-recipe-library/ANDH%20MSH%20CURRY.zip"
+    },
+    {
+        "id":  "ANDH PNR CURRY",
+        "zipName":  "ANDH PNR CURRY.zip",
+        "recipeName":  "ANDH PNR CURRY",
+        "zipUrl":  "./data/global-recipe-library/ANDH%20PNR%20CURRY.zip"
+    },
+    {
+        "id":  "ANDHRA CHI CURRY",
+        "zipName":  "ANDHRA CHI CURRY.zip",
+        "recipeName":  "ANDHRA CHI CURRY",
+        "zipUrl":  "./data/global-recipe-library/ANDHRA%20CHI%20CURRY.zip"
+    },
+    {
+        "id":  "ANDHRA CHI FRY",
+        "zipName":  "ANDHRA CHI FRY.zip",
+        "recipeName":  "ANDHRA CHI FRY",
+        "zipUrl":  "./data/global-recipe-library/ANDHRA%20CHI%20FRY.zip"
+    },
+    {
+        "id":  "ANDHRA CHI RASSA",
+        "zipName":  "ANDHRA CHI RASSA.zip",
+        "recipeName":  "ANDHRA CHI RASSA",
+        "zipUrl":  "./data/global-recipe-library/ANDHRA%20CHI%20RASSA.zip"
+    },
+    {
+        "id":  "APPLE CIN CAKE",
+        "zipName":  "APPLE CIN CAKE.zip",
+        "recipeName":  "APPLE CIN CAKE",
+        "zipUrl":  "./data/global-recipe-library/APPLE%20CIN%20CAKE.zip"
+    },
+    {
+        "id":  "ARRABBIATA SAUCE",
+        "zipName":  "ARRABBIATA SAUCE.zip",
+        "recipeName":  "ARRABBIATA SAUCE",
+        "zipUrl":  "./data/global-recipe-library/ARRABBIATA%20SAUCE.zip"
+    },
+    {
+        "id":  "AVIAL",
+        "zipName":  "AVIAL.zip",
+        "recipeName":  "AVIAL",
+        "zipUrl":  "./data/global-recipe-library/AVIAL.zip"
+    },
+    {
+        "id":  "BAINGAN BHAJA",
+        "zipName":  "BAINGAN BHAJA.zip",
+        "recipeName":  "BAINGAN BHAJA",
+        "zipUrl":  "./data/global-recipe-library/BAINGAN%20BHAJA.zip"
+    },
+    {
+        "id":  "BAINGAN BHARTA ",
+        "zipName":  "BAINGAN BHARTA .zip",
+        "recipeName":  "BAINGAN BHARTA",
+        "zipUrl":  "./data/global-recipe-library/BAINGAN%20BHARTA%20.zip"
+    },
+    {
+        "id":  "BANANA CRML CAKE",
+        "zipName":  "BANANA CRML CAKE.zip",
+        "recipeName":  "BANANA CRML CAKE",
+        "zipUrl":  "./data/global-recipe-library/BANANA%20CRML%20CAKE.zip"
+    },
+    {
+        "id":  "BANANA WLT CAKE",
+        "zipName":  "BANANA WLT CAKE.zip",
+        "recipeName":  "BANANA WLT CAKE",
+        "zipUrl":  "./data/global-recipe-library/BANANA%20WLT%20CAKE.zip"
+    },
+    {
+        "id":  "BASIL PESTO ",
+        "zipName":  "BASIL PESTO .zip",
+        "recipeName":  "BASIL PESTO",
+        "zipUrl":  "./data/global-recipe-library/BASIL%20PESTO%20.zip"
+    },
+    {
+        "id":  "BATHUA SUBZI",
+        "zipName":  "BATHUA SUBZI.zip",
+        "recipeName":  "BATHUA SUBZI",
+        "zipUrl":  "./data/global-recipe-library/BATHUA%20SUBZI.zip"
+    },
+    {
+        "id":  "BBQ CHI WINGS",
+        "zipName":  "BBQ CHI WINGS.zip",
+        "recipeName":  "BBQ CHI WINGS",
+        "zipUrl":  "./data/global-recipe-library/BBQ%20CHI%20WINGS.zip"
+    },
+    {
+        "id":  "BBQ PANEER STRIP",
+        "zipName":  "BBQ PANEER STRIP.zip",
+        "recipeName":  "BBQ PANEER STRIP",
+        "zipUrl":  "./data/global-recipe-library/BBQ%20PANEER%20STRIP.zip"
+    },
+    {
+        "id":  "BEEF CHILI SMALL",
+        "zipName":  "BEEF CHILI SMALL.zip",
+        "recipeName":  "BEEF CHILI SMALL",
+        "zipUrl":  "./data/global-recipe-library/BEEF%20CHILI%20SMALL.zip"
+    },
+    {
+        "id":  "BEEF CHILLI BIG",
+        "zipName":  "BEEF CHILLI BIG.zip",
+        "recipeName":  "BEEF CHILLI BIG",
+        "zipUrl":  "./data/global-recipe-library/BEEF%20CHILLI%20BIG.zip"
+    },
+    {
+        "id":  "BENGALI KHICHDI ",
+        "zipName":  "BENGALI KHICHDI .zip",
+        "recipeName":  "BENGALI KHICHDI",
+        "zipUrl":  "./data/global-recipe-library/BENGALI%20KHICHDI%20.zip"
+    },
+    {
+        "id":  "BENGALI PULAO ",
+        "zipName":  "BENGALI PULAO .zip",
+        "recipeName":  "BENGALI PULAO",
+        "zipUrl":  "./data/global-recipe-library/BENGALI%20PULAO%20.zip"
+    },
+    {
+        "id":  "BESAN CHILLA ",
+        "zipName":  "BESAN CHILLA .zip",
+        "recipeName":  "BESAN CHILLA",
+        "zipUrl":  "./data/global-recipe-library/BESAN%20CHILLA%20.zip"
+    },
+    {
+        "id":  "BESAN LADOO",
+        "zipName":  "BESAN LADOO.zip",
+        "recipeName":  "BESAN LADOO",
+        "zipUrl":  "./data/global-recipe-library/BESAN%20LADOO.zip"
+    },
+    {
+        "id":  "BESAN TURAI",
+        "zipName":  "BESAN TURAI.zip",
+        "recipeName":  "BESAN TURAI",
+        "zipUrl":  "./data/global-recipe-library/BESAN%20TURAI.zip"
+    },
+    {
+        "id":  "BHAPA DOI",
+        "zipName":  "BHAPA DOI.zip",
+        "recipeName":  "BHAPA DOI",
+        "zipUrl":  "./data/global-recipe-library/BHAPA%20DOI.zip"
+    },
+    {
+        "id":  "BHARELA KARELA ",
+        "zipName":  "BHARELA KARELA .zip",
+        "recipeName":  "BHARELA KARELA",
+        "zipUrl":  "./data/global-recipe-library/BHARELA%20KARELA%20.zip"
+    },
+    {
+        "id":  "BHARELA MIRCHI ",
+        "zipName":  "BHARELA MIRCHI .zip",
+        "recipeName":  "BHARELA MIRCHI",
+        "zipUrl":  "./data/global-recipe-library/BHARELA%20MIRCHI%20.zip"
+    },
+    {
+        "id":  "BHINDI MASALA",
+        "zipName":  "BHINDI MASALA.zip",
+        "recipeName":  "BHINDI MASALA",
+        "zipUrl":  "./data/global-recipe-library/BHINDI%20MASALA.zip"
+    },
+    {
+        "id":  "BHUNA BESAN GN",
+        "zipName":  "BHUNA BESAN GN.zip",
+        "recipeName":  "BHUNA BESAN GN",
+        "zipUrl":  "./data/global-recipe-library/BHUNA%20BESAN%20GN.zip"
+    },
+    {
+        "id":  "BOILED CHOLE GN",
+        "zipName":  "BOILED CHOLE GN.zip",
+        "recipeName":  "BOILED CHOLE GN",
+        "zipUrl":  "./data/global-recipe-library/BOILED%20CHOLE%20GN.zip"
+    },
+    {
+        "id":  "BOILED MUTTON",
+        "zipName":  "BOILED MUTTON.zip",
+        "recipeName":  "BOILED MUTTON",
+        "zipUrl":  "./data/global-recipe-library/BOILED%20MUTTON.zip"
+    },
+    {
+        "id":  "BOILED PASTA ",
+        "zipName":  "BOILED PASTA .zip",
+        "recipeName":  "BOILED PASTA",
+        "zipUrl":  "./data/global-recipe-library/BOILED%20PASTA%20.zip"
+    },
+    {
+        "id":  "BOM KEEMA MASALA",
+        "zipName":  "BOM KEEMA MASALA.zip",
+        "recipeName":  "BOM KEEMA MASALA",
+        "zipUrl":  "./data/global-recipe-library/BOM%20KEEMA%20MASALA.zip"
+    },
+    {
+        "id":  "BONE AND VEG SP",
+        "zipName":  "BONE AND VEG SP.zip",
+        "recipeName":  "BONE AND VEG SP",
+        "zipUrl":  "./data/global-recipe-library/BONE%20AND%20VEG%20SP.zip"
+    },
+    {
+        "id":  "BREAD PAKODA",
+        "zipName":  "BREAD PAKODA.zip",
+        "recipeName":  "BREAD PAKODA",
+        "zipUrl":  "./data/global-recipe-library/BREAD%20PAKODA.zip"
+    },
+    {
+        "id":  "BREAKFAST EGG",
+        "zipName":  "BREAKFAST EGG.zip",
+        "recipeName":  "BREAKFAST EGG",
+        "zipUrl":  "./data/global-recipe-library/BREAKFAST%20EGG.zip"
+    },
+    {
+        "id":  "BRIGADEIRO",
+        "zipName":  "BRIGADEIRO.zip",
+        "recipeName":  "BRIGADEIRO",
+        "zipUrl":  "./data/global-recipe-library/BRIGADEIRO.zip"
+    },
+    {
+        "id":  "BROCCOLI  ANTUNES",
+        "zipName":  "BROCCOLI  ANTUNES.zip",
+        "recipeName":  "BROCCOLI  ANTUNES",
+        "zipUrl":  "./data/global-recipe-library/BROCCOLI%20%20ANTUNES.zip"
+    },
+    {
+        "id":  "BROCCOLI CHEESE",
+        "zipName":  "BROCCOLI CHEESE.zip",
+        "recipeName":  "BROCCOLI CHEESE",
+        "zipUrl":  "./data/global-recipe-library/BROCCOLI%20CHEESE.zip"
+    },
+    {
+        "id":  "BROCCOLI TIKKA ",
+        "zipName":  "BROCCOLI TIKKA .zip",
+        "recipeName":  "BROCCOLI TIKKA",
+        "zipUrl":  "./data/global-recipe-library/BROCCOLI%20TIKKA%20.zip"
+    },
+    {
+        "id":  "BROWN HERB RICE ",
+        "zipName":  "BROWN HERB RICE .zip",
+        "recipeName":  "BROWN HERB RICE",
+        "zipUrl":  "./data/global-recipe-library/BROWN%20HERB%20RICE%20.zip"
+    },
+    {
+        "id":  "BROWN ONION RICE",
+        "zipName":  "BROWN ONION RICE.zip",
+        "recipeName":  "BROWN ONION RICE",
+        "zipUrl":  "./data/global-recipe-library/BROWN%20ONION%20RICE.zip"
+    },
+    {
+        "id":  "BROWN STIR-FRY ",
+        "zipName":  "BROWN STIR-FRY .zip",
+        "recipeName":  "BROWN STIR-FRY",
+        "zipUrl":  "./data/global-recipe-library/BROWN%20STIR-FRY%20.zip"
+    },
+    {
+        "id":  "BROWN STOCK ",
+        "zipName":  "BROWN STOCK .zip",
+        "recipeName":  "BROWN STOCK",
+        "zipUrl":  "./data/global-recipe-library/BROWN%20STOCK%20.zip"
+    },
+    {
+        "id":  "BRZ CHEESE BALLS",
+        "zipName":  "BRZ CHEESE BALLS.zip",
+        "recipeName":  "BRZ CHEESE BALLS",
+        "zipUrl":  "./data/global-recipe-library/BRZ%20CHEESE%20BALLS.zip"
+    },
+    {
+        "id":  "BRZ CHI BALLS",
+        "zipName":  "BRZ CHI BALLS.zip",
+        "recipeName":  "BRZ CHI BALLS",
+        "zipUrl":  "./data/global-recipe-library/BRZ%20CHI%20BALLS.zip"
+    },
+    {
+        "id":  "BURNT GARLIC R",
+        "zipName":  "BURNT GARLIC R.zip",
+        "recipeName":  "BURNT GARLIC R",
+        "zipUrl":  "./data/global-recipe-library/BURNT%20GARLIC%20R.zip"
+    },
+    {
+        "id":  "BUTTER CHICKEN",
+        "zipName":  "BUTTER CHICKEN.zip",
+        "recipeName":  "BUTTER CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/BUTTER%20CHICKEN.zip"
+    },
+    {
+        "id":  "BUTTER CHICKEN3K",
+        "zipName":  "BUTTER CHICKEN3K.zip",
+        "recipeName":  "BUTTER CHICKEN3K",
+        "zipUrl":  "./data/global-recipe-library/BUTTER%20CHICKEN3K.zip"
+    },
+    {
+        "id":  "CABBAGE PORIYAL ",
+        "zipName":  "CABBAGE PORIYAL .zip",
+        "recipeName":  "CABBAGE PORIYAL",
+        "zipUrl":  "./data/global-recipe-library/CABBAGE%20PORIYAL%20.zip"
+    },
+    {
+        "id":  "CABBAGE ROLL",
+        "zipName":  "CABBAGE ROLL.zip",
+        "recipeName":  "CABBAGE ROLL",
+        "zipUrl":  "./data/global-recipe-library/CABBAGE%20ROLL.zip"
+    },
+    {
+        "id":  "CACIO E PEPE",
+        "zipName":  "CACIO E PEPE.zip",
+        "recipeName":  "CACIO E PEPE",
+        "zipUrl":  "./data/global-recipe-library/CACIO%20E%20PEPE.zip"
+    },
+    {
+        "id":  "CACIO PEPE CHI",
+        "zipName":  "CACIO PEPE CHI.zip",
+        "recipeName":  "CACIO PEPE CHI",
+        "zipUrl":  "./data/global-recipe-library/CACIO%20PEPE%20CHI.zip"
+    },
+    {
+        "id":  "CAJUN CHI RICE",
+        "zipName":  "CAJUN CHI RICE.zip",
+        "recipeName":  "CAJUN CHI RICE",
+        "zipUrl":  "./data/global-recipe-library/CAJUN%20CHI%20RICE.zip"
+    },
+    {
+        "id":  "CARAMEL CAKE",
+        "zipName":  "CARAMEL CAKE.zip",
+        "recipeName":  "CARAMEL CAKE",
+        "zipUrl":  "./data/global-recipe-library/CARAMEL%20CAKE.zip"
+    },
+    {
+        "id":  "CARROT CAKE",
+        "zipName":  "CARROT CAKE.zip",
+        "recipeName":  "CARROT CAKE",
+        "zipUrl":  "./data/global-recipe-library/CARROT%20CAKE.zip"
+    },
+    {
+        "id":  "CARROT PORIYAL ",
+        "zipName":  "CARROT PORIYAL .zip",
+        "recipeName":  "CARROT PORIYAL",
+        "zipUrl":  "./data/global-recipe-library/CARROT%20PORIYAL%20.zip"
+    },
+    {
+        "id":  "CAULIFLOWER SOUP",
+        "zipName":  "CAULIFLOWER SOUP.zip",
+        "recipeName":  "CAULIFLOWER SOUP",
+        "zipUrl":  "./data/global-recipe-library/CAULIFLOWER%20SOUP.zip"
+    },
+    {
+        "id":  "CHANA DAL ",
+        "zipName":  "CHANA DAL .zip",
+        "recipeName":  "CHANA DAL",
+        "zipUrl":  "./data/global-recipe-library/CHANA%20DAL%20.zip"
+    },
+    {
+        "id":  "CHANA MADRA",
+        "zipName":  "CHANA MADRA.zip",
+        "recipeName":  "CHANA MADRA",
+        "zipUrl":  "./data/global-recipe-library/CHANA%20MADRA.zip"
+    },
+    {
+        "id":  "CHANAR DALNA",
+        "zipName":  "CHANAR DALNA.zip",
+        "recipeName":  "CHANAR DALNA",
+        "zipUrl":  "./data/global-recipe-library/CHANAR%20DALNA.zip"
+    },
+    {
+        "id":  "CHAPLI KEBAB",
+        "zipName":  "CHAPLI KEBAB.zip",
+        "recipeName":  "CHAPLI KEBAB",
+        "zipUrl":  "./data/global-recipe-library/CHAPLI%20KEBAB.zip"
+    },
+    {
+        "id":  "CHEESE CORN SAMOSA",
+        "zipName":  "CHEESE CORN SAMOSA.zip",
+        "recipeName":  "CHEESE CORN SAMOSA",
+        "zipUrl":  "./data/global-recipe-library/CHEESE%20CORN%20SAMOSA.zip"
+    },
+    {
+        "id":  "CHEESE MAGGI",
+        "zipName":  "CHEESE MAGGI.zip",
+        "recipeName":  "CHEESE MAGGI",
+        "zipUrl":  "./data/global-recipe-library/CHEESE%20MAGGI.zip"
+    },
+    {
+        "id":  "CHEESE OMELETTE",
+        "zipName":  "CHEESE OMELETTE.zip",
+        "recipeName":  "CHEESE OMELETTE",
+        "zipUrl":  "./data/global-recipe-library/CHEESE%20OMELETTE.zip"
+    },
+    {
+        "id":  "CHENNAI CHICKEN ",
+        "zipName":  "CHENNAI CHICKEN .zip",
+        "recipeName":  "CHENNAI CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/CHENNAI%20CHICKEN%20.zip"
+    },
+    {
+        "id":  "CHETTINAD CHUKKA",
+        "zipName":  "CHETTINAD CHUKKA.zip",
+        "recipeName":  "CHETTINAD CHUKKA",
+        "zipUrl":  "./data/global-recipe-library/CHETTINAD%20CHUKKA.zip"
+    },
+    {
+        "id":  "CHI BIRYANI 1000",
+        "zipName":  "CHI BIRYANI 1000.zip",
+        "recipeName":  "CHI BIRYANI 1000",
+        "zipUrl":  "./data/global-recipe-library/CHI%20BIRYANI%201000.zip"
+    },
+    {
+        "id":  "CHI BIRYANI 2000",
+        "zipName":  "CHI BIRYANI 2000.zip",
+        "recipeName":  "CHI BIRYANI 2000",
+        "zipUrl":  "./data/global-recipe-library/CHI%20BIRYANI%202000.zip"
+    },
+    {
+        "id":  "CHI BIRYANI 2800",
+        "zipName":  "CHI BIRYANI 2800.zip",
+        "recipeName":  "CHI BIRYANI 2800",
+        "zipUrl":  "./data/global-recipe-library/CHI%20BIRYANI%202800.zip"
+    },
+    {
+        "id":  "CHI BRW STIR FRY",
+        "zipName":  "CHI BRW STIR FRY.zip",
+        "recipeName":  "CHI BRW STIR FRY",
+        "zipUrl":  "./data/global-recipe-library/CHI%20BRW%20STIR%20FRY.zip"
+    },
+    {
+        "id":  "CHI CACCIATORE",
+        "zipName":  "CHI CACCIATORE.zip",
+        "recipeName":  "CHI CACCIATORE",
+        "zipUrl":  "./data/global-recipe-library/CHI%20CACCIATORE.zip"
+    },
+    {
+        "id":  "CHI CHETTINAD ",
+        "zipName":  "CHI CHETTINAD .zip",
+        "recipeName":  "CHI CHETTINAD",
+        "zipUrl":  "./data/global-recipe-library/CHI%20CHETTINAD%20.zip"
+    },
+    {
+        "id":  "CHI CHILLI DRY ",
+        "zipName":  "CHI CHILLI DRY .zip",
+        "recipeName":  "CHI CHILLI DRY",
+        "zipUrl":  "./data/global-recipe-library/CHI%20CHILLI%20DRY%20.zip"
+    },
+    {
+        "id":  "CHI CHL GAR NDL",
+        "zipName":  "CHI CHL GAR NDL.zip",
+        "recipeName":  "CHI CHL GAR NDL",
+        "zipUrl":  "./data/global-recipe-library/CHI%20CHL%20GAR%20NDL.zip"
+    },
+    {
+        "id":  "CHI CHL GAR RICE",
+        "zipName":  "CHI CHL GAR RICE.zip",
+        "recipeName":  "CHI CHL GAR RICE",
+        "zipUrl":  "./data/global-recipe-library/CHI%20CHL%20GAR%20RICE.zip"
+    },
+    {
+        "id":  "CHI CL STIR FRY",
+        "zipName":  "CHI CL STIR FRY.zip",
+        "recipeName":  "CHI CL STIR FRY",
+        "zipUrl":  "./data/global-recipe-library/CHI%20CL%20STIR%20FRY.zip"
+    },
+    {
+        "id":  "CHI DARBARI DRY",
+        "zipName":  "CHI DARBARI DRY.zip",
+        "recipeName":  "CHI DARBARI DRY",
+        "zipUrl":  "./data/global-recipe-library/CHI%20DARBARI%20DRY.zip"
+    },
+    {
+        "id":  "CHI FRIED RICE",
+        "zipName":  "CHI FRIED RICE.zip",
+        "recipeName":  "CHI FRIED RICE",
+        "zipUrl":  "./data/global-recipe-library/CHI%20FRIED%20RICE.zip"
+    },
+    {
+        "id":  "CHI GHEE ROAST",
+        "zipName":  "CHI GHEE ROAST.zip",
+        "recipeName":  "CHI GHEE ROAST",
+        "zipUrl":  "./data/global-recipe-library/CHI%20GHEE%20ROAST.zip"
+    },
+    {
+        "id":  "CHI HAKKA NDL",
+        "zipName":  "CHI HAKKA NDL.zip",
+        "recipeName":  "CHI HAKKA NDL",
+        "zipUrl":  "./data/global-recipe-library/CHI%20HAKKA%20NDL.zip"
+    },
+    {
+        "id":  "CHI LEMON COR SP ",
+        "zipName":  "CHI LEMON COR SP .zip",
+        "recipeName":  "CHI LEMON COR SP",
+        "zipUrl":  "./data/global-recipe-library/CHI%20LEMON%20COR%20SP%20.zip"
+    },
+    {
+        "id":  "CHI LOLLIPOP FRY",
+        "zipName":  "CHI LOLLIPOP FRY.zip",
+        "recipeName":  "CHI LOLLIPOP FRY",
+        "zipUrl":  "./data/global-recipe-library/CHI%20LOLLIPOP%20FRY.zip"
+    },
+    {
+        "id":  "CHI MANCHURIAN D",
+        "zipName":  "CHI MANCHURIAN D.zip",
+        "recipeName":  "CHI MANCHURIAN D",
+        "zipUrl":  "./data/global-recipe-library/CHI%20MANCHURIAN%20D.zip"
+    },
+    {
+        "id":  "CHI MANCHURIAN G",
+        "zipName":  "CHI MANCHURIAN G.zip",
+        "recipeName":  "CHI MANCHURIAN G",
+        "zipUrl":  "./data/global-recipe-library/CHI%20MANCHURIAN%20G.zip"
+    },
+    {
+        "id":  "CHI PALLIPALAYAM",
+        "zipName":  "CHI PALLIPALAYAM.zip",
+        "recipeName":  "CHI PALLIPALAYAM",
+        "zipUrl":  "./data/global-recipe-library/CHI%20PALLIPALAYAM.zip"
+    },
+    {
+        "id":  "CHI POT BIRYANI",
+        "zipName":  "CHI POT BIRYANI.zip",
+        "recipeName":  "CHI POT BIRYANI",
+        "zipUrl":  "./data/global-recipe-library/CHI%20POT%20BIRYANI.zip"
+    },
+    {
+        "id":  "CHI QUESADILLA",
+        "zipName":  "CHI QUESADILLA.zip",
+        "recipeName":  "CHI QUESADILLA",
+        "zipUrl":  "./data/global-recipe-library/CHI%20QUESADILLA.zip"
+    },
+    {
+        "id":  "CHI SALT PEPPERS",
+        "zipName":  "CHI SALT PEPPERS.zip",
+        "recipeName":  "CHI SALT PEPPERS",
+        "zipUrl":  "./data/global-recipe-library/CHI%20SALT%20PEPPERS.zip"
+    },
+    {
+        "id":  "CHI SCHEZWAN NDL",
+        "zipName":  "CHI SCHEZWAN NDL.zip",
+        "recipeName":  "CHI SCHEZWAN NDL",
+        "zipUrl":  "./data/global-recipe-library/CHI%20SCHEZWAN%20NDL.zip"
+    },
+    {
+        "id":  "CHI SCHZ RICE",
+        "zipName":  "CHI SCHZ RICE.zip",
+        "recipeName":  "CHI SCHZ RICE",
+        "zipUrl":  "./data/global-recipe-library/CHI%20SCHZ%20RICE.zip"
+    },
+    {
+        "id":  "CHI STIR FRY NDL",
+        "zipName":  "CHI STIR FRY NDL.zip",
+        "recipeName":  "CHI STIR FRY NDL",
+        "zipUrl":  "./data/global-recipe-library/CHI%20STIR%20FRY%20NDL.zip"
+    },
+    {
+        "id":  "CHI SWEET CORN S",
+        "zipName":  "CHI SWEET CORN S.zip",
+        "recipeName":  "CHI SWEET CORN S",
+        "zipUrl":  "./data/global-recipe-library/CHI%20SWEET%20CORN%20S.zip"
+    },
+    {
+        "id":  "CHI VARUTHARACHA",
+        "zipName":  "CHI VARUTHARACHA.zip",
+        "recipeName":  "CHI VARUTHARACHA",
+        "zipUrl":  "./data/global-recipe-library/CHI%20VARUTHARACHA.zip"
+    },
+    {
+        "id":  "CHICKEN 65 ",
+        "zipName":  "CHICKEN 65 .zip",
+        "recipeName":  "CHICKEN 65",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%2065%20.zip"
+    },
+    {
+        "id":  "CHICKEN 65 FRY(2)",
+        "zipName":  "CHICKEN 65 FRY(2).zip",
+        "recipeName":  "CHICKEN 65 FRY(2)",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%2065%20FRY(2).zip"
+    },
+    {
+        "id":  "CHICKEN 65 FRY",
+        "zipName":  "CHICKEN 65 FRY.zip",
+        "recipeName":  "CHICKEN 65 FRY",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%2065%20FRY.zip"
+    },
+    {
+        "id":  "CHICKEN BIRYANI 3200G",
+        "zipName":  "CHICKEN BIRYANI 3200G.zip",
+        "recipeName":  "CHICKEN BIRYANI 3200G",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20BIRYANI%203200G.zip"
+    },
+    {
+        "id":  "CHICKEN CHEESE M",
+        "zipName":  "CHICKEN CHEESE M.zip",
+        "recipeName":  "CHICKEN CHEESE M",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20CHEESE%20M.zip"
+    },
+    {
+        "id":  "CHICKEN CHENGAZI",
+        "zipName":  "CHICKEN CHENGAZI.zip",
+        "recipeName":  "CHICKEN CHENGAZI",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20CHENGAZI.zip"
+    },
+    {
+        "id":  "CHICKEN CHILLI G",
+        "zipName":  "CHICKEN CHILLI G.zip",
+        "recipeName":  "CHICKEN CHILLI G",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20CHILLI%20G.zip"
+    },
+    {
+        "id":  "CHICKEN CURRY 3K",
+        "zipName":  "CHICKEN CURRY 3K.zip",
+        "recipeName":  "CHICKEN CURRY 3K",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20CURRY%203K.zip"
+    },
+    {
+        "id":  "CHICKEN CURRY VN",
+        "zipName":  "CHICKEN CURRY VN.zip",
+        "recipeName":  "CHICKEN CURRY VN",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20CURRY%20VN.zip"
+    },
+    {
+        "id":  "CHICKEN CURRY",
+        "zipName":  "CHICKEN CURRY.zip",
+        "recipeName":  "CHICKEN CURRY",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20CURRY.zip"
+    },
+    {
+        "id":  "CHICKEN GOSHTABA",
+        "zipName":  "CHICKEN GOSHTABA.zip",
+        "recipeName":  "CHICKEN GOSHTABA",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20GOSHTABA.zip"
+    },
+    {
+        "id":  "CHICKEN HANDI ",
+        "zipName":  "CHICKEN HANDI .zip",
+        "recipeName":  "CHICKEN HANDI",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20HANDI%20.zip"
+    },
+    {
+        "id":  "CHICKEN HANDI 3K",
+        "zipName":  "CHICKEN HANDI 3K.zip",
+        "recipeName":  "CHICKEN HANDI 3K",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20HANDI%203K.zip"
+    },
+    {
+        "id":  "CHICKEN HANDI POT",
+        "zipName":  "CHICKEN HANDI POT.zip",
+        "recipeName":  "CHICKEN HANDI POT",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20HANDI%20POT.zip"
+    },
+    {
+        "id":  "CHICKEN KEBAB",
+        "zipName":  "CHICKEN KEBAB.zip",
+        "recipeName":  "CHICKEN KEBAB",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20KEBAB.zip"
+    },
+    {
+        "id":  "CHICKEN KONDATAM",
+        "zipName":  "CHICKEN KONDATAM.zip",
+        "recipeName":  "CHICKEN KONDATAM",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20KONDATAM.zip"
+    },
+    {
+        "id":  "CHICKEN KORMA",
+        "zipName":  "CHICKEN KORMA.zip",
+        "recipeName":  "CHICKEN KORMA",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20KORMA.zip"
+    },
+    {
+        "id":  "CHICKEN KOSHA",
+        "zipName":  "CHICKEN KOSHA.zip",
+        "recipeName":  "CHICKEN KOSHA",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20KOSHA.zip"
+    },
+    {
+        "id":  "CHICKEN LOLLIPOP",
+        "zipName":  "CHICKEN LOLLIPOP.zip",
+        "recipeName":  "CHICKEN LOLLIPOP",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20LOLLIPOP.zip"
+    },
+    {
+        "id":  "CHICKEN MAGGI",
+        "zipName":  "CHICKEN MAGGI.zip",
+        "recipeName":  "CHICKEN MAGGI",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20MAGGI.zip"
+    },
+    {
+        "id":  "CHICKEN MAPPAS",
+        "zipName":  "CHICKEN MAPPAS.zip",
+        "recipeName":  "CHICKEN MAPPAS",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20MAPPAS.zip"
+    },
+    {
+        "id":  "CHICKEN POPCORN ",
+        "zipName":  "CHICKEN POPCORN .zip",
+        "recipeName":  "CHICKEN POPCORN",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20POPCORN%20.zip"
+    },
+    {
+        "id":  "CHICKEN REZALA",
+        "zipName":  "CHICKEN REZALA.zip",
+        "recipeName":  "CHICKEN REZALA",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20REZALA.zip"
+    },
+    {
+        "id":  "CHICKEN SAMOSA ",
+        "zipName":  "CHICKEN SAMOSA .zip",
+        "recipeName":  "CHICKEN SAMOSA",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20SAMOSA%20.zip"
+    },
+    {
+        "id":  "CHICKEN SAN ",
+        "zipName":  "CHICKEN SAN .zip",
+        "recipeName":  "CHICKEN SAN",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20SAN%20.zip"
+    },
+    {
+        "id":  "CHICKEN SATAY",
+        "zipName":  "CHICKEN SATAY.zip",
+        "recipeName":  "CHICKEN SATAY",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20SATAY.zip"
+    },
+    {
+        "id":  "CHICKEN SAUSAGE ",
+        "zipName":  "CHICKEN SAUSAGE .zip",
+        "recipeName":  "CHICKEN SAUSAGE",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20SAUSAGE%20.zip"
+    },
+    {
+        "id":  "CHICKEN SHAMMI",
+        "zipName":  "CHICKEN SHAMMI.zip",
+        "recipeName":  "CHICKEN SHAMMI",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20SHAMMI.zip"
+    },
+    {
+        "id":  "CHICKEN SPAGHETTI",
+        "zipName":  "CHICKEN SPAGHETTI.zip",
+        "recipeName":  "CHICKEN SPAGHETTI",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20SPAGHETTI.zip"
+    },
+    {
+        "id":  "CHICKEN STEW",
+        "zipName":  "CHICKEN STEW.zip",
+        "recipeName":  "CHICKEN STEW",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20STEW.zip"
+    },
+    {
+        "id":  "CHICKEN STROG",
+        "zipName":  "CHICKEN STROG.zip",
+        "recipeName":  "CHICKEN STROG",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20STROG.zip"
+    },
+    {
+        "id":  "CHICKEN SUKKA",
+        "zipName":  "CHICKEN SUKKA.zip",
+        "recipeName":  "CHICKEN SUKKA",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20SUKKA.zip"
+    },
+    {
+        "id":  "CHICKEN T MASALA",
+        "zipName":  "CHICKEN T MASALA.zip",
+        "recipeName":  "CHICKEN T MASALA",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20T%20MASALA.zip"
+    },
+    {
+        "id":  "CHICKEN TIKKA",
+        "zipName":  "CHICKEN TIKKA.zip",
+        "recipeName":  "CHICKEN TIKKA",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20TIKKA.zip"
+    },
+    {
+        "id":  "CHICKEN VINDALOO",
+        "zipName":  "CHICKEN VINDALOO.zip",
+        "recipeName":  "CHICKEN VINDALOO",
+        "zipUrl":  "./data/global-recipe-library/CHICKEN%20VINDALOO.zip"
+    },
+    {
+        "id":  "CHICKPEA BOILED",
+        "zipName":  "CHICKPEA BOILED.zip",
+        "recipeName":  "CHICKPEA BOILED",
+        "zipUrl":  "./data/global-recipe-library/CHICKPEA%20BOILED.zip"
+    },
+    {
+        "id":  "CHILI STEAM BUN",
+        "zipName":  "CHILI STEAM BUN.zip",
+        "recipeName":  "CHILI STEAM BUN",
+        "zipUrl":  "./data/global-recipe-library/CHILI%20STEAM%20BUN.zip"
+    },
+    {
+        "id":  "CHILLI BASIL ",
+        "zipName":  "CHILLI BASIL .zip",
+        "recipeName":  "CHILLI BASIL",
+        "zipUrl":  "./data/global-recipe-library/CHILLI%20BASIL%20.zip"
+    },
+    {
+        "id":  "CHILLI GAR CHI",
+        "zipName":  "CHILLI GAR CHI.zip",
+        "recipeName":  "CHILLI GAR CHI",
+        "zipUrl":  "./data/global-recipe-library/CHILLI%20GAR%20CHI.zip"
+    },
+    {
+        "id":  "CHILLI GAR FISH",
+        "zipName":  "CHILLI GAR FISH.zip",
+        "recipeName":  "CHILLI GAR FISH",
+        "zipUrl":  "./data/global-recipe-library/CHILLI%20GAR%20FISH.zip"
+    },
+    {
+        "id":  "CHILLI GAR PRAWN",
+        "zipName":  "CHILLI GAR PRAWN.zip",
+        "recipeName":  "CHILLI GAR PRAWN",
+        "zipUrl":  "./data/global-recipe-library/CHILLI%20GAR%20PRAWN.zip"
+    },
+    {
+        "id":  "CHINESE GOBI FRY(2)",
+        "zipName":  "CHINESE GOBI FRY(2).zip",
+        "recipeName":  "CHINESE GOBI FRY(2)",
+        "zipUrl":  "./data/global-recipe-library/CHINESE%20GOBI%20FRY(2).zip"
+    },
+    {
+        "id":  "CHINESE GOBI FRY",
+        "zipName":  "CHINESE GOBI FRY.zip",
+        "recipeName":  "CHINESE GOBI FRY",
+        "zipUrl":  "./data/global-recipe-library/CHINESE%20GOBI%20FRY.zip"
+    },
+    {
+        "id":  "CHINGRI MALAI ",
+        "zipName":  "CHINGRI MALAI .zip",
+        "recipeName":  "CHINGRI MALAI",
+        "zipUrl":  "./data/global-recipe-library/CHINGRI%20MALAI%20.zip"
+    },
+    {
+        "id":  "CHO ORG CAKE",
+        "zipName":  "CHO ORG CAKE.zip",
+        "recipeName":  "CHO ORG CAKE",
+        "zipUrl":  "./data/global-recipe-library/CHO%20ORG%20CAKE.zip"
+    },
+    {
+        "id":  "CHOCO DRF CAKE",
+        "zipName":  "CHOCO DRF CAKE.zip",
+        "recipeName":  "CHOCO DRF CAKE",
+        "zipUrl":  "./data/global-recipe-library/CHOCO%20DRF%20CAKE.zip"
+    },
+    {
+        "id":  "CHOCO GANACHE ",
+        "zipName":  "CHOCO GANACHE .zip",
+        "recipeName":  "CHOCO GANACHE",
+        "zipUrl":  "./data/global-recipe-library/CHOCO%20GANACHE%20.zip"
+    },
+    {
+        "id":  "CHOCOLATE SPONGE",
+        "zipName":  "CHOCOLATE SPONGE.zip",
+        "recipeName":  "CHOCOLATE SPONGE",
+        "zipUrl":  "./data/global-recipe-library/CHOCOLATE%20SPONGE.zip"
+    },
+    {
+        "id":  "CHOLAR DAL ",
+        "zipName":  "CHOLAR DAL .zip",
+        "recipeName":  "CHOLAR DAL",
+        "zipUrl":  "./data/global-recipe-library/CHOLAR%20DAL%20.zip"
+    },
+    {
+        "id":  "CHOLE MASALA BULK",
+        "zipName":  "CHOLE MASALA BULK.zip",
+        "recipeName":  "CHOLE MASALA BULK",
+        "zipUrl":  "./data/global-recipe-library/CHOLE%20MASALA%20BULK.zip"
+    },
+    {
+        "id":  "CHOLE MASALA",
+        "zipName":  "CHOLE MASALA.zip",
+        "recipeName":  "CHOLE MASALA",
+        "zipUrl":  "./data/global-recipe-library/CHOLE%20MASALA.zip"
+    },
+    {
+        "id":  "CL STIR FRY SAU ",
+        "zipName":  "CL STIR FRY SAU .zip",
+        "recipeName":  "CL STIR FRY SAU",
+        "zipUrl":  "./data/global-recipe-library/CL%20STIR%20FRY%20SAU%20.zip"
+    },
+    {
+        "id":  "CLASSIC VELOUTE",
+        "zipName":  "CLASSIC VELOUTE.zip",
+        "recipeName":  "CLASSIC VELOUTE",
+        "zipUrl":  "./data/global-recipe-library/CLASSIC%20VELOUTE.zip"
+    },
+    {
+        "id":  "CN BROWN SAUCE",
+        "zipName":  "CN BROWN SAUCE.zip",
+        "recipeName":  "CN BROWN SAUCE",
+        "zipUrl":  "./data/global-recipe-library/CN%20BROWN%20SAUCE.zip"
+    },
+    {
+        "id":  "CN FRIED CHICKEN(2)",
+        "zipName":  "CN FRIED CHICKEN(2).zip",
+        "recipeName":  "CN FRIED CHICKEN(2)",
+        "zipUrl":  "./data/global-recipe-library/CN%20FRIED%20CHICKEN(2).zip"
+    },
+    {
+        "id":  "CN FRIED CHICKEN(3)",
+        "zipName":  "CN FRIED CHICKEN(3).zip",
+        "recipeName":  "CN FRIED CHICKEN(3)",
+        "zipUrl":  "./data/global-recipe-library/CN%20FRIED%20CHICKEN(3).zip"
+    },
+    {
+        "id":  "CN FRIED CHICKEN(4)",
+        "zipName":  "CN FRIED CHICKEN(4).zip",
+        "recipeName":  "CN FRIED CHICKEN(4)",
+        "zipUrl":  "./data/global-recipe-library/CN%20FRIED%20CHICKEN(4).zip"
+    },
+    {
+        "id":  "CN FRIED CHICKEN(5)",
+        "zipName":  "CN FRIED CHICKEN(5).zip",
+        "recipeName":  "CN FRIED CHICKEN(5)",
+        "zipUrl":  "./data/global-recipe-library/CN%20FRIED%20CHICKEN(5).zip"
+    },
+    {
+        "id":  "CN FRIED CHICKEN(6)",
+        "zipName":  "CN FRIED CHICKEN(6).zip",
+        "recipeName":  "CN FRIED CHICKEN(6)",
+        "zipUrl":  "./data/global-recipe-library/CN%20FRIED%20CHICKEN(6).zip"
+    },
+    {
+        "id":  "CN FRIED CHICKEN(7)",
+        "zipName":  "CN FRIED CHICKEN(7).zip",
+        "recipeName":  "CN FRIED CHICKEN(7)",
+        "zipUrl":  "./data/global-recipe-library/CN%20FRIED%20CHICKEN(7).zip"
+    },
+    {
+        "id":  "CN FRIED CHICKEN(8)",
+        "zipName":  "CN FRIED CHICKEN(8).zip",
+        "recipeName":  "CN FRIED CHICKEN(8)",
+        "zipUrl":  "./data/global-recipe-library/CN%20FRIED%20CHICKEN(8).zip"
+    },
+    {
+        "id":  "CN FRIED CHICKEN",
+        "zipName":  "CN FRIED CHICKEN.zip",
+        "recipeName":  "CN FRIED CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/CN%20FRIED%20CHICKEN.zip"
+    },
+    {
+        "id":  "CN STIR FRY VEG",
+        "zipName":  "CN STIR FRY VEG.zip",
+        "recipeName":  "CN STIR FRY VEG",
+        "zipUrl":  "./data/global-recipe-library/CN%20STIR%20FRY%20VEG.zip"
+    },
+    {
+        "id":  "COCO RICE 1600G",
+        "zipName":  "COCO RICE 1600G.zip",
+        "recipeName":  "COCO RICE 1600G",
+        "zipUrl":  "./data/global-recipe-library/COCO%20RICE%201600G.zip"
+    },
+    {
+        "id":  "COCONUT CURRY ",
+        "zipName":  "COCONUT CURRY .zip",
+        "recipeName":  "COCONUT CURRY",
+        "zipUrl":  "./data/global-recipe-library/COCONUT%20CURRY%20.zip"
+    },
+    {
+        "id":  "COCONUT RICE",
+        "zipName":  "COCONUT RICE.zip",
+        "recipeName":  "COCONUT RICE",
+        "zipUrl":  "./data/global-recipe-library/COCONUT%20RICE.zip"
+    },
+    {
+        "id":  "COFFEE WAL CAKE",
+        "zipName":  "COFFEE WAL CAKE.zip",
+        "recipeName":  "COFFEE WAL CAKE",
+        "zipUrl":  "./data/global-recipe-library/COFFEE%20WAL%20CAKE.zip"
+    },
+    {
+        "id":  "CORIANDER CHI",
+        "zipName":  "CORIANDER CHI.zip",
+        "recipeName":  "CORIANDER CHI",
+        "zipUrl":  "./data/global-recipe-library/CORIANDER%20CHI.zip"
+    },
+    {
+        "id":  "CORN SALT N PEP",
+        "zipName":  "CORN SALT N PEP.zip",
+        "recipeName":  "CORN SALT N PEP",
+        "zipUrl":  "./data/global-recipe-library/CORN%20SALT%20N%20PEP.zip"
+    },
+    {
+        "id":  "CREAM OF CARROTS ",
+        "zipName":  "CREAM OF CARROTS .zip",
+        "recipeName":  "CREAM OF CARROTS",
+        "zipUrl":  "./data/global-recipe-library/CREAM%20OF%20CARROTS%20.zip"
+    },
+    {
+        "id":  "CREAM OF CORN ",
+        "zipName":  "CREAM OF CORN .zip",
+        "recipeName":  "CREAM OF CORN",
+        "zipUrl":  "./data/global-recipe-library/CREAM%20OF%20CORN%20.zip"
+    },
+    {
+        "id":  "CREAM OF PEAS",
+        "zipName":  "CREAM OF PEAS.zip",
+        "recipeName":  "CREAM OF PEAS",
+        "zipUrl":  "./data/global-recipe-library/CREAM%20OF%20PEAS.zip"
+    },
+    {
+        "id":  "CREAM OF SPINACH",
+        "zipName":  "CREAM OF SPINACH.zip",
+        "recipeName":  "CREAM OF SPINACH",
+        "zipUrl":  "./data/global-recipe-library/CREAM%20OF%20SPINACH.zip"
+    },
+    {
+        "id":  "CREAM OF TOMATO ",
+        "zipName":  "CREAM OF TOMATO .zip",
+        "recipeName":  "CREAM OF TOMATO",
+        "zipUrl":  "./data/global-recipe-library/CREAM%20OF%20TOMATO%20.zip"
+    },
+    {
+        "id":  "CREAM OF VEGGIES ",
+        "zipName":  "CREAM OF VEGGIES .zip",
+        "recipeName":  "CREAM OF VEGGIES",
+        "zipUrl":  "./data/global-recipe-library/CREAM%20OF%20VEGGIES%20.zip"
+    },
+    {
+        "id":  "CRISPY CHI FRY",
+        "zipName":  "CRISPY CHI FRY.zip",
+        "recipeName":  "CRISPY CHI FRY",
+        "zipUrl":  "./data/global-recipe-library/CRISPY%20CHI%20FRY.zip"
+    },
+    {
+        "id":  "CRISPY CHICKEN ",
+        "zipName":  "CRISPY CHICKEN .zip",
+        "recipeName":  "CRISPY CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/CRISPY%20CHICKEN%20.zip"
+    },
+    {
+        "id":  "CRISPY VEG FRY",
+        "zipName":  "CRISPY VEG FRY.zip",
+        "recipeName":  "CRISPY VEG FRY",
+        "zipUrl":  "./data/global-recipe-library/CRISPY%20VEG%20FRY.zip"
+    },
+    {
+        "id":  "CRISPY VEGETABLE",
+        "zipName":  "CRISPY VEGETABLE.zip",
+        "recipeName":  "CRISPY VEGETABLE",
+        "zipUrl":  "./data/global-recipe-library/CRISPY%20VEGETABLE.zip"
+    },
+    {
+        "id":  "CRM BROCCOLI SP",
+        "zipName":  "CRM BROCCOLI SP.zip",
+        "recipeName":  "CRM BROCCOLI SP",
+        "zipUrl":  "./data/global-recipe-library/CRM%20BROCCOLI%20SP.zip"
+    },
+    {
+        "id":  "CRM OF MUSHROOM ",
+        "zipName":  "CRM OF MUSHROOM .zip",
+        "recipeName":  "CRM OF MUSHROOM",
+        "zipUrl":  "./data/global-recipe-library/CRM%20OF%20MUSHROOM%20.zip"
+    },
+    {
+        "id":  "CURD RICE ",
+        "zipName":  "CURD RICE .zip",
+        "recipeName":  "CURD RICE",
+        "zipUrl":  "./data/global-recipe-library/CURD%20RICE%20.zip"
+    },
+    {
+        "id":  "DABELI FILLING ",
+        "zipName":  "DABELI FILLING .zip",
+        "recipeName":  "DABELI FILLING",
+        "zipUrl":  "./data/global-recipe-library/DABELI%20FILLING%20.zip"
+    },
+    {
+        "id":  "DADU BIRYANI CH",
+        "zipName":  "DADU BIRYANI CH.zip",
+        "recipeName":  "DADU BIRYANI CH",
+        "zipUrl":  "./data/global-recipe-library/DADU%20BIRYANI%20CH.zip"
+    },
+    {
+        "id":  "DAHI KE KEBAB",
+        "zipName":  "DAHI KE KEBAB.zip",
+        "recipeName":  "DAHI KE KEBAB",
+        "zipUrl":  "./data/global-recipe-library/DAHI%20KE%20KEBAB.zip"
+    },
+    {
+        "id":  "DAL DHOKLI",
+        "zipName":  "DAL DHOKLI.zip",
+        "recipeName":  "DAL DHOKLI",
+        "zipUrl":  "./data/global-recipe-library/DAL%20DHOKLI.zip"
+    },
+    {
+        "id":  "DAL FRY 3000G",
+        "zipName":  "DAL FRY 3000G.zip",
+        "recipeName":  "DAL FRY 3000G",
+        "zipUrl":  "./data/global-recipe-library/DAL%20FRY%203000G.zip"
+    },
+    {
+        "id":  "DAL MAKHANI BULK",
+        "zipName":  "DAL MAKHANI BULK.zip",
+        "recipeName":  "DAL MAKHANI BULK",
+        "zipUrl":  "./data/global-recipe-library/DAL%20MAKHANI%20BULK.zip"
+    },
+    {
+        "id":  "DAL MAKHANI",
+        "zipName":  "DAL MAKHANI.zip",
+        "recipeName":  "DAL MAKHANI",
+        "zipUrl":  "./data/global-recipe-library/DAL%20MAKHANI.zip"
+    },
+    {
+        "id":  "DAL VADA",
+        "zipName":  "DAL VADA.zip",
+        "recipeName":  "DAL VADA",
+        "zipUrl":  "./data/global-recipe-library/DAL%20VADA.zip"
+    },
+    {
+        "id":  "DHABA STYLE DAHI",
+        "zipName":  "DHABA STYLE DAHI.zip",
+        "recipeName":  "DHABA STYLE DAHI",
+        "zipUrl":  "./data/global-recipe-library/DHABA%20STYLE%20DAHI.zip"
+    },
+    {
+        "id":  "DIMER  JHOL ",
+        "zipName":  "DIMER  JHOL .zip",
+        "recipeName":  "DIMER  JHOL",
+        "zipUrl":  "./data/global-recipe-library/DIMER%20%20JHOL%20.zip"
+    },
+    {
+        "id":  "DOODHI HALWA ",
+        "zipName":  "DOODHI HALWA .zip",
+        "recipeName":  "DOODHI HALWA",
+        "zipUrl":  "./data/global-recipe-library/DOODHI%20HALWA%20.zip"
+    },
+    {
+        "id":  "EGG BHURJI",
+        "zipName":  "EGG BHURJI.zip",
+        "recipeName":  "EGG BHURJI",
+        "zipUrl":  "./data/global-recipe-library/EGG%20BHURJI.zip"
+    },
+    {
+        "id":  "EGG CHL GAR NDL",
+        "zipName":  "EGG CHL GAR NDL.zip",
+        "recipeName":  "EGG CHL GAR NDL",
+        "zipUrl":  "./data/global-recipe-library/EGG%20CHL%20GAR%20NDL.zip"
+    },
+    {
+        "id":  "EGG CHL GAR RICE",
+        "zipName":  "EGG CHL GAR RICE.zip",
+        "recipeName":  "EGG CHL GAR RICE",
+        "zipUrl":  "./data/global-recipe-library/EGG%20CHL%20GAR%20RICE.zip"
+    },
+    {
+        "id":  "EGG CURRY ",
+        "zipName":  "EGG CURRY .zip",
+        "recipeName":  "EGG CURRY",
+        "zipUrl":  "./data/global-recipe-library/EGG%20CURRY%20.zip"
+    },
+    {
+        "id":  "EGG DEVIL",
+        "zipName":  "EGG DEVIL.zip",
+        "recipeName":  "EGG DEVIL",
+        "zipUrl":  "./data/global-recipe-library/EGG%20DEVIL.zip"
+    },
+    {
+        "id":  "EGG FRIED RICE",
+        "zipName":  "EGG FRIED RICE.zip",
+        "recipeName":  "EGG FRIED RICE",
+        "zipUrl":  "./data/global-recipe-library/EGG%20FRIED%20RICE.zip"
+    },
+    {
+        "id":  "EGG HAKKA NDL",
+        "zipName":  "EGG HAKKA NDL.zip",
+        "recipeName":  "EGG HAKKA NDL",
+        "zipUrl":  "./data/global-recipe-library/EGG%20HAKKA%20NDL.zip"
+    },
+    {
+        "id":  "EGG ROAST",
+        "zipName":  "EGG ROAST.zip",
+        "recipeName":  "EGG ROAST",
+        "zipUrl":  "./data/global-recipe-library/EGG%20ROAST.zip"
+    },
+    {
+        "id":  "EGG SCHEZWAN NDL",
+        "zipName":  "EGG SCHEZWAN NDL.zip",
+        "recipeName":  "EGG SCHEZWAN NDL",
+        "zipUrl":  "./data/global-recipe-library/EGG%20SCHEZWAN%20NDL.zip"
+    },
+    {
+        "id":  "EGG SCHZ RICE ",
+        "zipName":  "EGG SCHZ RICE .zip",
+        "recipeName":  "EGG SCHZ RICE",
+        "zipUrl":  "./data/global-recipe-library/EGG%20SCHZ%20RICE%20.zip"
+    },
+    {
+        "id":  "EGG SHAKSHUKA",
+        "zipName":  "EGG SHAKSHUKA.zip",
+        "recipeName":  "EGG SHAKSHUKA",
+        "zipUrl":  "./data/global-recipe-library/EGG%20SHAKSHUKA.zip"
+    },
+    {
+        "id":  "EGG SOUP",
+        "zipName":  "EGG SOUP.zip",
+        "recipeName":  "EGG SOUP",
+        "zipUrl":  "./data/global-recipe-library/EGG%20SOUP.zip"
+    },
+    {
+        "id":  "ESPAGNOLE SAUCE",
+        "zipName":  "ESPAGNOLE SAUCE.zip",
+        "recipeName":  "ESPAGNOLE SAUCE",
+        "zipUrl":  "./data/global-recipe-library/ESPAGNOLE%20SAUCE.zip"
+    },
+    {
+        "id":  "FISH FINGERS ",
+        "zipName":  "FISH FINGERS .zip",
+        "recipeName":  "FISH FINGERS",
+        "zipUrl":  "./data/global-recipe-library/FISH%20FINGERS%20.zip"
+    },
+    {
+        "id":  "FISH FRY (2)",
+        "zipName":  "FISH FRY (2).zip",
+        "recipeName":  "FISH FRY (2)",
+        "zipUrl":  "./data/global-recipe-library/FISH%20FRY%20(2).zip"
+    },
+    {
+        "id":  "FISH FRY ",
+        "zipName":  "FISH FRY .zip",
+        "recipeName":  "FISH FRY",
+        "zipUrl":  "./data/global-recipe-library/FISH%20FRY%20.zip"
+    },
+    {
+        "id":  "FISH MASALA CURRY",
+        "zipName":  "FISH MASALA CURRY.zip",
+        "recipeName":  "FISH MASALA CURRY",
+        "zipUrl":  "./data/global-recipe-library/FISH%20MASALA%20CURRY.zip"
+    },
+    {
+        "id":  "FISH REZALA",
+        "zipName":  "FISH REZALA.zip",
+        "recipeName":  "FISH REZALA",
+        "zipUrl":  "./data/global-recipe-library/FISH%20REZALA.zip"
+    },
+    {
+        "id":  "FRENCH FRIES",
+        "zipName":  "FRENCH FRIES.zip",
+        "recipeName":  "FRENCH FRIES",
+        "zipUrl":  "./data/global-recipe-library/FRENCH%20FRIES.zip"
+    },
+    {
+        "id":  "FRENCH ONION SOUP",
+        "zipName":  "FRENCH ONION SOUP.zip",
+        "recipeName":  "FRENCH ONION SOUP",
+        "zipUrl":  "./data/global-recipe-library/FRENCH%20ONION%20SOUP.zip"
+    },
+    {
+        "id":  "FRESH STEAM MOMO ",
+        "zipName":  "FRESH STEAM MOMO .zip",
+        "recipeName":  "FRESH STEAM MOMO",
+        "zipUrl":  "./data/global-recipe-library/FRESH%20STEAM%20MOMO%20.zip"
+    },
+    {
+        "id":  "FRIED CHI STRIPS",
+        "zipName":  "FRIED CHI STRIPS.zip",
+        "recipeName":  "FRIED CHI STRIPS",
+        "zipUrl":  "./data/global-recipe-library/FRIED%20CHI%20STRIPS.zip"
+    },
+    {
+        "id":  "FRIED DRUMSTICKS ",
+        "zipName":  "FRIED DRUMSTICKS .zip",
+        "recipeName":  "FRIED DRUMSTICKS",
+        "zipUrl":  "./data/global-recipe-library/FRIED%20DRUMSTICKS%20.zip"
+    },
+    {
+        "id":  "FRIED KOFTA",
+        "zipName":  "FRIED KOFTA.zip",
+        "recipeName":  "FRIED KOFTA",
+        "zipUrl":  "./data/global-recipe-library/FRIED%20KOFTA.zip"
+    },
+    {
+        "id":  "FRIED MOMO",
+        "zipName":  "FRIED MOMO.zip",
+        "recipeName":  "FRIED MOMO",
+        "zipUrl":  "./data/global-recipe-library/FRIED%20MOMO.zip"
+    },
+    {
+        "id":  "FRIED MUSHROOM ",
+        "zipName":  "FRIED MUSHROOM .zip",
+        "recipeName":  "FRIED MUSHROOM",
+        "zipUrl":  "./data/global-recipe-library/FRIED%20MUSHROOM%20.zip"
+    },
+    {
+        "id":  "FRIED PNR STRIPS",
+        "zipName":  "FRIED PNR STRIPS.zip",
+        "recipeName":  "FRIED PNR STRIPS",
+        "zipUrl":  "./data/global-recipe-library/FRIED%20PNR%20STRIPS.zip"
+    },
+    {
+        "id":  "FROZEN PIZZA",
+        "zipName":  "FROZEN PIZZA.zip",
+        "recipeName":  "FROZEN PIZZA",
+        "zipUrl":  "./data/global-recipe-library/FROZEN%20PIZZA.zip"
+    },
+    {
+        "id":  "FROZEN SAMOSA",
+        "zipName":  "FROZEN SAMOSA.zip",
+        "recipeName":  "FROZEN SAMOSA",
+        "zipUrl":  "./data/global-recipe-library/FROZEN%20SAMOSA.zip"
+    },
+    {
+        "id":  "FRY MOMO",
+        "zipName":  "FRY MOMO.zip",
+        "recipeName":  "FRY MOMO",
+        "zipUrl":  "./data/global-recipe-library/FRY%20MOMO.zip"
+    },
+    {
+        "id":  "FRY PANEER(2)",
+        "zipName":  "FRY PANEER(2).zip",
+        "recipeName":  "FRY PANEER(2)",
+        "zipUrl":  "./data/global-recipe-library/FRY%20PANEER(2).zip"
+    },
+    {
+        "id":  "FRY PANEER(3)",
+        "zipName":  "FRY PANEER(3).zip",
+        "recipeName":  "FRY PANEER(3)",
+        "zipUrl":  "./data/global-recipe-library/FRY%20PANEER(3).zip"
+    },
+    {
+        "id":  "FRY PANEER(4)",
+        "zipName":  "FRY PANEER(4).zip",
+        "recipeName":  "FRY PANEER(4)",
+        "zipUrl":  "./data/global-recipe-library/FRY%20PANEER(4).zip"
+    },
+    {
+        "id":  "FRY PANEER(5)",
+        "zipName":  "FRY PANEER(5).zip",
+        "recipeName":  "FRY PANEER(5)",
+        "zipUrl":  "./data/global-recipe-library/FRY%20PANEER(5).zip"
+    },
+    {
+        "id":  "FRY PANEER",
+        "zipName":  "FRY PANEER.zip",
+        "recipeName":  "FRY PANEER",
+        "zipUrl":  "./data/global-recipe-library/FRY%20PANEER.zip"
+    },
+    {
+        "id":  "FRY VEG BIRYANI",
+        "zipName":  "FRY VEG BIRYANI.zip",
+        "recipeName":  "FRY VEG BIRYANI",
+        "zipUrl":  "./data/global-recipe-library/FRY%20VEG%20BIRYANI.zip"
+    },
+    {
+        "id":  "GAJAR HALWA ",
+        "zipName":  "GAJAR HALWA .zip",
+        "recipeName":  "GAJAR HALWA",
+        "zipUrl":  "./data/global-recipe-library/GAJAR%20HALWA%20.zip"
+    },
+    {
+        "id":  "GAJAR HALWA 500",
+        "zipName":  "GAJAR HALWA 500.zip",
+        "recipeName":  "GAJAR HALWA 500",
+        "zipUrl":  "./data/global-recipe-library/GAJAR%20HALWA%20500.zip"
+    },
+    {
+        "id":  "GALOUTI KABAB",
+        "zipName":  "GALOUTI KABAB.zip",
+        "recipeName":  "GALOUTI KABAB",
+        "zipUrl":  "./data/global-recipe-library/GALOUTI%20KABAB.zip"
+    },
+    {
+        "id":  "GHEE RICE GN",
+        "zipName":  "GHEE RICE GN.zip",
+        "recipeName":  "GHEE RICE GN",
+        "zipUrl":  "./data/global-recipe-library/GHEE%20RICE%20GN.zip"
+    },
+    {
+        "id":  "GHEE RICE",
+        "zipName":  "GHEE RICE.zip",
+        "recipeName":  "GHEE RICE",
+        "zipUrl":  "./data/global-recipe-library/GHEE%20RICE.zip"
+    },
+    {
+        "id":  "GINGER TEA",
+        "zipName":  "GINGER TEA.zip",
+        "recipeName":  "GINGER TEA",
+        "zipUrl":  "./data/global-recipe-library/GINGER%20TEA.zip"
+    },
+    {
+        "id":  "GLD STK MUTTON",
+        "zipName":  "GLD STK MUTTON.zip",
+        "recipeName":  "GLD STK MUTTON",
+        "zipUrl":  "./data/global-recipe-library/GLD%20STK%20MUTTON.zip"
+    },
+    {
+        "id":  "GOAN ALOO BHAJI",
+        "zipName":  "GOAN ALOO BHAJI.zip",
+        "recipeName":  "GOAN ALOO BHAJI",
+        "zipUrl":  "./data/global-recipe-library/GOAN%20ALOO%20BHAJI.zip"
+    },
+    {
+        "id":  "GOBI MANCHU DRY",
+        "zipName":  "GOBI MANCHU DRY.zip",
+        "recipeName":  "GOBI MANCHU DRY",
+        "zipUrl":  "./data/global-recipe-library/GOBI%20MANCHU%20DRY.zip"
+    },
+    {
+        "id":  "GOBI MANCHU G",
+        "zipName":  "GOBI MANCHU G.zip",
+        "recipeName":  "GOBI MANCHU G",
+        "zipUrl":  "./data/global-recipe-library/GOBI%20MANCHU%20G.zip"
+    },
+    {
+        "id":  "GOBI PAKODA ",
+        "zipName":  "GOBI PAKODA .zip",
+        "recipeName":  "GOBI PAKODA",
+        "zipUrl":  "./data/global-recipe-library/GOBI%20PAKODA%20.zip"
+    },
+    {
+        "id":  "GOBI TIKKA",
+        "zipName":  "GOBI TIKKA.zip",
+        "recipeName":  "GOBI TIKKA",
+        "zipUrl":  "./data/global-recipe-library/GOBI%20TIKKA.zip"
+    },
+    {
+        "id":  "GRILL CHEESE SW",
+        "zipName":  "GRILL CHEESE SW.zip",
+        "recipeName":  "GRILL CHEESE SW",
+        "zipUrl":  "./data/global-recipe-library/GRILL%20CHEESE%20SW.zip"
+    },
+    {
+        "id":  "GRL CHI BREAST",
+        "zipName":  "GRL CHI BREAST.zip",
+        "recipeName":  "GRL CHI BREAST",
+        "zipUrl":  "./data/global-recipe-library/GRL%20CHI%20BREAST.zip"
+    },
+    {
+        "id":  "GUJARATI DAL ",
+        "zipName":  "GUJARATI DAL .zip",
+        "recipeName":  "GUJARATI DAL",
+        "zipUrl":  "./data/global-recipe-library/GUJARATI%20DAL%20.zip"
+    },
+    {
+        "id":  "GUJARATI DAL GN",
+        "zipName":  "GUJARATI DAL GN.zip",
+        "recipeName":  "GUJARATI DAL GN",
+        "zipUrl":  "./data/global-recipe-library/GUJARATI%20DAL%20GN.zip"
+    },
+    {
+        "id":  "GUJARATI KADHI",
+        "zipName":  "GUJARATI KADHI.zip",
+        "recipeName":  "GUJARATI KADHI",
+        "zipUrl":  "./data/global-recipe-library/GUJARATI%20KADHI.zip"
+    },
+    {
+        "id":  "GUJIYA",
+        "zipName":  "GUJIYA.zip",
+        "recipeName":  "GUJIYA",
+        "zipUrl":  "./data/global-recipe-library/GUJIYA.zip"
+    },
+    {
+        "id":  "GULAB JAMUN F",
+        "zipName":  "GULAB JAMUN F.zip",
+        "recipeName":  "GULAB JAMUN F",
+        "zipUrl":  "./data/global-recipe-library/GULAB%20JAMUN%20F.zip"
+    },
+    {
+        "id":  "HALDI KI SUBZI",
+        "zipName":  "HALDI KI SUBZI.zip",
+        "recipeName":  "HALDI KI SUBZI",
+        "zipUrl":  "./data/global-recipe-library/HALDI%20KI%20SUBZI.zip"
+    },
+    {
+        "id":  "HANDVO ",
+        "zipName":  "HANDVO .zip",
+        "recipeName":  "HANDVO",
+        "zipUrl":  "./data/global-recipe-library/HANDVO%20.zip"
+    },
+    {
+        "id":  "HARA BHARA KEBAB",
+        "zipName":  "HARA BHARA KEBAB.zip",
+        "recipeName":  "HARA BHARA KEBAB",
+        "zipUrl":  "./data/global-recipe-library/HARA%20BHARA%20KEBAB.zip"
+    },
+    {
+        "id":  "HERB RICE",
+        "zipName":  "HERB RICE.zip",
+        "recipeName":  "HERB RICE",
+        "zipUrl":  "./data/global-recipe-library/HERB%20RICE.zip"
+    },
+    {
+        "id":  "HOISIN CHI BUNS",
+        "zipName":  "HOISIN CHI BUNS.zip",
+        "recipeName":  "HOISIN CHI BUNS",
+        "zipUrl":  "./data/global-recipe-library/HOISIN%20CHI%20BUNS.zip"
+    },
+    {
+        "id":  "HOISIN STEAM BUN",
+        "zipName":  "HOISIN STEAM BUN.zip",
+        "recipeName":  "HOISIN STEAM BUN",
+        "zipUrl":  "./data/global-recipe-library/HOISIN%20STEAM%20BUN.zip"
+    },
+    {
+        "id":  "HONEY CHILLI CHI",
+        "zipName":  "HONEY CHILLI CHI.zip",
+        "recipeName":  "HONEY CHILLI CHI",
+        "zipUrl":  "./data/global-recipe-library/HONEY%20CHILLI%20CHI.zip"
+    },
+    {
+        "id":  "HONEY POTATO",
+        "zipName":  "HONEY POTATO.zip",
+        "recipeName":  "HONEY POTATO",
+        "zipUrl":  "./data/global-recipe-library/HONEY%20POTATO.zip"
+    },
+    {
+        "id":  "HOT AND SOUR",
+        "zipName":  "HOT AND SOUR.zip",
+        "recipeName":  "HOT AND SOUR",
+        "zipUrl":  "./data/global-recipe-library/HOT%20AND%20SOUR.zip"
+    },
+    {
+        "id":  "IDLI SAKSHUKA",
+        "zipName":  "IDLI SAKSHUKA.zip",
+        "recipeName":  "IDLI SAKSHUKA",
+        "zipUrl":  "./data/global-recipe-library/IDLI%20SAKSHUKA.zip"
+    },
+    {
+        "id":  "INDORI POHA",
+        "zipName":  "INDORI POHA.zip",
+        "recipeName":  "INDORI POHA",
+        "zipUrl":  "./data/global-recipe-library/INDORI%20POHA.zip"
+    },
+    {
+        "id":  "JAMA FRIED CHI",
+        "zipName":  "JAMA FRIED CHI.zip",
+        "recipeName":  "JAMA FRIED CHI",
+        "zipUrl":  "./data/global-recipe-library/JAMA%20FRIED%20CHI.zip"
+    },
+    {
+        "id":  "JAMA FRY PANEER",
+        "zipName":  "JAMA FRY PANEER.zip",
+        "recipeName":  "JAMA FRY PANEER",
+        "zipUrl":  "./data/global-recipe-library/JAMA%20FRY%20PANEER.zip"
+    },
+    {
+        "id":  "JEERA ALOO ",
+        "zipName":  "JEERA ALOO .zip",
+        "recipeName":  "JEERA ALOO",
+        "zipUrl":  "./data/global-recipe-library/JEERA%20ALOO%20.zip"
+    },
+    {
+        "id":  "JEERA ALOO 1000G",
+        "zipName":  "JEERA ALOO 1000G.zip",
+        "recipeName":  "JEERA ALOO 1000G",
+        "zipUrl":  "./data/global-recipe-library/JEERA%20ALOO%201000G.zip"
+    },
+    {
+        "id":  "JEERA RICE ",
+        "zipName":  "JEERA RICE .zip",
+        "recipeName":  "JEERA RICE",
+        "zipUrl":  "./data/global-recipe-library/JEERA%20RICE%20.zip"
+    },
+    {
+        "id":  "JEERA RICE",
+        "zipName":  "JEERA RICE.zip",
+        "recipeName":  "JEERA RICE",
+        "zipUrl":  "./data/global-recipe-library/JEERA%20RICE.zip"
+    },
+    {
+        "id":  "JHOL MOMO",
+        "zipName":  "JHOL MOMO.zip",
+        "recipeName":  "JHOL MOMO",
+        "zipUrl":  "./data/global-recipe-library/JHOL%20MOMO.zip"
+    },
+    {
+        "id":  "KADA PRASAD ",
+        "zipName":  "KADA PRASAD .zip",
+        "recipeName":  "KADA PRASAD",
+        "zipUrl":  "./data/global-recipe-library/KADA%20PRASAD%20.zip"
+    },
+    {
+        "id":  "KADAI CHICKEN",
+        "zipName":  "KADAI CHICKEN.zip",
+        "recipeName":  "KADAI CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/KADAI%20CHICKEN.zip"
+    },
+    {
+        "id":  "KADDU KI SUBZI",
+        "zipName":  "KADDU KI SUBZI.zip",
+        "recipeName":  "KADDU KI SUBZI",
+        "zipUrl":  "./data/global-recipe-library/KADDU%20KI%20SUBZI.zip"
+    },
+    {
+        "id":  "KADHAI PANEER",
+        "zipName":  "KADHAI PANEER.zip",
+        "recipeName":  "KADHAI PANEER",
+        "zipUrl":  "./data/global-recipe-library/KADHAI%20PANEER.zip"
+    },
+    {
+        "id":  "KAJU KATLI ",
+        "zipName":  "KAJU KATLI .zip",
+        "recipeName":  "KAJU KATLI",
+        "zipUrl":  "./data/global-recipe-library/KAJU%20KATLI%20.zip"
+    },
+    {
+        "id":  "KAJU MASALA",
+        "zipName":  "KAJU MASALA.zip",
+        "recipeName":  "KAJU MASALA",
+        "zipUrl":  "./data/global-recipe-library/KAJU%20MASALA.zip"
+    },
+    {
+        "id":  "KALAKAND",
+        "zipName":  "KALAKAND.zip",
+        "recipeName":  "KALAKAND",
+        "zipUrl":  "./data/global-recipe-library/KALAKAND.zip"
+    },
+    {
+        "id":  "KASHMIRI PULAO",
+        "zipName":  "KASHMIRI PULAO.zip",
+        "recipeName":  "KASHMIRI PULAO",
+        "zipUrl":  "./data/global-recipe-library/KASHMIRI%20PULAO.zip"
+    },
+    {
+        "id":  "KERALA FISH ",
+        "zipName":  "KERALA FISH .zip",
+        "recipeName":  "KERALA FISH",
+        "zipUrl":  "./data/global-recipe-library/KERALA%20FISH%20.zip"
+    },
+    {
+        "id":  "KESAR PEDA",
+        "zipName":  "KESAR PEDA.zip",
+        "recipeName":  "KESAR PEDA",
+        "zipUrl":  "./data/global-recipe-library/KESAR%20PEDA.zip"
+    },
+    {
+        "id":  "KESAR PHIRNI",
+        "zipName":  "KESAR PHIRNI.zip",
+        "recipeName":  "KESAR PHIRNI",
+        "zipUrl":  "./data/global-recipe-library/KESAR%20PHIRNI.zip"
+    },
+    {
+        "id":  "KESARI BHAAT",
+        "zipName":  "KESARI BHAAT.zip",
+        "recipeName":  "KESARI BHAAT",
+        "zipUrl":  "./data/global-recipe-library/KESARI%20BHAAT.zip"
+    },
+    {
+        "id":  "KODI PAKORA",
+        "zipName":  "KODI PAKORA.zip",
+        "recipeName":  "KODI PAKORA",
+        "zipUrl":  "./data/global-recipe-library/KODI%20PAKORA.zip"
+    },
+    {
+        "id":  "KODOMILLET BATH",
+        "zipName":  "KODOMILLET BATH.zip",
+        "recipeName":  "KODOMILLET BATH",
+        "zipUrl":  "./data/global-recipe-library/KODOMILLET%20BATH.zip"
+    },
+    {
+        "id":  "KOFTA FRY GN",
+        "zipName":  "KOFTA FRY GN.zip",
+        "recipeName":  "KOFTA FRY GN",
+        "zipUrl":  "./data/global-recipe-library/KOFTA%20FRY%20GN.zip"
+    },
+    {
+        "id":  "KOLKATA FISH FRY ",
+        "zipName":  "KOLKATA FISH FRY .zip",
+        "recipeName":  "KOLKATA FISH FRY",
+        "zipUrl":  "./data/global-recipe-library/KOLKATA%20FISH%20FRY%20.zip"
+    },
+    {
+        "id":  "KOREAN RAMEN ",
+        "zipName":  "KOREAN RAMEN .zip",
+        "recipeName":  "KOREAN RAMEN",
+        "zipUrl":  "./data/global-recipe-library/KOREAN%20RAMEN%20.zip"
+    },
+    {
+        "id":  "KORI GASSI 2200",
+        "zipName":  "KORI GASSI 2200.zip",
+        "recipeName":  "KORI GASSI 2200",
+        "zipUrl":  "./data/global-recipe-library/KORI%20GASSI%202200.zip"
+    },
+    {
+        "id":  "KORI GASSI 650 G",
+        "zipName":  "KORI GASSI 650 G.zip",
+        "recipeName":  "KORI GASSI 650 G",
+        "zipUrl":  "./data/global-recipe-library/KORI%20GASSI%20650%20G.zip"
+    },
+    {
+        "id":  "KOTHMIR VADI FRY",
+        "zipName":  "KOTHMIR VADI FRY.zip",
+        "recipeName":  "KOTHMIR VADI FRY",
+        "zipUrl":  "./data/global-recipe-library/KOTHMIR%20VADI%20FRY.zip"
+    },
+    {
+        "id":  "KOTHMIR VADI",
+        "zipName":  "KOTHMIR VADI.zip",
+        "recipeName":  "KOTHMIR VADI",
+        "zipUrl":  "./data/global-recipe-library/KOTHMIR%20VADI.zip"
+    },
+    {
+        "id":  "KUN PAO MUSHROOM ",
+        "zipName":  "KUN PAO MUSHROOM .zip",
+        "recipeName":  "KUN PAO MUSHROOM",
+        "zipUrl":  "./data/global-recipe-library/KUN%20PAO%20MUSHROOM%20.zip"
+    },
+    {
+        "id":  "KUNG PAO CHICKEN",
+        "zipName":  "KUNG PAO CHICKEN.zip",
+        "recipeName":  "KUNG PAO CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/KUNG%20PAO%20CHICKEN.zip"
+    },
+    {
+        "id":  "LAKSA SOUP",
+        "zipName":  "LAKSA SOUP.zip",
+        "recipeName":  "LAKSA SOUP",
+        "zipUrl":  "./data/global-recipe-library/LAKSA%20SOUP.zip"
+    },
+    {
+        "id":  "LASANIYA BATETA ",
+        "zipName":  "LASANIYA BATETA .zip",
+        "recipeName":  "LASANIYA BATETA",
+        "zipUrl":  "./data/global-recipe-library/LASANIYA%20BATETA%20.zip"
+    },
+    {
+        "id":  "LE CORIANDER SP",
+        "zipName":  "LE CORIANDER SP.zip",
+        "recipeName":  "LE CORIANDER SP",
+        "zipUrl":  "./data/global-recipe-library/LE%20CORIANDER%20SP.zip"
+    },
+    {
+        "id":  "LEMON RICE",
+        "zipName":  "LEMON RICE.zip",
+        "recipeName":  "LEMON RICE",
+        "zipUrl":  "./data/global-recipe-library/LEMON%20RICE.zip"
+    },
+    {
+        "id":  "LEMON THYME RICE",
+        "zipName":  "LEMON THYME RICE.zip",
+        "recipeName":  "LEMON THYME RICE",
+        "zipUrl":  "./data/global-recipe-library/LEMON%20THYME%20RICE.zip"
+    },
+    {
+        "id":  "LITTLE MILLET ",
+        "zipName":  "LITTLE MILLET .zip",
+        "recipeName":  "LITTLE MILLET",
+        "zipUrl":  "./data/global-recipe-library/LITTLE%20MILLET%20.zip"
+    },
+    {
+        "id":  "MAC N CHA MAG",
+        "zipName":  "MAC N CHA MAG.zip",
+        "recipeName":  "MAC N CHA MAG",
+        "zipUrl":  "./data/global-recipe-library/MAC%20N%20CHA%20MAG.zip"
+    },
+    {
+        "id":  "MACARONI PASTA",
+        "zipName":  "MACARONI PASTA.zip",
+        "recipeName":  "MACARONI PASTA",
+        "zipUrl":  "./data/global-recipe-library/MACARONI%20PASTA.zip"
+    },
+    {
+        "id":  "MAKHANA KHEER",
+        "zipName":  "MAKHANA KHEER.zip",
+        "recipeName":  "MAKHANA KHEER",
+        "zipUrl":  "./data/global-recipe-library/MAKHANA%20KHEER.zip"
+    },
+    {
+        "id":  "MAKHANI GRAVY",
+        "zipName":  "MAKHANI GRAVY.zip",
+        "recipeName":  "MAKHANI GRAVY",
+        "zipUrl":  "./data/global-recipe-library/MAKHANI%20GRAVY.zip"
+    },
+    {
+        "id":  "MALABAR PRAWN ",
+        "zipName":  "MALABAR PRAWN .zip",
+        "recipeName":  "MALABAR PRAWN",
+        "zipUrl":  "./data/global-recipe-library/MALABAR%20PRAWN%20.zip"
+    },
+    {
+        "id":  "MALAI BROCCOLI T",
+        "zipName":  "MALAI BROCCOLI T.zip",
+        "recipeName":  "MALAI BROCCOLI T",
+        "zipUrl":  "./data/global-recipe-library/MALAI%20BROCCOLI%20T.zip"
+    },
+    {
+        "id":  "MALAI CHI TIKKA",
+        "zipName":  "MALAI CHI TIKKA.zip",
+        "recipeName":  "MALAI CHI TIKKA",
+        "zipUrl":  "./data/global-recipe-library/MALAI%20CHI%20TIKKA.zip"
+    },
+    {
+        "id":  "MALAI GOBI TIKKA",
+        "zipName":  "MALAI GOBI TIKKA.zip",
+        "recipeName":  "MALAI GOBI TIKKA",
+        "zipUrl":  "./data/global-recipe-library/MALAI%20GOBI%20TIKKA.zip"
+    },
+    {
+        "id":  "MALAI KEEMA",
+        "zipName":  "MALAI KEEMA.zip",
+        "recipeName":  "MALAI KEEMA",
+        "zipUrl":  "./data/global-recipe-library/MALAI%20KEEMA.zip"
+    },
+    {
+        "id":  "MALAI KOFTA",
+        "zipName":  "MALAI KOFTA.zip",
+        "recipeName":  "MALAI KOFTA",
+        "zipUrl":  "./data/global-recipe-library/MALAI%20KOFTA.zip"
+    },
+    {
+        "id":  "MALAI KULFI",
+        "zipName":  "MALAI KULFI.zip",
+        "recipeName":  "MALAI KULFI",
+        "zipUrl":  "./data/global-recipe-library/MALAI%20KULFI.zip"
+    },
+    {
+        "id":  "MALAI MUSHROOM T",
+        "zipName":  "MALAI MUSHROOM T.zip",
+        "recipeName":  "MALAI MUSHROOM T",
+        "zipUrl":  "./data/global-recipe-library/MALAI%20MUSHROOM%20T.zip"
+    },
+    {
+        "id":  "MALAI PANEER T",
+        "zipName":  "MALAI PANEER T.zip",
+        "recipeName":  "MALAI PANEER T",
+        "zipUrl":  "./data/global-recipe-library/MALAI%20PANEER%20T.zip"
+    },
+    {
+        "id":  "MANCHURIAN FRY",
+        "zipName":  "MANCHURIAN FRY.zip",
+        "recipeName":  "MANCHURIAN FRY",
+        "zipUrl":  "./data/global-recipe-library/MANCHURIAN%20FRY.zip"
+    },
+    {
+        "id":  "MAPPAS MUSHROOM",
+        "zipName":  "MAPPAS MUSHROOM.zip",
+        "recipeName":  "MAPPAS MUSHROOM",
+        "zipUrl":  "./data/global-recipe-library/MAPPAS%20MUSHROOM.zip"
+    },
+    {
+        "id":  "MASALA ALOO",
+        "zipName":  "MASALA ALOO.zip",
+        "recipeName":  "MASALA ALOO",
+        "zipUrl":  "./data/global-recipe-library/MASALA%20ALOO.zip"
+    },
+    {
+        "id":  "MASALA CHAI CAKE ",
+        "zipName":  "MASALA CHAI CAKE .zip",
+        "recipeName":  "MASALA CHAI CAKE",
+        "zipUrl":  "./data/global-recipe-library/MASALA%20CHAI%20CAKE%20.zip"
+    },
+    {
+        "id":  "MASALA MAGGI",
+        "zipName":  "MASALA MAGGI.zip",
+        "recipeName":  "MASALA MAGGI",
+        "zipUrl":  "./data/global-recipe-library/MASALA%20MAGGI.zip"
+    },
+    {
+        "id":  "MASALA OMELETTE",
+        "zipName":  "MASALA OMELETTE.zip",
+        "recipeName":  "MASALA OMELETTE",
+        "zipUrl":  "./data/global-recipe-library/MASALA%20OMELETTE.zip"
+    },
+    {
+        "id":  "MASHED POTATOES ",
+        "zipName":  "MASHED POTATOES .zip",
+        "recipeName":  "MASHED POTATOES",
+        "zipUrl":  "./data/global-recipe-library/MASHED%20POTATOES%20.zip"
+    },
+    {
+        "id":  "MASOOR DAL ",
+        "zipName":  "MASOOR DAL .zip",
+        "recipeName":  "MASOOR DAL",
+        "zipUrl":  "./data/global-recipe-library/MASOOR%20DAL%20.zip"
+    },
+    {
+        "id":  "MASOOR DAL SOAKED ",
+        "zipName":  "MASOOR DAL SOAKED .zip",
+        "recipeName":  "MASOOR DAL SOAKED",
+        "zipUrl":  "./data/global-recipe-library/MASOOR%20DAL%20SOAKED%20.zip"
+    },
+    {
+        "id":  "MATAR MASALA",
+        "zipName":  "MATAR MASALA.zip",
+        "recipeName":  "MATAR MASALA",
+        "zipUrl":  "./data/global-recipe-library/MATAR%20MASALA.zip"
+    },
+    {
+        "id":  "MATAR PANEER",
+        "zipName":  "MATAR PANEER.zip",
+        "recipeName":  "MATAR PANEER",
+        "zipUrl":  "./data/global-recipe-library/MATAR%20PANEER.zip"
+    },
+    {
+        "id":  "MILLET CHILLA",
+        "zipName":  "MILLET CHILLA.zip",
+        "recipeName":  "MILLET CHILLA",
+        "zipUrl":  "./data/global-recipe-library/MILLET%20CHILLA.zip"
+    },
+    {
+        "id":  "MILLET KHEER",
+        "zipName":  "MILLET KHEER.zip",
+        "recipeName":  "MILLET KHEER",
+        "zipUrl":  "./data/global-recipe-library/MILLET%20KHEER.zip"
+    },
+    {
+        "id":  "MINESTRONE SOUP",
+        "zipName":  "MINESTRONE SOUP.zip",
+        "recipeName":  "MINESTRONE SOUP",
+        "zipUrl":  "./data/global-recipe-library/MINESTRONE%20SOUP.zip"
+    },
+    {
+        "id":  "MIRCHI KA SALAN",
+        "zipName":  "MIRCHI KA SALAN.zip",
+        "recipeName":  "MIRCHI KA SALAN",
+        "zipUrl":  "./data/global-recipe-library/MIRCHI%20KA%20SALAN.zip"
+    },
+    {
+        "id":  "MIRCHI PAKODA",
+        "zipName":  "MIRCHI PAKODA.zip",
+        "recipeName":  "MIRCHI PAKODA",
+        "zipUrl":  "./data/global-recipe-library/MIRCHI%20PAKODA.zip"
+    },
+    {
+        "id":  "MIRCHI ROAST",
+        "zipName":  "MIRCHI ROAST.zip",
+        "recipeName":  "MIRCHI ROAST",
+        "zipUrl":  "./data/global-recipe-library/MIRCHI%20ROAST.zip"
+    },
+    {
+        "id":  "MISO SOUP ",
+        "zipName":  "MISO SOUP .zip",
+        "recipeName":  "MISO SOUP",
+        "zipUrl":  "./data/global-recipe-library/MISO%20SOUP%20.zip"
+    },
+    {
+        "id":  "MOOLI KI SUBZI",
+        "zipName":  "MOOLI KI SUBZI.zip",
+        "recipeName":  "MOOLI KI SUBZI",
+        "zipUrl":  "./data/global-recipe-library/MOOLI%20KI%20SUBZI.zip"
+    },
+    {
+        "id":  "MOONG DAL ",
+        "zipName":  "MOONG DAL .zip",
+        "recipeName":  "MOONG DAL",
+        "zipUrl":  "./data/global-recipe-library/MOONG%20DAL%20.zip"
+    },
+    {
+        "id":  "MOONG DAL CHILLA",
+        "zipName":  "MOONG DAL CHILLA.zip",
+        "recipeName":  "MOONG DAL CHILLA",
+        "zipUrl":  "./data/global-recipe-library/MOONG%20DAL%20CHILLA.zip"
+    },
+    {
+        "id":  "MOONG DAL HALWA ",
+        "zipName":  "MOONG DAL HALWA .zip",
+        "recipeName":  "MOONG DAL HALWA",
+        "zipUrl":  "./data/global-recipe-library/MOONG%20DAL%20HALWA%20.zip"
+    },
+    {
+        "id":  "MOONG DAL HALWA",
+        "zipName":  "MOONG DAL HALWA.zip",
+        "recipeName":  "MOONG DAL HALWA",
+        "zipUrl":  "./data/global-recipe-library/MOONG%20DAL%20HALWA.zip"
+    },
+    {
+        "id":  "MOONG DAL SOAKED ",
+        "zipName":  "MOONG DAL SOAKED .zip",
+        "recipeName":  "MOONG DAL SOAKED",
+        "zipUrl":  "./data/global-recipe-library/MOONG%20DAL%20SOAKED%20.zip"
+    },
+    {
+        "id":  "MOONG-DAL HALWA",
+        "zipName":  "MOONG-DAL HALWA.zip",
+        "recipeName":  "MOONG-DAL HALWA",
+        "zipUrl":  "./data/global-recipe-library/MOONG-DAL%20HALWA.zip"
+    },
+    {
+        "id":  "MOR KUZHUMBU",
+        "zipName":  "MOR KUZHUMBU.zip",
+        "recipeName":  "MOR KUZHUMBU",
+        "zipUrl":  "./data/global-recipe-library/MOR%20KUZHUMBU.zip"
+    },
+    {
+        "id":  "MOZZARELLA STICK",
+        "zipName":  "MOZZARELLA STICK.zip",
+        "recipeName":  "MOZZARELLA STICK",
+        "zipUrl":  "./data/global-recipe-library/MOZZARELLA%20STICK.zip"
+    },
+    {
+        "id":  "MSH GHEE ROAST",
+        "zipName":  "MSH GHEE ROAST.zip",
+        "recipeName":  "MSH GHEE ROAST",
+        "zipUrl":  "./data/global-recipe-library/MSH%20GHEE%20ROAST.zip"
+    },
+    {
+        "id":  "MUGHLAI CHICKEN ",
+        "zipName":  "MUGHLAI CHICKEN .zip",
+        "recipeName":  "MUGHLAI CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/MUGHLAI%20CHICKEN%20.zip"
+    },
+    {
+        "id":  "MUGHLAI PANEER ",
+        "zipName":  "MUGHLAI PANEER .zip",
+        "recipeName":  "MUGHLAI PANEER",
+        "zipUrl":  "./data/global-recipe-library/MUGHLAI%20PANEER%20.zip"
+    },
+    {
+        "id":  "MUMBAI BHAJI",
+        "zipName":  "MUMBAI BHAJI.zip",
+        "recipeName":  "MUMBAI BHAJI",
+        "zipUrl":  "./data/global-recipe-library/MUMBAI%20BHAJI.zip"
+    },
+    {
+        "id":  "MURGIR JHOL",
+        "zipName":  "MURGIR JHOL.zip",
+        "recipeName":  "MURGIR JHOL",
+        "zipUrl":  "./data/global-recipe-library/MURGIR%20JHOL.zip"
+    },
+    {
+        "id":  "MUSHROOM CHILI D",
+        "zipName":  "MUSHROOM CHILI D.zip",
+        "recipeName":  "MUSHROOM CHILI D",
+        "zipUrl":  "./data/global-recipe-library/MUSHROOM%20CHILI%20D.zip"
+    },
+    {
+        "id":  "MUSHROOM CHILLI",
+        "zipName":  "MUSHROOM CHILLI.zip",
+        "recipeName":  "MUSHROOM CHILLI",
+        "zipUrl":  "./data/global-recipe-library/MUSHROOM%20CHILLI.zip"
+    },
+    {
+        "id":  "MUSHROOM FRY(2)",
+        "zipName":  "MUSHROOM FRY(2).zip",
+        "recipeName":  "MUSHROOM FRY(2)",
+        "zipUrl":  "./data/global-recipe-library/MUSHROOM%20FRY(2).zip"
+    },
+    {
+        "id":  "MUSHROOM FRY",
+        "zipName":  "MUSHROOM FRY.zip",
+        "recipeName":  "MUSHROOM FRY",
+        "zipUrl":  "./data/global-recipe-library/MUSHROOM%20FRY.zip"
+    },
+    {
+        "id":  "MUSHROOM NUGGETS ",
+        "zipName":  "MUSHROOM NUGGETS .zip",
+        "recipeName":  "MUSHROOM NUGGETS",
+        "zipUrl":  "./data/global-recipe-library/MUSHROOM%20NUGGETS%20.zip"
+    },
+    {
+        "id":  "MUSHROOM OMELETTE",
+        "zipName":  "MUSHROOM OMELETTE.zip",
+        "recipeName":  "MUSHROOM OMELETTE",
+        "zipUrl":  "./data/global-recipe-library/MUSHROOM%20OMELETTE.zip"
+    },
+    {
+        "id":  "MUSHROOM RISSOTO ",
+        "zipName":  "MUSHROOM RISSOTO .zip",
+        "recipeName":  "MUSHROOM RISSOTO",
+        "zipUrl":  "./data/global-recipe-library/MUSHROOM%20RISSOTO%20.zip"
+    },
+    {
+        "id":  "MUSHROOM TIKKA",
+        "zipName":  "MUSHROOM TIKKA.zip",
+        "recipeName":  "MUSHROOM TIKKA",
+        "zipUrl":  "./data/global-recipe-library/MUSHROOM%20TIKKA.zip"
+    },
+    {
+        "id":  "MUSHY PEAS ",
+        "zipName":  "MUSHY PEAS .zip",
+        "recipeName":  "MUSHY PEAS",
+        "zipUrl":  "./data/global-recipe-library/MUSHY%20PEAS%20.zip"
+    },
+    {
+        "id":  "MUTTON KEEMA",
+        "zipName":  "MUTTON KEEMA.zip",
+        "recipeName":  "MUTTON KEEMA",
+        "zipUrl":  "./data/global-recipe-library/MUTTON%20KEEMA.zip"
+    },
+    {
+        "id":  "MUTTON MARAG",
+        "zipName":  "MUTTON MARAG.zip",
+        "recipeName":  "MUTTON MARAG",
+        "zipUrl":  "./data/global-recipe-library/MUTTON%20MARAG.zip"
+    },
+    {
+        "id":  "MUTTON ROGAN ",
+        "zipName":  "MUTTON ROGAN .zip",
+        "recipeName":  "MUTTON ROGAN",
+        "zipUrl":  "./data/global-recipe-library/MUTTON%20ROGAN%20.zip"
+    },
+    {
+        "id":  "MYSORE PAK",
+        "zipName":  "MYSORE PAK.zip",
+        "recipeName":  "MYSORE PAK",
+        "zipUrl":  "./data/global-recipe-library/MYSORE%20PAK.zip"
+    },
+    {
+        "id":  "NAGARJUNA CHICKEN",
+        "zipName":  "NAGARJUNA CHICKEN.zip",
+        "recipeName":  "NAGARJUNA CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/NAGARJUNA%20CHICKEN.zip"
+    },
+    {
+        "id":  "NAMAK PARA",
+        "zipName":  "NAMAK PARA.zip",
+        "recipeName":  "NAMAK PARA",
+        "zipUrl":  "./data/global-recipe-library/NAMAK%20PARA.zip"
+    },
+    {
+        "id":  "NIZAMI DUM CHI",
+        "zipName":  "NIZAMI DUM CHI.zip",
+        "recipeName":  "NIZAMI DUM CHI",
+        "zipUrl":  "./data/global-recipe-library/NIZAMI%20DUM%20CHI.zip"
+    },
+    {
+        "id":  "NOLEN GUR PAYES ",
+        "zipName":  "NOLEN GUR PAYES .zip",
+        "recipeName":  "NOLEN GUR PAYES",
+        "zipUrl":  "./data/global-recipe-library/NOLEN%20GUR%20PAYES%20.zip"
+    },
+    {
+        "id":  "ONION PAKODA ",
+        "zipName":  "ONION PAKODA .zip",
+        "recipeName":  "ONION PAKODA",
+        "zipUrl":  "./data/global-recipe-library/ONION%20PAKODA%20.zip"
+    },
+    {
+        "id":  "ONION RICE GN",
+        "zipName":  "ONION RICE GN.zip",
+        "recipeName":  "ONION RICE GN",
+        "zipUrl":  "./data/global-recipe-library/ONION%20RICE%20GN.zip"
+    },
+    {
+        "id":  "ONION TOMATO",
+        "zipName":  "ONION TOMATO.zip",
+        "recipeName":  "ONION TOMATO",
+        "zipUrl":  "./data/global-recipe-library/ONION%20TOMATO.zip"
+    },
+    {
+        "id":  "PAAL PAYASAM ",
+        "zipName":  "PAAL PAYASAM .zip",
+        "recipeName":  "PAAL PAYASAM",
+        "zipUrl":  "./data/global-recipe-library/PAAL%20PAYASAM%20.zip"
+    },
+    {
+        "id":  "PAN MANCHURIAN D",
+        "zipName":  "PAN MANCHURIAN D.zip",
+        "recipeName":  "PAN MANCHURIAN D",
+        "zipUrl":  "./data/global-recipe-library/PAN%20MANCHURIAN%20D.zip"
+    },
+    {
+        "id":  "PANCHKUTIYU SHAK",
+        "zipName":  "PANCHKUTIYU SHAK.zip",
+        "recipeName":  "PANCHKUTIYU SHAK",
+        "zipUrl":  "./data/global-recipe-library/PANCHKUTIYU%20SHAK.zip"
+    },
+    {
+        "id":  "PANCHMEL DAL GN",
+        "zipName":  "PANCHMEL DAL GN.zip",
+        "recipeName":  "PANCHMEL DAL GN",
+        "zipUrl":  "./data/global-recipe-library/PANCHMEL%20DAL%20GN.zip"
+    },
+    {
+        "id":  "PANEER BHURJI",
+        "zipName":  "PANEER BHURJI.zip",
+        "recipeName":  "PANEER BHURJI",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20BHURJI.zip"
+    },
+    {
+        "id":  "PANEER CHILI DRY",
+        "zipName":  "PANEER CHILI DRY.zip",
+        "recipeName":  "PANEER CHILI DRY",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20CHILI%20DRY.zip"
+    },
+    {
+        "id":  "PANEER CHILLI G",
+        "zipName":  "PANEER CHILLI G.zip",
+        "recipeName":  "PANEER CHILLI G",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20CHILLI%20G.zip"
+    },
+    {
+        "id":  "PANEER JALFREZI",
+        "zipName":  "PANEER JALFREZI.zip",
+        "recipeName":  "PANEER JALFREZI",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20JALFREZI.zip"
+    },
+    {
+        "id":  "PANEER MAKHANI",
+        "zipName":  "PANEER MAKHANI.zip",
+        "recipeName":  "PANEER MAKHANI",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20MAKHANI.zip"
+    },
+    {
+        "id":  "PANEER MANCHURIA",
+        "zipName":  "PANEER MANCHURIA.zip",
+        "recipeName":  "PANEER MANCHURIA",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20MANCHURIA.zip"
+    },
+    {
+        "id":  "PANEER PAKODA ",
+        "zipName":  "PANEER PAKODA .zip",
+        "recipeName":  "PANEER PAKODA",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20PAKODA%20.zip"
+    },
+    {
+        "id":  "PANEER PEAS ",
+        "zipName":  "PANEER PEAS .zip",
+        "recipeName":  "PANEER PEAS",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20PEAS%20.zip"
+    },
+    {
+        "id":  "PANEER SAMOSA",
+        "zipName":  "PANEER SAMOSA.zip",
+        "recipeName":  "PANEER SAMOSA",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20SAMOSA.zip"
+    },
+    {
+        "id":  "PANEER SICHUAN D",
+        "zipName":  "PANEER SICHUAN D.zip",
+        "recipeName":  "PANEER SICHUAN D",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20SICHUAN%20D.zip"
+    },
+    {
+        "id":  "PANEER SUKKA",
+        "zipName":  "PANEER SUKKA.zip",
+        "recipeName":  "PANEER SUKKA",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20SUKKA.zip"
+    },
+    {
+        "id":  "PANEER T MASALA",
+        "zipName":  "PANEER T MASALA.zip",
+        "recipeName":  "PANEER T MASALA",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20T%20MASALA.zip"
+    },
+    {
+        "id":  "PANEER TIKKA",
+        "zipName":  "PANEER TIKKA.zip",
+        "recipeName":  "PANEER TIKKA",
+        "zipUrl":  "./data/global-recipe-library/PANEER%20TIKKA.zip"
+    },
+    {
+        "id":  "PAO BHAJI MASALA",
+        "zipName":  "PAO BHAJI MASALA.zip",
+        "recipeName":  "PAO BHAJI MASALA",
+        "zipUrl":  "./data/global-recipe-library/PAO%20BHAJI%20MASALA.zip"
+    },
+    {
+        "id":  "PAPAD KEBAB",
+        "zipName":  "PAPAD KEBAB.zip",
+        "recipeName":  "PAPAD KEBAB",
+        "zipUrl":  "./data/global-recipe-library/PAPAD%20KEBAB.zip"
+    },
+    {
+        "id":  "PARUPPU PAYASAM",
+        "zipName":  "PARUPPU PAYASAM.zip",
+        "recipeName":  "PARUPPU PAYASAM",
+        "zipUrl":  "./data/global-recipe-library/PARUPPU%20PAYASAM.zip"
+    },
+    {
+        "id":  "PAV BHAJI GN",
+        "zipName":  "PAV BHAJI GN.zip",
+        "recipeName":  "PAV BHAJI GN",
+        "zipUrl":  "./data/global-recipe-library/PAV%20BHAJI%20GN.zip"
+    },
+    {
+        "id":  "PEAS PULAO ",
+        "zipName":  "PEAS PULAO .zip",
+        "recipeName":  "PEAS PULAO",
+        "zipUrl":  "./data/global-recipe-library/PEAS%20PULAO%20.zip"
+    },
+    {
+        "id":  "PEAS PULAO 1000G",
+        "zipName":  "PEAS PULAO 1000G.zip",
+        "recipeName":  "PEAS PULAO 1000G",
+        "zipUrl":  "./data/global-recipe-library/PEAS%20PULAO%201000G.zip"
+    },
+    {
+        "id":  "PEAS PULAO",
+        "zipName":  "PEAS PULAO.zip",
+        "recipeName":  "PEAS PULAO",
+        "zipUrl":  "./data/global-recipe-library/PEAS%20PULAO.zip"
+    },
+    {
+        "id":  "PENNE ALF MAG",
+        "zipName":  "PENNE ALF MAG.zip",
+        "recipeName":  "PENNE ALF MAG",
+        "zipUrl":  "./data/global-recipe-library/PENNE%20ALF%20MAG.zip"
+    },
+    {
+        "id":  "PENNE ALFREDO",
+        "zipName":  "PENNE ALFREDO.zip",
+        "recipeName":  "PENNE ALFREDO",
+        "zipUrl":  "./data/global-recipe-library/PENNE%20ALFREDO.zip"
+    },
+    {
+        "id":  "PENNE ARR MAG",
+        "zipName":  "PENNE ARR MAG.zip",
+        "recipeName":  "PENNE ARR MAG",
+        "zipUrl":  "./data/global-recipe-library/PENNE%20ARR%20MAG.zip"
+    },
+    {
+        "id":  "PENNE ARRABIATA ",
+        "zipName":  "PENNE ARRABIATA .zip",
+        "recipeName":  "PENNE ARRABIATA",
+        "zipUrl":  "./data/global-recipe-library/PENNE%20ARRABIATA%20.zip"
+    },
+    {
+        "id":  "PENNE PASTA 300G",
+        "zipName":  "PENNE PASTA 300G.zip",
+        "recipeName":  "PENNE PASTA 300G",
+        "zipUrl":  "./data/global-recipe-library/PENNE%20PASTA%20300G.zip"
+    },
+    {
+        "id":  "PENNE PASTA A",
+        "zipName":  "PENNE PASTA A.zip",
+        "recipeName":  "PENNE PASTA A",
+        "zipUrl":  "./data/global-recipe-library/PENNE%20PASTA%20A.zip"
+    },
+    {
+        "id":  "PENNE RED A",
+        "zipName":  "PENNE RED A.zip",
+        "recipeName":  "PENNE RED A",
+        "zipUrl":  "./data/global-recipe-library/PENNE%20RED%20A.zip"
+    },
+    {
+        "id":  "PEPPER CHICKEN",
+        "zipName":  "PEPPER CHICKEN.zip",
+        "recipeName":  "PEPPER CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/PEPPER%20CHICKEN.zip"
+    },
+    {
+        "id":  "PEPPER QUINOA ",
+        "zipName":  "PEPPER QUINOA .zip",
+        "recipeName":  "PEPPER QUINOA",
+        "zipUrl":  "./data/global-recipe-library/PEPPER%20QUINOA%20.zip"
+    },
+    {
+        "id":  "PINDI CHOLE GN",
+        "zipName":  "PINDI CHOLE GN.zip",
+        "recipeName":  "PINDI CHOLE GN",
+        "zipUrl":  "./data/global-recipe-library/PINDI%20CHOLE%20GN.zip"
+    },
+    {
+        "id":  "PINDI CHOLE MS",
+        "zipName":  "PINDI CHOLE MS.zip",
+        "recipeName":  "PINDI CHOLE MS",
+        "zipUrl":  "./data/global-recipe-library/PINDI%20CHOLE%20MS.zip"
+    },
+    {
+        "id":  "PINDI CHOLE",
+        "zipName":  "PINDI CHOLE.zip",
+        "recipeName":  "PINDI CHOLE",
+        "zipUrl":  "./data/global-recipe-library/PINDI%20CHOLE.zip"
+    },
+    {
+        "id":  "PINEAPPLE SHEERA",
+        "zipName":  "PINEAPPLE SHEERA.zip",
+        "recipeName":  "PINEAPPLE SHEERA",
+        "zipUrl":  "./data/global-recipe-library/PINEAPPLE%20SHEERA.zip"
+    },
+    {
+        "id":  "PNR CHZ BHURJI",
+        "zipName":  "PNR CHZ BHURJI.zip",
+        "recipeName":  "PNR CHZ BHURJI",
+        "zipUrl":  "./data/global-recipe-library/PNR%20CHZ%20BHURJI.zip"
+    },
+    {
+        "id":  "PNR MAKHANI 1KG",
+        "zipName":  "PNR MAKHANI 1KG.zip",
+        "recipeName":  "PNR MAKHANI 1KG",
+        "zipUrl":  "./data/global-recipe-library/PNR%20MAKHANI%201KG.zip"
+    },
+    {
+        "id":  "PNR MAKHANI 2KG",
+        "zipName":  "PNR MAKHANI 2KG.zip",
+        "recipeName":  "PNR MAKHANI 2KG",
+        "zipUrl":  "./data/global-recipe-library/PNR%20MAKHANI%202KG.zip"
+    },
+    {
+        "id":  "PNR MAKHANI 3KG",
+        "zipName":  "PNR MAKHANI 3KG.zip",
+        "recipeName":  "PNR MAKHANI 3KG",
+        "zipUrl":  "./data/global-recipe-library/PNR%20MAKHANI%203KG.zip"
+    },
+    {
+        "id":  "PODI IDLI",
+        "zipName":  "PODI IDLI.zip",
+        "recipeName":  "PODI IDLI",
+        "zipUrl":  "./data/global-recipe-library/PODI%20IDLI.zip"
+    },
+    {
+        "id":  "POHA PAKODA",
+        "zipName":  "POHA PAKODA.zip",
+        "recipeName":  "POHA PAKODA",
+        "zipUrl":  "./data/global-recipe-library/POHA%20PAKODA.zip"
+    },
+    {
+        "id":  "PONGAL ",
+        "zipName":  "PONGAL .zip",
+        "recipeName":  "PONGAL",
+        "zipUrl":  "./data/global-recipe-library/PONGAL%20.zip"
+    },
+    {
+        "id":  "POPCORN ",
+        "zipName":  "POPCORN .zip",
+        "recipeName":  "POPCORN",
+        "zipUrl":  "./data/global-recipe-library/POPCORN%20.zip"
+    },
+    {
+        "id":  "POTATO FRITTATA",
+        "zipName":  "POTATO FRITTATA.zip",
+        "recipeName":  "POTATO FRITTATA",
+        "zipUrl":  "./data/global-recipe-library/POTATO%20FRITTATA.zip"
+    },
+    {
+        "id":  "POTATO WEDGES",
+        "zipName":  "POTATO WEDGES.zip",
+        "recipeName":  "POTATO WEDGES",
+        "zipUrl":  "./data/global-recipe-library/POTATO%20WEDGES.zip"
+    },
+    {
+        "id":  "PRAWN DIM SUM",
+        "zipName":  "PRAWN DIM SUM.zip",
+        "recipeName":  "PRAWN DIM SUM",
+        "zipUrl":  "./data/global-recipe-library/PRAWN%20DIM%20SUM.zip"
+    },
+    {
+        "id":  "PRAWN MOILEE",
+        "zipName":  "PRAWN MOILEE.zip",
+        "recipeName":  "PRAWN MOILEE",
+        "zipUrl":  "./data/global-recipe-library/PRAWN%20MOILEE.zip"
+    },
+    {
+        "id":  "PRAWNS CURRY",
+        "zipName":  "PRAWNS CURRY.zip",
+        "recipeName":  "PRAWNS CURRY",
+        "zipUrl":  "./data/global-recipe-library/PRAWNS%20CURRY.zip"
+    },
+    {
+        "id":  "PRAWNS MAPPAS",
+        "zipName":  "PRAWNS MAPPAS.zip",
+        "recipeName":  "PRAWNS MAPPAS",
+        "zipUrl":  "./data/global-recipe-library/PRAWNS%20MAPPAS.zip"
+    },
+    {
+        "id":  "PUNJABI KADHI GN",
+        "zipName":  "PUNJABI KADHI GN.zip",
+        "recipeName":  "PUNJABI KADHI GN",
+        "zipUrl":  "./data/global-recipe-library/PUNJABI%20KADHI%20GN.zip"
+    },
+    {
+        "id":  "PUNJABI KADHI",
+        "zipName":  "PUNJABI KADHI.zip",
+        "recipeName":  "PUNJABI KADHI",
+        "zipUrl":  "./data/global-recipe-library/PUNJABI%20KADHI.zip"
+    },
+    {
+        "id":  "QUINOA BOIL",
+        "zipName":  "QUINOA BOIL.zip",
+        "recipeName":  "QUINOA BOIL",
+        "zipUrl":  "./data/global-recipe-library/QUINOA%20BOIL.zip"
+    },
+    {
+        "id":  "RABDI BASE ",
+        "zipName":  "RABDI BASE .zip",
+        "recipeName":  "RABDI BASE",
+        "zipUrl":  "./data/global-recipe-library/RABDI%20BASE%20.zip"
+    },
+    {
+        "id":  "RAGI AMBALI",
+        "zipName":  "RAGI AMBALI.zip",
+        "recipeName":  "RAGI AMBALI",
+        "zipUrl":  "./data/global-recipe-library/RAGI%20AMBALI.zip"
+    },
+    {
+        "id":  "RAGI MILLET CAKE",
+        "zipName":  "RAGI MILLET CAKE.zip",
+        "recipeName":  "RAGI MILLET CAKE",
+        "zipUrl":  "./data/global-recipe-library/RAGI%20MILLET%20CAKE.zip"
+    },
+    {
+        "id":  "RAJASTHANI CHI",
+        "zipName":  "RAJASTHANI CHI.zip",
+        "recipeName":  "RAJASTHANI CHI",
+        "zipUrl":  "./data/global-recipe-library/RAJASTHANI%20CHI.zip"
+    },
+    {
+        "id":  "RAJMA BOILED(2)",
+        "zipName":  "RAJMA BOILED(2).zip",
+        "recipeName":  "RAJMA BOILED(2)",
+        "zipUrl":  "./data/global-recipe-library/RAJMA%20BOILED(2).zip"
+    },
+    {
+        "id":  "RAJMA BOILED",
+        "zipName":  "RAJMA BOILED.zip",
+        "recipeName":  "RAJMA BOILED",
+        "zipUrl":  "./data/global-recipe-library/RAJMA%20BOILED.zip"
+    },
+    {
+        "id":  "RAJMA MASALA 300",
+        "zipName":  "RAJMA MASALA 300.zip",
+        "recipeName":  "RAJMA MASALA 300",
+        "zipUrl":  "./data/global-recipe-library/RAJMA%20MASALA%20300.zip"
+    },
+    {
+        "id":  "RAJMA MASALA GN",
+        "zipName":  "RAJMA MASALA GN.zip",
+        "recipeName":  "RAJMA MASALA GN",
+        "zipUrl":  "./data/global-recipe-library/RAJMA%20MASALA%20GN.zip"
+    },
+    {
+        "id":  "RAJMA MASALA",
+        "zipName":  "RAJMA MASALA.zip",
+        "recipeName":  "RAJMA MASALA",
+        "zipUrl":  "./data/global-recipe-library/RAJMA%20MASALA.zip"
+    },
+    {
+        "id":  "RAJWADI DHOKLI",
+        "zipName":  "RAJWADI DHOKLI.zip",
+        "recipeName":  "RAJWADI DHOKLI",
+        "zipUrl":  "./data/global-recipe-library/RAJWADI%20DHOKLI.zip"
+    },
+    {
+        "id":  "RAVA UPMA 2500GM",
+        "zipName":  "RAVA UPMA 2500GM.zip",
+        "recipeName":  "RAVA UPMA 2500GM",
+        "zipUrl":  "./data/global-recipe-library/RAVA%20UPMA%202500GM.zip"
+    },
+    {
+        "id":  "RAVA UPMA",
+        "zipName":  "RAVA UPMA.zip",
+        "recipeName":  "RAVA UPMA",
+        "zipUrl":  "./data/global-recipe-library/RAVA%20UPMA.zip"
+    },
+    {
+        "id":  "RED MAC MAG",
+        "zipName":  "RED MAC MAG.zip",
+        "recipeName":  "RED MAC MAG",
+        "zipUrl":  "./data/global-recipe-library/RED%20MAC%20MAG.zip"
+    },
+    {
+        "id":  "RED SAUCE PASTA ",
+        "zipName":  "RED SAUCE PASTA .zip",
+        "recipeName":  "RED SAUCE PASTA",
+        "zipUrl":  "./data/global-recipe-library/RED%20SAUCE%20PASTA%20.zip"
+    },
+    {
+        "id":  "RICE KHEER ",
+        "zipName":  "RICE KHEER .zip",
+        "recipeName":  "RICE KHEER",
+        "zipUrl":  "./data/global-recipe-library/RICE%20KHEER%20.zip"
+    },
+    {
+        "id":  "ROASTED CHICKEN",
+        "zipName":  "ROASTED CHICKEN.zip",
+        "recipeName":  "ROASTED CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/ROASTED%20CHICKEN.zip"
+    },
+    {
+        "id":  "ROSE SAUCE PASTA",
+        "zipName":  "ROSE SAUCE PASTA.zip",
+        "recipeName":  "ROSE SAUCE PASTA",
+        "zipUrl":  "./data/global-recipe-library/ROSE%20SAUCE%20PASTA.zip"
+    },
+    {
+        "id":  "SAARU",
+        "zipName":  "SAARU.zip",
+        "recipeName":  "SAARU",
+        "zipUrl":  "./data/global-recipe-library/SAARU.zip"
+    },
+    {
+        "id":  "SABUDANA KHEER",
+        "zipName":  "SABUDANA KHEER.zip",
+        "recipeName":  "SABUDANA KHEER",
+        "zipUrl":  "./data/global-recipe-library/SABUDANA%20KHEER.zip"
+    },
+    {
+        "id":  "SABUDANA KHICHDI",
+        "zipName":  "SABUDANA KHICHDI.zip",
+        "recipeName":  "SABUDANA KHICHDI",
+        "zipUrl":  "./data/global-recipe-library/SABUDANA%20KHICHDI.zip"
+    },
+    {
+        "id":  "SAFED MURGH",
+        "zipName":  "SAFED MURGH.zip",
+        "recipeName":  "SAFED MURGH",
+        "zipUrl":  "./data/global-recipe-library/SAFED%20MURGH.zip"
+    },
+    {
+        "id":  "SAFED PANEER",
+        "zipName":  "SAFED PANEER.zip",
+        "recipeName":  "SAFED PANEER",
+        "zipUrl":  "./data/global-recipe-library/SAFED%20PANEER.zip"
+    },
+    {
+        "id":  "SAMBHAR ",
+        "zipName":  "SAMBHAR .zip",
+        "recipeName":  "SAMBHAR",
+        "zipUrl":  "./data/global-recipe-library/SAMBHAR%20.zip"
+    },
+    {
+        "id":  "SAUTE CARROT A",
+        "zipName":  "SAUTE CARROT A.zip",
+        "recipeName":  "SAUTE CARROT A",
+        "zipUrl":  "./data/global-recipe-library/SAUTE%20CARROT%20A.zip"
+    },
+    {
+        "id":  "SAUTE POTATOES A",
+        "zipName":  "SAUTE POTATOES A.zip",
+        "recipeName":  "SAUTE POTATOES A",
+        "zipUrl":  "./data/global-recipe-library/SAUTE%20POTATOES%20A.zip"
+    },
+    {
+        "id":  "SAUTE VEG 200G",
+        "zipName":  "SAUTE VEG 200G.zip",
+        "recipeName":  "SAUTE VEG 200G",
+        "zipUrl":  "./data/global-recipe-library/SAUTE%20VEG%20200G.zip"
+    },
+    {
+        "id":  "SAUTE VEGETABLES",
+        "zipName":  "SAUTE VEGETABLES.zip",
+        "recipeName":  "SAUTE VEGETABLES",
+        "zipUrl":  "./data/global-recipe-library/SAUTE%20VEGETABLES.zip"
+    },
+    {
+        "id":  "SCHEZWAN CHICKEN",
+        "zipName":  "SCHEZWAN CHICKEN.zip",
+        "recipeName":  "SCHEZWAN CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/SCHEZWAN%20CHICKEN.zip"
+    },
+    {
+        "id":  "SCHEZWAN MOMO",
+        "zipName":  "SCHEZWAN MOMO.zip",
+        "recipeName":  "SCHEZWAN MOMO",
+        "zipUrl":  "./data/global-recipe-library/SCHEZWAN%20MOMO.zip"
+    },
+    {
+        "id":  "SCHEZWAN PULAO",
+        "zipName":  "SCHEZWAN PULAO.zip",
+        "recipeName":  "SCHEZWAN PULAO",
+        "zipUrl":  "./data/global-recipe-library/SCHEZWAN%20PULAO.zip"
+    },
+    {
+        "id":  "SCHEZWAN RICE",
+        "zipName":  "SCHEZWAN RICE.zip",
+        "recipeName":  "SCHEZWAN RICE",
+        "zipUrl":  "./data/global-recipe-library/SCHEZWAN%20RICE.zip"
+    },
+    {
+        "id":  "SEEKH KEBAB ",
+        "zipName":  "SEEKH KEBAB .zip",
+        "recipeName":  "SEEKH KEBAB",
+        "zipUrl":  "./data/global-recipe-library/SEEKH%20KEBAB%20.zip"
+    },
+    {
+        "id":  "SEMIYA PAYASAM",
+        "zipName":  "SEMIYA PAYASAM.zip",
+        "recipeName":  "SEMIYA PAYASAM",
+        "zipUrl":  "./data/global-recipe-library/SEMIYA%20PAYASAM.zip"
+    },
+    {
+        "id":  "SEV TAMETA",
+        "zipName":  "SEV TAMETA.zip",
+        "recipeName":  "SEV TAMETA",
+        "zipUrl":  "./data/global-recipe-library/SEV%20TAMETA.zip"
+    },
+    {
+        "id":  "SFD CHI MAKHANI",
+        "zipName":  "SFD CHI MAKHANI.zip",
+        "recipeName":  "SFD CHI MAKHANI",
+        "zipUrl":  "./data/global-recipe-library/SFD%20CHI%20MAKHANI.zip"
+    },
+    {
+        "id":  "SHAHI DAHI HALWA",
+        "zipName":  "SHAHI DAHI HALWA.zip",
+        "recipeName":  "SHAHI DAHI HALWA",
+        "zipUrl":  "./data/global-recipe-library/SHAHI%20DAHI%20HALWA.zip"
+    },
+    {
+        "id":  "SHAHI PANEER KOR",
+        "zipName":  "SHAHI PANEER KOR.zip",
+        "recipeName":  "SHAHI PANEER KOR",
+        "zipUrl":  "./data/global-recipe-library/SHAHI%20PANEER%20KOR.zip"
+    },
+    {
+        "id":  "SHIMLA MIRCH ALOO",
+        "zipName":  "SHIMLA MIRCH ALOO.zip",
+        "recipeName":  "SHIMLA MIRCH ALOO",
+        "zipUrl":  "./data/global-recipe-library/SHIMLA%20MIRCH%20ALOO.zip"
+    },
+    {
+        "id":  "SHORSHE ILISH",
+        "zipName":  "SHORSHE ILISH.zip",
+        "recipeName":  "SHORSHE ILISH",
+        "zipUrl":  "./data/global-recipe-library/SHORSHE%20ILISH.zip"
+    },
+    {
+        "id":  "SICHUAN SAUCE ",
+        "zipName":  "SICHUAN SAUCE .zip",
+        "recipeName":  "SICHUAN SAUCE",
+        "zipUrl":  "./data/global-recipe-library/SICHUAN%20SAUCE%20.zip"
+    },
+    {
+        "id":  "SOAJI CHICKEN",
+        "zipName":  "SOAJI CHICKEN.zip",
+        "recipeName":  "SOAJI CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/SOAJI%20CHICKEN.zip"
+    },
+    {
+        "id":  "SOAJI MUSHROOM",
+        "zipName":  "SOAJI MUSHROOM.zip",
+        "recipeName":  "SOAJI MUSHROOM",
+        "zipUrl":  "./data/global-recipe-library/SOAJI%20MUSHROOM.zip"
+    },
+    {
+        "id":  "SOAJI PANEER",
+        "zipName":  "SOAJI PANEER.zip",
+        "recipeName":  "SOAJI PANEER",
+        "zipUrl":  "./data/global-recipe-library/SOAJI%20PANEER.zip"
+    },
+    {
+        "id":  "SOBA BOILING ",
+        "zipName":  "SOBA BOILING .zip",
+        "recipeName":  "SOBA BOILING",
+        "zipUrl":  "./data/global-recipe-library/SOBA%20BOILING%20.zip"
+    },
+    {
+        "id":  "SOBA NOODLES ",
+        "zipName":  "SOBA NOODLES .zip",
+        "recipeName":  "SOBA NOODLES",
+        "zipUrl":  "./data/global-recipe-library/SOBA%20NOODLES%20.zip"
+    },
+    {
+        "id":  "SOOJI KHEER ",
+        "zipName":  "SOOJI KHEER .zip",
+        "recipeName":  "SOOJI KHEER",
+        "zipUrl":  "./data/global-recipe-library/SOOJI%20KHEER%20.zip"
+    },
+    {
+        "id":  "SPANISH PAELLA",
+        "zipName":  "SPANISH PAELLA.zip",
+        "recipeName":  "SPANISH PAELLA",
+        "zipUrl":  "./data/global-recipe-library/SPANISH%20PAELLA.zip"
+    },
+    {
+        "id":  "SPINACH OMELETTE",
+        "zipName":  "SPINACH OMELETTE.zip",
+        "recipeName":  "SPINACH OMELETTE",
+        "zipUrl":  "./data/global-recipe-library/SPINACH%20OMELETTE.zip"
+    },
+    {
+        "id":  "STEAM MOMO UAE",
+        "zipName":  "STEAM MOMO UAE.zip",
+        "recipeName":  "STEAM MOMO UAE",
+        "zipUrl":  "./data/global-recipe-library/STEAM%20MOMO%20UAE.zip"
+    },
+    {
+        "id":  "STEAM RICE 2000G",
+        "zipName":  "STEAM RICE 2000G.zip",
+        "recipeName":  "STEAM RICE 2000G",
+        "zipUrl":  "./data/global-recipe-library/STEAM%20RICE%202000G.zip"
+    },
+    {
+        "id":  "STEAM RICE 3000G",
+        "zipName":  "STEAM RICE 3000G.zip",
+        "recipeName":  "STEAM RICE 3000G",
+        "zipUrl":  "./data/global-recipe-library/STEAM%20RICE%203000G.zip"
+    },
+    {
+        "id":  "STEAM RICE 500G",
+        "zipName":  "STEAM RICE 500G.zip",
+        "recipeName":  "STEAM RICE 500G",
+        "zipUrl":  "./data/global-recipe-library/STEAM%20RICE%20500G.zip"
+    },
+    {
+        "id":  "STEAM RICE",
+        "zipName":  "STEAM RICE.zip",
+        "recipeName":  "STEAM RICE",
+        "zipUrl":  "./data/global-recipe-library/STEAM%20RICE.zip"
+    },
+    {
+        "id":  "STEAMED IDLI",
+        "zipName":  "STEAMED IDLI.zip",
+        "recipeName":  "STEAMED IDLI",
+        "zipUrl":  "./data/global-recipe-library/STEAMED%20IDLI.zip"
+    },
+    {
+        "id":  "STEAMED MOMOS",
+        "zipName":  "STEAMED MOMOS.zip",
+        "recipeName":  "STEAMED MOMOS",
+        "zipUrl":  "./data/global-recipe-library/STEAMED%20MOMOS.zip"
+    },
+    {
+        "id":  "STIR FRY CABBAGE ",
+        "zipName":  "STIR FRY CABBAGE .zip",
+        "recipeName":  "STIR FRY CABBAGE",
+        "zipUrl":  "./data/global-recipe-library/STIR%20FRY%20CABBAGE%20.zip"
+    },
+    {
+        "id":  "STIR FRY CHICKEN",
+        "zipName":  "STIR FRY CHICKEN.zip",
+        "recipeName":  "STIR FRY CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/STIR%20FRY%20CHICKEN.zip"
+    },
+    {
+        "id":  "STIR FRY FISH",
+        "zipName":  "STIR FRY FISH.zip",
+        "recipeName":  "STIR FRY FISH",
+        "zipUrl":  "./data/global-recipe-library/STIR%20FRY%20FISH.zip"
+    },
+    {
+        "id":  "STIR FRY NOODLES",
+        "zipName":  "STIR FRY NOODLES.zip",
+        "recipeName":  "STIR FRY NOODLES",
+        "zipUrl":  "./data/global-recipe-library/STIR%20FRY%20NOODLES.zip"
+    },
+    {
+        "id":  "STIR FRY PRAWN",
+        "zipName":  "STIR FRY PRAWN.zip",
+        "recipeName":  "STIR FRY PRAWN",
+        "zipUrl":  "./data/global-recipe-library/STIR%20FRY%20PRAWN.zip"
+    },
+    {
+        "id":  "STIR FRY VEG",
+        "zipName":  "STIR FRY VEG.zip",
+        "recipeName":  "STIR FRY VEG",
+        "zipUrl":  "./data/global-recipe-library/STIR%20FRY%20VEG.zip"
+    },
+    {
+        "id":  "STUFFED BRINJAL ",
+        "zipName":  "STUFFED BRINJAL .zip",
+        "recipeName":  "STUFFED BRINJAL",
+        "zipUrl":  "./data/global-recipe-library/STUFFED%20BRINJAL%20.zip"
+    },
+    {
+        "id":  "STUFFED CHICKEN ",
+        "zipName":  "STUFFED CHICKEN .zip",
+        "recipeName":  "STUFFED CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/STUFFED%20CHICKEN%20.zip"
+    },
+    {
+        "id":  "SUJI HALWA 3000G",
+        "zipName":  "SUJI HALWA 3000G.zip",
+        "recipeName":  "SUJI HALWA 3000G",
+        "zipUrl":  "./data/global-recipe-library/SUJI%20HALWA%203000G.zip"
+    },
+    {
+        "id":  "SUJI HALWA",
+        "zipName":  "SUJI HALWA.zip",
+        "recipeName":  "SUJI HALWA",
+        "zipUrl":  "./data/global-recipe-library/SUJI%20HALWA.zip"
+    },
+    {
+        "id":  "SUKTO ",
+        "zipName":  "SUKTO .zip",
+        "recipeName":  "SUKTO",
+        "zipUrl":  "./data/global-recipe-library/SUKTO%20.zip"
+    },
+    {
+        "id":  "SWEET CORN SOUP",
+        "zipName":  "SWEET CORN SOUP.zip",
+        "recipeName":  "SWEET CORN SOUP",
+        "zipUrl":  "./data/global-recipe-library/SWEET%20CORN%20SOUP.zip"
+    },
+    {
+        "id":  "SWEET SOUR SAUCE ",
+        "zipName":  "SWEET SOUR SAUCE .zip",
+        "recipeName":  "SWEET SOUR SAUCE",
+        "zipUrl":  "./data/global-recipe-library/SWEET%20SOUR%20SAUCE%20.zip"
+    },
+    {
+        "id":  "TALOD KHAMAN",
+        "zipName":  "TALOD KHAMAN.zip",
+        "recipeName":  "TALOD KHAMAN",
+        "zipUrl":  "./data/global-recipe-library/TALOD%20KHAMAN.zip"
+    },
+    {
+        "id":  "TALOD KHICHU",
+        "zipName":  "TALOD KHICHU.zip",
+        "recipeName":  "TALOD KHICHU",
+        "zipUrl":  "./data/global-recipe-library/TALOD%20KHICHU.zip"
+    },
+    {
+        "id":  "TAMARIND RICE ",
+        "zipName":  "TAMARIND RICE .zip",
+        "recipeName":  "TAMARIND RICE",
+        "zipUrl":  "./data/global-recipe-library/TAMARIND%20RICE%20.zip"
+    },
+    {
+        "id":  "TANDOORI CHICKEN",
+        "zipName":  "TANDOORI CHICKEN.zip",
+        "recipeName":  "TANDOORI CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/TANDOORI%20CHICKEN.zip"
+    },
+    {
+        "id":  "TARIWALA KUKKAD",
+        "zipName":  "TARIWALA KUKKAD.zip",
+        "recipeName":  "TARIWALA KUKKAD",
+        "zipUrl":  "./data/global-recipe-library/TARIWALA%20KUKKAD.zip"
+    },
+    {
+        "id":  "THAI CHI CURRY G",
+        "zipName":  "THAI CHI CURRY G.zip",
+        "recipeName":  "THAI CHI CURRY G",
+        "zipUrl":  "./data/global-recipe-library/THAI%20CHI%20CURRY%20G.zip"
+    },
+    {
+        "id":  "THAI CHI CURRY R",
+        "zipName":  "THAI CHI CURRY R.zip",
+        "recipeName":  "THAI CHI CURRY R",
+        "zipUrl":  "./data/global-recipe-library/THAI%20CHI%20CURRY%20R.zip"
+    },
+    {
+        "id":  "THAI GREEN CURRY",
+        "zipName":  "THAI GREEN CURRY.zip",
+        "recipeName":  "THAI GREEN CURRY",
+        "zipUrl":  "./data/global-recipe-library/THAI%20GREEN%20CURRY.zip"
+    },
+    {
+        "id":  "THAI GREEN PASTE",
+        "zipName":  "THAI GREEN PASTE.zip",
+        "recipeName":  "THAI GREEN PASTE",
+        "zipUrl":  "./data/global-recipe-library/THAI%20GREEN%20PASTE.zip"
+    },
+    {
+        "id":  "THAI NOODLES SOUP",
+        "zipName":  "THAI NOODLES SOUP.zip",
+        "recipeName":  "THAI NOODLES SOUP",
+        "zipUrl":  "./data/global-recipe-library/THAI%20NOODLES%20SOUP.zip"
+    },
+    {
+        "id":  "THAI PASTE GREEN",
+        "zipName":  "THAI PASTE GREEN.zip",
+        "recipeName":  "THAI PASTE GREEN",
+        "zipUrl":  "./data/global-recipe-library/THAI%20PASTE%20GREEN.zip"
+    },
+    {
+        "id":  "THAI PASTE RED ",
+        "zipName":  "THAI PASTE RED .zip",
+        "recipeName":  "THAI PASTE RED",
+        "zipUrl":  "./data/global-recipe-library/THAI%20PASTE%20RED%20.zip"
+    },
+    {
+        "id":  "THAI RED CURRY ",
+        "zipName":  "THAI RED CURRY .zip",
+        "recipeName":  "THAI RED CURRY",
+        "zipUrl":  "./data/global-recipe-library/THAI%20RED%20CURRY%20.zip"
+    },
+    {
+        "id":  "THAI RED PASTE",
+        "zipName":  "THAI RED PASTE.zip",
+        "recipeName":  "THAI RED PASTE",
+        "zipUrl":  "./data/global-recipe-library/THAI%20RED%20PASTE.zip"
+    },
+    {
+        "id":  "THECHA CHICKEN ",
+        "zipName":  "THECHA CHICKEN .zip",
+        "recipeName":  "THECHA CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/THECHA%20CHICKEN%20.zip"
+    },
+    {
+        "id":  "THECHA PASTE",
+        "zipName":  "THECHA PASTE.zip",
+        "recipeName":  "THECHA PASTE",
+        "zipUrl":  "./data/global-recipe-library/THECHA%20PASTE.zip"
+    },
+    {
+        "id":  "THUKPA SOUP",
+        "zipName":  "THUKPA SOUP.zip",
+        "recipeName":  "THUKPA SOUP",
+        "zipUrl":  "./data/global-recipe-library/THUKPA%20SOUP.zip"
+    },
+    {
+        "id":  "TOM KHA GAI SOUP",
+        "zipName":  "TOM KHA GAI SOUP.zip",
+        "recipeName":  "TOM KHA GAI SOUP",
+        "zipUrl":  "./data/global-recipe-library/TOM%20KHA%20GAI%20SOUP.zip"
+    },
+    {
+        "id":  "TOM KHA SOUP",
+        "zipName":  "TOM KHA SOUP.zip",
+        "recipeName":  "TOM KHA SOUP",
+        "zipUrl":  "./data/global-recipe-library/TOM%20KHA%20SOUP.zip"
+    },
+    {
+        "id":  "TOM YUM SOUP",
+        "zipName":  "TOM YUM SOUP.zip",
+        "recipeName":  "TOM YUM SOUP",
+        "zipUrl":  "./data/global-recipe-library/TOM%20YUM%20SOUP.zip"
+    },
+    {
+        "id":  "TOMATO GRAVY ",
+        "zipName":  "TOMATO GRAVY .zip",
+        "recipeName":  "TOMATO GRAVY",
+        "zipUrl":  "./data/global-recipe-library/TOMATO%20GRAVY%20.zip"
+    },
+    {
+        "id":  "TOMATO NOODLE SP",
+        "zipName":  "TOMATO NOODLE SP.zip",
+        "recipeName":  "TOMATO NOODLE SP",
+        "zipUrl":  "./data/global-recipe-library/TOMATO%20NOODLE%20SP.zip"
+    },
+    {
+        "id":  "TOMATO RASAM",
+        "zipName":  "TOMATO RASAM.zip",
+        "recipeName":  "TOMATO RASAM",
+        "zipUrl":  "./data/global-recipe-library/TOMATO%20RASAM.zip"
+    },
+    {
+        "id":  "TOOR DAL RAW",
+        "zipName":  "TOOR DAL RAW.zip",
+        "recipeName":  "TOOR DAL RAW",
+        "zipUrl":  "./data/global-recipe-library/TOOR%20DAL%20RAW.zip"
+    },
+    {
+        "id":  "TOOR DAL SOAKED",
+        "zipName":  "TOOR DAL SOAKED.zip",
+        "recipeName":  "TOOR DAL SOAKED",
+        "zipUrl":  "./data/global-recipe-library/TOOR%20DAL%20SOAKED.zip"
+    },
+    {
+        "id":  "TORTILLA SOUP ",
+        "zipName":  "TORTILLA SOUP .zip",
+        "recipeName":  "TORTILLA SOUP",
+        "zipUrl":  "./data/global-recipe-library/TORTILLA%20SOUP%20.zip"
+    },
+    {
+        "id":  "TUNDAY KEBAB ",
+        "zipName":  "TUNDAY KEBAB .zip",
+        "recipeName":  "TUNDAY KEBAB",
+        "zipUrl":  "./data/global-recipe-library/TUNDAY%20KEBAB%20.zip"
+    },
+    {
+        "id":  "TUSCAN CHICKEN ",
+        "zipName":  "TUSCAN CHICKEN .zip",
+        "recipeName":  "TUSCAN CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/TUSCAN%20CHICKEN%20.zip"
+    },
+    {
+        "id":  "UDON  BOILING ",
+        "zipName":  "UDON  BOILING .zip",
+        "recipeName":  "UDON  BOILING",
+        "zipUrl":  "./data/global-recipe-library/UDON%20%20BOILING%20.zip"
+    },
+    {
+        "id":  "UDON NOODLES ",
+        "zipName":  "UDON NOODLES .zip",
+        "recipeName":  "UDON NOODLES",
+        "zipUrl":  "./data/global-recipe-library/UDON%20NOODLES%20.zip"
+    },
+    {
+        "id":  "UDUPI SAMBER",
+        "zipName":  "UDUPI SAMBER.zip",
+        "recipeName":  "UDUPI SAMBER",
+        "zipUrl":  "./data/global-recipe-library/UDUPI%20SAMBER.zip"
+    },
+    {
+        "id":  "ULIWADA ",
+        "zipName":  "ULIWADA .zip",
+        "recipeName":  "ULIWADA",
+        "zipUrl":  "./data/global-recipe-library/ULIWADA%20.zip"
+    },
+    {
+        "id":  "URAD DAL  ",
+        "zipName":  "URAD DAL  .zip",
+        "recipeName":  "URAD DAL",
+        "zipUrl":  "./data/global-recipe-library/URAD%20DAL%20%20.zip"
+    },
+    {
+        "id":  "VADA FRY DMRC",
+        "zipName":  "VADA FRY DMRC.zip",
+        "recipeName":  "VADA FRY DMRC",
+        "zipUrl":  "./data/global-recipe-library/VADA%20FRY%20DMRC.zip"
+    },
+    {
+        "id":  "VADA FRY",
+        "zipName":  "VADA FRY.zip",
+        "recipeName":  "VADA FRY",
+        "zipUrl":  "./data/global-recipe-library/VADA%20FRY.zip"
+    },
+    {
+        "id":  "VALOR PAPDI SHAK",
+        "zipName":  "VALOR PAPDI SHAK.zip",
+        "recipeName":  "VALOR PAPDI SHAK",
+        "zipUrl":  "./data/global-recipe-library/VALOR%20PAPDI%20SHAK.zip"
+    },
+    {
+        "id":  "VEG BIRYANI 1000G",
+        "zipName":  "VEG BIRYANI 1000G.zip",
+        "recipeName":  "VEG BIRYANI 1000G",
+        "zipUrl":  "./data/global-recipe-library/VEG%20BIRYANI%201000G.zip"
+    },
+    {
+        "id":  "VEG BIRYANI 2000",
+        "zipName":  "VEG BIRYANI 2000.zip",
+        "recipeName":  "VEG BIRYANI 2000",
+        "zipUrl":  "./data/global-recipe-library/VEG%20BIRYANI%202000.zip"
+    },
+    {
+        "id":  "VEG BIRYANI 2800",
+        "zipName":  "VEG BIRYANI 2800.zip",
+        "recipeName":  "VEG BIRYANI 2800",
+        "zipUrl":  "./data/global-recipe-library/VEG%20BIRYANI%202800.zip"
+    },
+    {
+        "id":  "VEG BIRYANI 3200",
+        "zipName":  "VEG BIRYANI 3200.zip",
+        "recipeName":  "VEG BIRYANI 3200",
+        "zipUrl":  "./data/global-recipe-library/VEG%20BIRYANI%203200.zip"
+    },
+    {
+        "id":  "VEG BURGER PATTY",
+        "zipName":  "VEG BURGER PATTY.zip",
+        "recipeName":  "VEG BURGER PATTY",
+        "zipUrl":  "./data/global-recipe-library/VEG%20BURGER%20PATTY.zip"
+    },
+    {
+        "id":  "VEG CHILI G RICE ",
+        "zipName":  "VEG CHILI G RICE .zip",
+        "recipeName":  "VEG CHILI G RICE",
+        "zipUrl":  "./data/global-recipe-library/VEG%20CHILI%20G%20RICE%20.zip"
+    },
+    {
+        "id":  "VEG CHILI GARLIC",
+        "zipName":  "VEG CHILI GARLIC.zip",
+        "recipeName":  "VEG CHILI GARLIC",
+        "zipUrl":  "./data/global-recipe-library/VEG%20CHILI%20GARLIC.zip"
+    },
+    {
+        "id":  "VEG CHILLI GAR N",
+        "zipName":  "VEG CHILLI GAR N.zip",
+        "recipeName":  "VEG CHILLI GAR N",
+        "zipUrl":  "./data/global-recipe-library/VEG%20CHILLI%20GAR%20N.zip"
+    },
+    {
+        "id":  "VEG DIWANI HANDI ",
+        "zipName":  "VEG DIWANI HANDI .zip",
+        "recipeName":  "VEG DIWANI HANDI",
+        "zipUrl":  "./data/global-recipe-library/VEG%20DIWANI%20HANDI%20.zip"
+    },
+    {
+        "id":  "VEG HAKKA NOODLE",
+        "zipName":  "VEG HAKKA NOODLE.zip",
+        "recipeName":  "VEG HAKKA NOODLE",
+        "zipUrl":  "./data/global-recipe-library/VEG%20HAKKA%20NOODLE.zip"
+    },
+    {
+        "id":  "VEG JAIPURI",
+        "zipName":  "VEG JAIPURI.zip",
+        "recipeName":  "VEG JAIPURI",
+        "zipUrl":  "./data/global-recipe-library/VEG%20JAIPURI.zip"
+    },
+    {
+        "id":  "VEG KHICHDI ",
+        "zipName":  "VEG KHICHDI .zip",
+        "recipeName":  "VEG KHICHDI",
+        "zipUrl":  "./data/global-recipe-library/VEG%20KHICHDI%20.zip"
+    },
+    {
+        "id":  "VEG KOFTA CURRY ",
+        "zipName":  "VEG KOFTA CURRY .zip",
+        "recipeName":  "VEG KOFTA CURRY",
+        "zipUrl":  "./data/global-recipe-library/VEG%20KOFTA%20CURRY%20.zip"
+    },
+    {
+        "id":  "VEG MAC CHEESE",
+        "zipName":  "VEG MAC CHEESE.zip",
+        "recipeName":  "VEG MAC CHEESE",
+        "zipUrl":  "./data/global-recipe-library/VEG%20MAC%20CHEESE.zip"
+    },
+    {
+        "id":  "VEG MANCHOW SOUP",
+        "zipName":  "VEG MANCHOW SOUP.zip",
+        "recipeName":  "VEG MANCHOW SOUP",
+        "zipUrl":  "./data/global-recipe-library/VEG%20MANCHOW%20SOUP.zip"
+    },
+    {
+        "id":  "VEG MANCHURIAN D",
+        "zipName":  "VEG MANCHURIAN D.zip",
+        "recipeName":  "VEG MANCHURIAN D",
+        "zipUrl":  "./data/global-recipe-library/VEG%20MANCHURIAN%20D.zip"
+    },
+    {
+        "id":  "VEG MANCHURIAN G",
+        "zipName":  "VEG MANCHURIAN G.zip",
+        "recipeName":  "VEG MANCHURIAN G",
+        "zipUrl":  "./data/global-recipe-library/VEG%20MANCHURIAN%20G.zip"
+    },
+    {
+        "id":  "VEG QUESADILLA",
+        "zipName":  "VEG QUESADILLA.zip",
+        "recipeName":  "VEG QUESADILLA",
+        "zipUrl":  "./data/global-recipe-library/VEG%20QUESADILLA.zip"
+    },
+    {
+        "id":  "VEG SCHEZWAN N",
+        "zipName":  "VEG SCHEZWAN N.zip",
+        "recipeName":  "VEG SCHEZWAN N",
+        "zipUrl":  "./data/global-recipe-library/VEG%20SCHEZWAN%20N.zip"
+    },
+    {
+        "id":  "VEGETABLE KURMA",
+        "zipName":  "VEGETABLE KURMA.zip",
+        "recipeName":  "VEGETABLE KURMA",
+        "zipUrl":  "./data/global-recipe-library/VEGETABLE%20KURMA.zip"
+    },
+    {
+        "id":  "VEGETABLE MAGGI",
+        "zipName":  "VEGETABLE MAGGI.zip",
+        "recipeName":  "VEGETABLE MAGGI",
+        "zipUrl":  "./data/global-recipe-library/VEGETABLE%20MAGGI.zip"
+    },
+    {
+        "id":  "VEGETABLE OMELETTE",
+        "zipName":  "VEGETABLE OMELETTE.zip",
+        "recipeName":  "VEGETABLE OMELETTE",
+        "zipUrl":  "./data/global-recipe-library/VEGETABLE%20OMELETTE.zip"
+    },
+    {
+        "id":  "VEGETABLE POHA ",
+        "zipName":  "VEGETABLE POHA .zip",
+        "recipeName":  "VEGETABLE POHA",
+        "zipUrl":  "./data/global-recipe-library/VEGETABLE%20POHA%20.zip"
+    },
+    {
+        "id":  "VEGETABLE STEW",
+        "zipName":  "VEGETABLE STEW.zip",
+        "recipeName":  "VEGETABLE STEW",
+        "zipUrl":  "./data/global-recipe-library/VEGETABLE%20STEW.zip"
+    },
+    {
+        "id":  "VEGETABLE UPMA",
+        "zipName":  "VEGETABLE UPMA.zip",
+        "recipeName":  "VEGETABLE UPMA",
+        "zipUrl":  "./data/global-recipe-library/VEGETABLE%20UPMA.zip"
+    },
+    {
+        "id":  "VIETNAMESE SOUP",
+        "zipName":  "VIETNAMESE SOUP.zip",
+        "recipeName":  "VIETNAMESE SOUP",
+        "zipUrl":  "./data/global-recipe-library/VIETNAMESE%20SOUP.zip"
+    },
+    {
+        "id":  "WHITE GRAVY",
+        "zipName":  "WHITE GRAVY.zip",
+        "recipeName":  "WHITE GRAVY",
+        "zipUrl":  "./data/global-recipe-library/WHITE%20GRAVY.zip"
+    },
+    {
+        "id":  "XACUTI CHICKEN",
+        "zipName":  "XACUTI CHICKEN.zip",
+        "recipeName":  "XACUTI CHICKEN",
+        "zipUrl":  "./data/global-recipe-library/XACUTI%20CHICKEN.zip"
+    },
+    {
+        "id":  "YELLOW GRAVY",
+        "zipName":  "YELLOW GRAVY.zip",
+        "recipeName":  "YELLOW GRAVY",
+        "zipUrl":  "./data/global-recipe-library/YELLOW%20GRAVY.zip"
+    }
+]

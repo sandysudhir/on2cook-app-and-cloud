@@ -1,0 +1,789 @@
+{
+  "instance": "47880_on2cook_cloud",
+  "generatedAt": "2026-06-15T07:09:42.199Z",
+  "tables": {
+    "cook_logs": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "integer",
+          "nullable": false,
+          "autoIncrement": true
+        },
+        "user_id": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "ncba_user",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "device_id": {
+          "type": "string",
+          "nullable": false
+        },
+        "recipe_id": {
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "indexed": true,
+          "foreignKey": {
+            "table": "recipes",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "recipe_title": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "order_id": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "outcome": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "started_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "finished_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "aborted_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "telemetry_json": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "summary": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "created_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      }
+    },
+    "devices": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "integer",
+          "nullable": false,
+          "autoIncrement": true
+        },
+        "user_id": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "ncba_user",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "device_id": {
+          "type": "string",
+          "nullable": false
+        },
+        "bluetooth_name": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "display_name": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "serial_photo_url": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "status": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "firmware_version": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "inventory_recipe_names": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "allowed_recipe_ids": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "last_seen_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "last_log_sync_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "notes": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "created_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "updated_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      }
+    },
+    "ncba_account": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "string",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "ncba_user",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "accountid": {
+          "type": "string",
+          "nullable": false
+        },
+        "providerid": {
+          "type": "string",
+          "nullable": false
+        },
+        "accesstoken": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "refreshtoken": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "accesstokenexpiresat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "refreshtokenexpiresat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "scope": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "idtoken": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "password": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "createdat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        },
+        "updatedat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        }
+      }
+    },
+    "ncba_config": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "string",
+          "nullable": false
+        },
+        "provider": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "unique": true
+        },
+        "enabled": {
+          "type": "integer",
+          "nullable": true,
+          "default": 0
+        },
+        "client_id": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "client_secret": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "created_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        },
+        "updated_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        }
+      }
+    },
+    "ncba_rls_config": {
+      "primaryKey": "table_name",
+      "columns": {
+        "table_name": {
+          "type": "string",
+          "nullable": false
+        },
+        "policy": {
+          "type": "string",
+          "nullable": false
+        }
+      }
+    },
+    "ncba_session": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "string",
+          "nullable": false
+        },
+        "user_id": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "ncba_user",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "expiresat": {
+          "type": "datetime",
+          "nullable": false
+        },
+        "token": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "unique": true
+        },
+        "ipaddress": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "useragent": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "createdat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        },
+        "updatedat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        }
+      }
+    },
+    "ncba_user": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "string",
+          "nullable": false
+        },
+        "name": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "email": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "unique": true
+        },
+        "emailverified": {
+          "type": "integer",
+          "nullable": true,
+          "default": 0
+        },
+        "image": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "createdat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        },
+        "updatedat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        }
+      }
+    },
+    "ncba_verification": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "string",
+          "nullable": false
+        },
+        "identifier": {
+          "type": "string",
+          "nullable": false
+        },
+        "value": {
+          "type": "string",
+          "nullable": false
+        },
+        "expiresat": {
+          "type": "datetime",
+          "nullable": false
+        },
+        "createdat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        },
+        "updatedat": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "current_timestamp()"
+        }
+      }
+    },
+    "profiles": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "integer",
+          "nullable": false,
+          "autoIncrement": true
+        },
+        "user_id": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "ncba_user",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "email": {
+          "type": "string",
+          "nullable": false
+        },
+        "full_name": {
+          "type": "string",
+          "nullable": false
+        },
+        "mobile_phone": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "whatsapp_phone": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "role": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "status": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "facility_id": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "facility_name": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "franchise_id": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "franchise_name": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "reports_to_user_id": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "manager_mode": {
+          "type": "integer",
+          "nullable": true,
+          "default": 0
+        },
+        "created_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "updated_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      }
+    },
+    "recipe_versions": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "integer",
+          "nullable": false,
+          "autoIncrement": true
+        },
+        "user_id": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "ncba_user",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "recipe_id": {
+          "type": "integer",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "recipes",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "title": {
+          "type": "string",
+          "nullable": false
+        },
+        "firmware_recipe_json": {
+          "type": "string",
+          "nullable": false
+        },
+        "change_note": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "version_tag": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "created_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      }
+    },
+    "recipes": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "integer",
+          "nullable": false,
+          "autoIncrement": true
+        },
+        "user_id": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "ncba_user",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "title": {
+          "type": "string",
+          "nullable": false
+        },
+        "description": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "cuisine": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "category": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "servings": {
+          "type": "integer",
+          "nullable": true,
+          "default": null
+        },
+        "visibility": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "status": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "firmware_recipe_json": {
+          "type": "string",
+          "nullable": false
+        },
+        "mobile_hidden": {
+          "type": "integer",
+          "nullable": true,
+          "default": 0
+        },
+        "cloud_deleted": {
+          "type": "integer",
+          "nullable": true,
+          "default": 0
+        },
+        "last_synced_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "base_recipe_name": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "base_zip_name": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "recipe_signature": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "created_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "updated_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      }
+    },
+    "sync_events": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "integer",
+          "nullable": false,
+          "autoIncrement": true
+        },
+        "user_id": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "ncba_user",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "entity_type": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "entity_id": {
+          "type": "string",
+          "nullable": false
+        },
+        "direction": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "action": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "status": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "details_json": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "created_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      }
+    },
+    "user_preferences": {
+      "primaryKey": "id",
+      "columns": {
+        "id": {
+          "type": "integer",
+          "nullable": false,
+          "autoIncrement": true
+        },
+        "user_id": {
+          "type": "string",
+          "nullable": false,
+          "indexed": true,
+          "foreignKey": {
+            "table": "ncba_user",
+            "column": "id",
+            "onDelete": "restrict",
+            "onUpdate": "restrict"
+          }
+        },
+        "selected_facility_id": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "order_screen_enabled": {
+          "type": "integer",
+          "nullable": true,
+          "default": 1
+        },
+        "pending_assignment_mode": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "queue_mode": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "log_sync_cadence": {
+          "type": "enum",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "email_digest_enabled": {
+          "type": "integer",
+          "nullable": true,
+          "default": 0
+        },
+        "email_digest_to": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "manual_mode_default_slot": {
+          "type": "integer",
+          "nullable": true,
+          "default": 1
+        },
+        "recipe_finder_url": {
+          "type": "string",
+          "nullable": true,
+          "default": "NULL"
+        },
+        "updated_at": {
+          "type": "datetime",
+          "nullable": true,
+          "default": "NULL"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey"
+        tools:context=".multiple_connection.ui.ConnectionFragment">
+
+        <TextView
+            android:id="@+id/tvMac"
+            style="@style/bold_20_dark_grey_10"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            style="@style/regular_17_dark_gey_6"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/btnConnect"
+            app:layout_constraintTop_toBottomOf="@+id/tvMac" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnConnect"
+            style="@style/semi_bold_12_white"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:background="@drawable/ic_round_corner_button_gradient"
+            android:text="Connect"
+            android:textAllCaps="false"
+            app:layout_constraintBottom_toBottomOf="@id/tvStatus"
+            app:layout_constraintLeft_toRightOf="@+id/tvStatus"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tvStatus" />
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etSend"
+            style="@style/et_regular_14_light_black"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+            android:hint="Enter Text To Send Device"
+            android:imeOptions="actionDone"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvStatus"
+            app:layout_constraintWidth_percent="0.7" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnSend"
+            style="@style/semi_bold_12_white"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_round_corner_button_gradient"
+            android:text="Send"
+            android:textAllCaps="false"
+            app:layout_constraintBottom_toBottomOf="@id/etSend"
+            app:layout_constraintLeft_toRightOf="@+id/etSend"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/etSend" />
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_margin="20dp"
+            android:fillViewport="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/etSend">
+
+            <TextView
+                android:id="@+id/tvReceive"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </androidx.core.widget.NestedScrollView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

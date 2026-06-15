@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/dp_25"
+        android:layout_marginEnd="@dimen/dp_25"
+        android:orientation="vertical"
+        app:cardBackgroundColor="@color/dark_grey"
+        app:cardCornerRadius="@dimen/dp_10">
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/imageViewAppLogo"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="@dimen/dp_20"
+                    android:src="@mipmap/ic_launcher"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/textViewTitle"
+                    style="@style/semi_bole_16_black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_10"
+                    android:gravity="center"
+                    android:textSize="18sp"
+                    android:paddingVertical="@dimen/dp_10"
+                    android:text="@string/txt_audio_type"
+                    android:visibility="visible"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/imageViewAppLogo" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/textViewMessage"
+                    style="@style/regular_16_light_black"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_10"
+                    android:gravity="center"
+                    android:paddingHorizontal="@dimen/dp_20"
+                    android:paddingVertical="@dimen/dp_10"
+                    android:textSize="16sp"
+                    android:text="@string/txt_audio_type_content"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/textViewTitle" />
+
+                <LinearLayout
+                    android:id="@+id/llFirst"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_margin="@dimen/dp_10"
+                    android:weightSum="3"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textViewMessage">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/btnFeedback"
+                        style="@style/semi_bold_12_dark_grey_4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/ic_round_corner_button_white"
+                        android:gravity="center"
+                        android:paddingTop="@dimen/dp_15"
+                        android:paddingBottom="@dimen/dp_15"
+                        android:text="@string/txt_feedback"
+                        android:textAllCaps="true"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/buttonDevice"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/textViewTitle" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/btnError"
+                        style="@style/semi_bold_12_dark_grey_4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_weight="1"
+                        android:background="@drawable/ic_round_corner_button_white"
+                        android:gravity="center"
+                        android:paddingTop="@dimen/dp_15"
+                        android:paddingBottom="@dimen/dp_15"
+                        android:text="@string/txt_error"
+                        android:textAllCaps="true"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/buttonOn2Cook"
+                        app:layout_constraintTop_toBottomOf="@+id/textViewTitle" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/btnTime"
+                        style="@style/semi_bold_12_white"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_weight="1"
+                        android:background="@drawable/ic_round_corner_button_orange_deselect"
+                        android:gravity="center"
+                        android:paddingTop="@dimen/dp_15"
+                        android:paddingBottom="@dimen/dp_15"
+                        android:text="@string/txt_time"
+                        android:textAllCaps="true"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/buttonOn2Cook" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_margin="@dimen/dp_10"
+                    android:layout_marginBottom="@dimen/dp_10"
+                    android:weightSum="3"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/llFirst">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/btnQuantity"
+                        style="@style/semi_bold_12_dark_grey_4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@drawable/ic_round_corner_button_white"
+                        android:gravity="center"
+                        android:paddingTop="@dimen/dp_15"
+                        android:paddingBottom="@dimen/dp_15"
+                        android:text="@string/txt_quantity"
+                        android:textAllCaps="true"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/buttonDevice"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/textViewTitle" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/btnIngredients"
+                        style="@style/semi_bold_12_dark_grey_4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_weight="1"
+                        android:background="@drawable/ic_round_corner_button_white"
+                        android:gravity="center"
+                        android:paddingTop="@dimen/dp_15"
+                        android:paddingBottom="@dimen/dp_15"
+                        android:text="@string/title_ingredients"
+                        android:textAllCaps="true"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/buttonOn2Cook"
+                        app:layout_constraintTop_toBottomOf="@+id/textViewTitle" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/btnAction"
+                        style="@style/semi_bold_12_dark_grey_4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/dp_10"
+                        android:layout_weight="1"
+                        android:background="@drawable/ic_round_corner_button_white"
+                        android:gravity="center"
+                        android:paddingTop="@dimen/dp_15"
+                        android:paddingBottom="@dimen/dp_15"
+                        android:text="@string/txt_action"
+                        android:textAllCaps="true"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/buttonOn2Cook" />
+                </LinearLayout>
+
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+</layout>

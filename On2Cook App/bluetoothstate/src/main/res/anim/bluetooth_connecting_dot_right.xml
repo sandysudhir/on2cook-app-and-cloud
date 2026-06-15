@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:ordering="sequentially">
+
+    <objectAnimator
+        android:duration="@integer/bluetooth_connecting_dot_alpha_transition_duration"
+        android:interpolator="@android:interpolator/linear"
+        android:propertyName="fillAlpha"
+        android:valueFrom="@integer/bluetooth_connecting_dot_alpha_max"
+        android:valueTo="@integer/bluetooth_connecting_dot_alpha_min"
+        android:valueType="floatType" />
+
+    <objectAnimator
+        android:duration="@integer/bluetooth_connecting_dot_alpha_transition_duration"
+        android:interpolator="@android:interpolator/linear"
+        android:propertyName="fillAlpha"
+        android:startOffset="@integer/bluetooth_connecting_dot_alpha_transition_interval"
+        android:valueFrom="@integer/bluetooth_connecting_dot_alpha_min"
+        android:valueTo="@integer/bluetooth_connecting_dot_alpha_max"
+        android:valueType="floatType" />
+
+    <objectAnimator
+        android:duration="@integer/bluetooth_connecting_dot_alpha_transition_interval"
+        android:interpolator="@android:interpolator/linear"
+        android:propertyName="fillAlpha"
+        android:valueFrom="@integer/bluetooth_connecting_dot_alpha_max"
+        android:valueTo="@integer/bluetooth_connecting_dot_alpha_max"
+        android:valueType="floatType" />
+</set>

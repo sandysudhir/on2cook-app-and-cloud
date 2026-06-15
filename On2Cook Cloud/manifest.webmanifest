@@ -1,0 +1,16 @@
+{
+  "name": "On2Cook Cloud",
+  "short_name": "On2Cook",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f6f2eb",
+  "theme_color": "#f47b20",
+  "icons": [
+    {
+      "src": "./assets/app_banner.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

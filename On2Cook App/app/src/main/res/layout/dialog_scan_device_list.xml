@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="@dimen/dp_10"
+        android:background="@color/dark_grey"
+        app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+        app:layout_constraintRight_toRightOf="@+id/guidelineRight">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/toolBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="20dp"
+            app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+            app:layout_constraintRight_toRightOf="@+id/guidelineRight"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivLeft"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_back"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvTitle"
+                style="@style/bold_20_dark_grey_10"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="20dp"
+                android:text="@string/label_devices"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <eo.view.bluetoothstate.BluetoothStateView
+                android:id="@+id/bleStateView"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:layout_margin="10dp"
+                app:bluetoothAnimateStateChanges="true"
+                app:bluetoothColor="@color/yellow"
+                app:bluetoothState="off"
+                app:bluetoothTheme="rounded"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvConnectedDevice"
+            style="@style/regular_14_dark_gey_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/text_view_new_devices"
+            android:textColor="@color/orange"
+            app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+            app:layout_constraintTop_toBottomOf="@+id/toolBar"
+             />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@color/dark_grey5"
+            app:layout_constraintBottom_toBottomOf="@+id/tvConnectedDevice"
+            app:layout_constraintLeft_toRightOf="@+id/tvConnectedDevice"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tvConnectedDevice" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvDevices"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginHorizontal="@dimen/dp_10"
+            android:layout_marginTop="10dp"
+            android:singleLine="false"
+            android:text=""
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintHeight_percent="0.4"
+            app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+            app:layout_constraintRight_toRightOf="@+id/guidelineRight"
+            app:layout_constraintTop_toBottomOf="@+id/tvConnectedDevice"
+            tools:listitem="@layout/item_device" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvPairedDevice"
+            style="@style/regular_14_dark_gey_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dp_10"
+            android:text="@string/text_view_paired_devices"
+            android:textColor="@color/orange"
+            app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+            app:layout_constraintTop_toBottomOf="@+id/rvDevices"
+            tools:ignore="MissingConstraints" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@color/dark_grey5"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/tvPairedDevice"
+            app:layout_constraintLeft_toRightOf="@+id/tvPairedDevice"
+            app:layout_constraintTop_toTopOf="@+id/tvPairedDevice" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvPairedDevices"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginHorizontal="@dimen/dp_10"
+            android:layout_marginTop="10dp"
+            android:singleLine="false"
+            android:text=""
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintHeight_percent="0.4"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="@+id/guidelineLeft"
+            app:layout_constraintRight_toRightOf="@+id/guidelineRight"
+            app:layout_constraintTop_toBottomOf="@+id/tvPairedDevice"
+            tools:listitem="@layout/item_device" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.1" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guidelineLeft"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.05" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guidelineRight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.95" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="8dp"
+        android:background="@color/white"
+        android:paddingHorizontal="8dp">
+
+        <TextView
+            android:id="@+id/textViewDeviceName"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:drawableStart="@drawable/bluetooth"
+            android:drawablePadding="8dp"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="10dp"
+            android:textSize="16sp"
+            card_view:drawableStartCompat="@drawable/bluetooth"
+            tools:text="@string/dummy_device_name" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

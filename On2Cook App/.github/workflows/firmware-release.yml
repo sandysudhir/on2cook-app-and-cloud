@@ -1,0 +1,65 @@
+name: Firmware Release
+
+on:
+  push:
+    tags:
+      - "firmware-v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-firmware:
+    name: Build ESP32 firmware
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: firmware-esp32
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Build firmware
+        run: |
+          if [ -f platformio.ini ]; then
+            pio run
+          else
+            echo "ESP32 firmware project not added yet. Add platformio.ini under firmware-esp32/."
+          fi
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-release
+          path: |
+            firmware-esp32/.pio/build/**/*.bin
+            firmware-esp32/.pio/build/**/*.elf
+          if-no-files-found: warn
+
+  publish-release:
+    name: Publish GitHub release
+    needs: build-firmware
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/firmware-v')
+
+    steps:
+      - name: Download firmware artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-release
+          path: dist/firmware
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/firmware/**

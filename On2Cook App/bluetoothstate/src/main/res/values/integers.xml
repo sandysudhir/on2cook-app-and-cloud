@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="bluetooth_search_icon_translation_x">-2</integer>
+
+    <integer name="bluetooth_connecting_dot_alpha_transition_duration">16</integer>
+    <integer name="bluetooth_connecting_dot_alpha_transition_interval">233</integer>
+
+    <item name="bluetooth_connecting_dot_alpha_min" format="float" type="integer">0.5</item>
+    <item name="bluetooth_connecting_dot_alpha_max" format="float" type="integer">1</item>
+
+
+    <item name="bluetooth_searching_level_alpha_min" format="float" type="integer">0</item>
+    <item name="bluetooth_searching_level_alpha_max" format="float" type="integer">1</item>
+
+    <integer name="bluetooth_searching_level_1_appear_start_offset">300</integer>
+    <integer name="bluetooth_searching_level_1_appear_duration">150</integer>
+    <integer name="bluetooth_searching_level_2_appear_start_offset">570</integer>
+    <integer name="bluetooth_searching_level_2_appear_duration">150</integer>
+    <integer name="bluetooth_searching_level_2_disappear_start_offset">480</integer>
+    <integer name="bluetooth_searching_level_2_disappear_duration">150</integer>
+    <integer name="bluetooth_searching_level_1_disappear_start_offset">900</integer>
+    <integer name="bluetooth_searching_level_1_disappear_duration">150</integer>
+
+    <integer name="bluetooth_searching_level_3_appear_duration">300</integer>
+    <integer name="bluetooth_searching_level_3_appear_start_offset">300</integer>
+    <integer name="bluetooth_searching_level_3_disappear_duration">300</integer>
+    <integer name="bluetooth_searching_level_3_disappear_start_offset">600</integer>
+
+    <integer name="bluetooth_turning_on_off_duration">300</integer>
+</resources>

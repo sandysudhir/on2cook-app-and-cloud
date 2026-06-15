@@ -1,0 +1,1196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cvControlPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="@color/dark_grey"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="8dp">
+
+                <include
+                    android:id="@+id/viewHeader"
+                    layout="@layout/view_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clControlPanel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/viewHeader">
+
+                    <ImageView
+                        android:id="@+id/ivPlayPause"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:src="@drawable/ic_play"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tvTime"
+                        style="@style/bold_18_dark_gey_4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:text="01:20"
+                        app:layout_constraintBottom_toTopOf="@+id/tvRecipeName"
+                        app:layout_constraintLeft_toRightOf="@+id/ivPlayPause"
+                        app:layout_constraintRight_toLeftOf="@+id/clTemp"
+                        app:layout_constraintTop_toTopOf="@+id/ivPlayPause" />
+
+                    <TextView
+                        android:id="@+id/tvRecipeName"
+                        style="@style/regular_14_dark_gey_6"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
+                        android:ellipsize="end"
+                        android:singleLine="true"
+                        android:text="Veg Fried Rice"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toRightOf="@+id/ivPlayPause"
+                        app:layout_constraintRight_toLeftOf="@+id/clTemp"
+                        app:layout_constraintTop_toBottomOf="@+id/tvTime" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clTemp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="70dp"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toTopOf="@+id/clWeight"
+                        app:layout_constraintRight_toLeftOf="@+id/viewLine"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:id="@+id/ivTemp"
+                            android:layout_width="20dp"
+                            android:layout_height="wrap_content"
+                            android:scaleType="center"
+                            android:src="@drawable/ic_temp"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <TextView
+                            android:id="@+id/tvTemp"
+                            style="@style/regular_13_dark_gey_4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="6dp"
+                            android:text="68ºc"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toRightOf="@+id/ivTemp"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clWeight"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:minWidth="70dp"
+                        android:visibility="gone"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintRight_toLeftOf="@+id/viewLine"
+                        app:layout_constraintTop_toBottomOf="@+id/clTemp">
+
+                        <ImageView
+                            android:id="@+id/ivWeight"
+                            android:layout_width="20dp"
+                            android:layout_height="wrap_content"
+                            android:scaleType="center"
+                            android:src="@drawable/ic_weight"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toLeftOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"></ImageView>
+
+                        <TextView
+                            android:id="@+id/tvWeight"
+                            style="@style/regular_13_dark_gey_4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="6dp"
+                            android:text="0.3 kg"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintLeft_toRightOf="@+id/ivWeight"
+                            app:layout_constraintTop_toTopOf="parent"></TextView>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <View
+                        android:id="@+id/viewLine"
+                        android:layout_width="1dp"
+                        android:layout_height="0dp"
+                        android:layout_marginRight="10dp"
+                        android:background="@color/dark_grey5"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintRight_toLeftOf="@+id/viewProgressMicrowave"
+                        app:layout_constraintTop_toTopOf="parent"></View>
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/viewProgressMicrowave"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginRight="8dp"
+                        app:cardCornerRadius="50dp"
+                        app:layout_constraintBottom_toTopOf="@+id/tvMicrowaveLabel"
+                        app:layout_constraintRight_toLeftOf="@+id/viewProgressFlam"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <com.invent.ontocook.progressview.ArcProgress
+                            android:id="@+id/arcProgressMv"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="center"
+                            android:background="@color/white"
+                            app:arc_finished_color="@color/colorMWColor"
+                            app:arc_progress="0"
+                            app:arc_stroke_width="2dp"
+                            app:arc_unfinished_color="@color/white" />
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_logo_microwave">
+
+                        </ImageView>
+
+                    </androidx.cardview.widget.CardView>
+
+                    <TextView
+                        android:id="@+id/tvMicrowaveLabel"
+                        style="@style/regular_10_dark_gey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/txt_microwave"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="@+id/viewProgressMicrowave"
+                        app:layout_constraintRight_toRightOf="@+id/viewProgressMicrowave"
+                        app:layout_constraintTop_toBottomOf="@+id/viewProgressMicrowave" />
+
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/viewProgressFlam"
+                        android:layout_width="50dp"
+                        android:layout_height="50dp"
+                        android:layout_marginRight="8dp"
+                        app:cardCornerRadius="50dp"
+                        app:layout_constraintBottom_toTopOf="@+id/tvFlamLabel"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <com.invent.ontocook.progressview.ArcProgress
+                            android:id="@+id/arcProgressFlam"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="center"
+                            android:background="@color/white"
+                            app:arc_finished_color="@color/colorFlamColor"
+                            app:arc_progress="0"
+                            app:arc_stroke_width="2dp"
+                            app:arc_unfinished_color="@color/white" />
+
+                        <ImageView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_logo_flames">
+
+                        </ImageView>
+
+                    </androidx.cardview.widget.CardView>
+
+                    <TextView
+                        android:id="@+id/tvFlamLabel"
+                        style="@style/regular_10_dark_gey_4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/txt_flames"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="@+id/viewProgressFlam"
+                        app:layout_constraintRight_toRightOf="@+id/viewProgressFlam"
+                        app:layout_constraintTop_toBottomOf="@+id/viewProgressFlam" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/nestedScrollSeekBar"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@color/dark_grey"
+            android:fillViewport="true"
+            app:layout_constraintBottom_toTopOf="@+id/viewFooter"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cvControlPanel">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/clSeekBarView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guideline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.4" />
+
+                    <com.masoudss.lib.WaveformSeekBar
+                        android:id="@+id/viewStoveProgress"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_gravity="center"
+                        android:layout_marginRight="6dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toLeftOf="@+id/viewMicrowaveProgress"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <com.masoudss.lib.WaveformSeekBar
+                        android:id="@+id/viewMicrowaveProgress"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_gravity="center"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toRightOf="@+id/viewStoveProgress"
+                        app:layout_constraintRight_toRightOf="@+id/guideline"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <params.com.stepprogressview.StepProgressView
+                        android:id="@+id/stepProgress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:currentProgress="0"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="@+id/guideline"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:markerWidth="2dp"
+                        app:markers=""
+                        app:progressBackgroundColor="@android:color/transparent"
+                        app:progressBarHeight="680dp"
+                        app:progressBarWidth="14dp"
+                        app:progressColor="@android:color/black"
+                        app:textSize="12sp"
+                        app:totalProgress="100" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <FrameLayout
+                    android:id="@+id/viewCurrentProContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/viewContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                </FrameLayout>
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guidelineCurrentPro"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.4" />
+
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="@+id/guidelineCurrentPro"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:id="@+id/ivCurrentPulseBg"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_gravity="center_horizontal"
+                            android:background="@drawable/ic_round_black"
+                            android:padding="6dp"
+                            android:scaleType="centerInside"
+                            android:visibility="visible" />
+
+                        <ImageView
+                            android:id="@+id/ivCurrentProgress"
+                            android:layout_width="26dp"
+                            android:layout_height="26dp"
+                            android:layout_gravity="center_horizontal"
+                            android:background="@drawable/ic_round_black"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_current_track"
+                            android:visibility="visible" />
+
+                    </FrameLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </FrameLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guidelineCurrentStep"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.17" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/viewIndicatorCurrentStep"
+            style="@style/bold_10_dark_gey_7"
+            android:layout_width="0dp"
+            android:layout_height="20dp"
+            android:background="@drawable/ic_left_round_corner_dark_grey"
+            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:text="Add"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/nestedScrollSeekBar"
+            app:layout_constraintLeft_toRightOf="@+id/guidelineCurrentStep"
+            app:layout_constraintRight_toLeftOf="@+id/clCurrentRecipe"
+            app:layout_constraintTop_toTopOf="@+id/nestedScrollSeekBar"></androidx.appcompat.widget.AppCompatTextView>
+
+        <View
+            android:id="@+id/viewConnectorCurrentStep"
+            android:layout_width="20dp"
+            android:layout_height="0dp"
+            android:background="@color/dark_grey"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/clCurrentRecipe">
+
+        </View>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clCurrentRecipe"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:background="@drawable/ic_three_round_corner_dark_grey"
+            android:padding="8dp"
+            android:visibility="gone"
+            app:layout_constraintLeft_toLeftOf="@+id/guidelineOuter"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/viewIndicatorCurrentStep">
+
+            <com.comix.rounded.RoundedCornerImageView
+                android:id="@+id/ivVeg"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_ver_rice"
+                app:cornerRadius="3dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </com.comix.rounded.RoundedCornerImageView>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivPlayPauseVideo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_play_black"
+                app:layout_constraintBottom_toBottomOf="@+id/ivVeg"
+                app:layout_constraintLeft_toLeftOf="@+id/ivVeg"
+                app:layout_constraintRight_toRightOf="@+id/ivVeg"
+                app:layout_constraintTop_toTopOf="@+id/ivVeg">
+
+            </androidx.appcompat.widget.AppCompatImageView>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivExpandVideo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_expand"
+                app:layout_constraintBottom_toBottomOf="@+id/ivVeg"
+                app:layout_constraintRight_toRightOf="@+id/ivVeg">
+
+            </androidx.appcompat.widget.AppCompatImageView>
+
+            <View
+                android:id="@+id/viewSeparator"
+                android:layout_width="1dp"
+                android:layout_height="0dp"
+                android:layout_marginLeft="8dp"
+                android:background="@color/dark_grey5"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/ivVeg"
+                app:layout_constraintTop_toTopOf="parent"></View>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvTitle"
+                style="@style/bold_12_dark_gey_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:text="Vegetables"
+                app:layout_constraintBottom_toTopOf="@+id/tvDesc"
+                app:layout_constraintLeft_toRightOf="@+id/viewSeparator"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_chainStyle="packed">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvDesc"
+                style="@style/regular_12_dark_gey_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="6dp"
+                android:text="Saute for 2m"
+                app:layout_constraintBottom_toTopOf="@+id/tvDuration"
+                app:layout_constraintLeft_toRightOf="@+id/viewSeparator"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvTitle">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:src="@drawable/ic_time_grey"
+                app:layout_constraintBottom_toBottomOf="@+id/tvDuration"
+                app:layout_constraintLeft_toRightOf="@+id/viewSeparator"
+                app:layout_constraintTop_toTopOf="@+id/tvDuration">
+
+            </androidx.appcompat.widget.AppCompatImageView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvDuration"
+                style="@style/bold_8_dark_gey_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:text="2 m."
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/ivTime"
+                app:layout_constraintTop_toBottomOf="@+id/tvDesc">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <ImageView
+            android:id="@+id/ivPulseBg"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/ic_round_black"
+            android:scaleType="centerInside"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/ivCenterPlay"
+            app:layout_constraintLeft_toLeftOf="@+id/ivCenterPlay"
+            app:layout_constraintRight_toRightOf="@+id/ivCenterPlay"
+            app:layout_constraintTop_toTopOf="@+id/ivCenterPlay">
+
+        </ImageView>
+
+        <ImageView
+            android:id="@+id/ivCenterPlay"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:background="@drawable/ic_round_black"
+            android:padding="6dp"
+            android:src="@drawable/ic_current_track"
+            android:visibility="gone"
+
+            app:layout_constraintBottom_toBottomOf="@+id/nestedScrollSeekBar"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="@+id/guidelineOuter"
+            app:layout_constraintTop_toTopOf="@+id/nestedScrollSeekBar">
+
+        </ImageView>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guidelineOuter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.4" />
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clNextStep"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:background="@drawable/ic_round_corner_orange"
+            android:paddingLeft="10dp"
+            android:paddingTop="16dp"
+            android:visibility="gone"
+            android:paddingRight="10dp"
+            android:paddingBottom="16dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cvControlPanel">
+
+            <TextView
+                android:id="@+id/tvNextIn"
+                style="@style/regular_16_white"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="Next in"
+                app:layout_constraintBottom_toTopOf="@+id/tvTimeIn"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvTimeIn"
+                style="@style/bold_16_white"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="2m"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvNextIn" />
+            <!-- 55FFFFFF -->
+            <View
+                android:layout_width="1dp"
+                android:layout_height="0dp"
+                android:layout_marginRight="10dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/tvStepDescDash"
+                app:layout_constraintRight_toLeftOf="@+id/tvDonePreAdd"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvStepTitle"
+                style="@style/bold_16_white"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text=""
+                app:layout_constraintBottom_toTopOf="@+id/tvStepDescDash"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvStepDescDash"
+                style="@style/regular_14_white"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="2 spn"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvStepTitle" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvDonePreAdd"
+                style="@style/semi_bold_12_dark_grey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/btn_done_action_step"
+                android:paddingLeft="20dp"
+                android:paddingTop="8dp"
+                android:paddingRight="20dp"
+                android:paddingBottom="8dp"
+                android:text="Done"
+                android:textAllCaps="false"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clPrePrepare"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/dark_grey"
+            android:padding="10dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cvControlPanel">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvPrePrepare"
+                style="@style/regular_14_dark_gey_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Prepreparation"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:background="@color/dark_grey5"
+                app:layout_constraintBottom_toBottomOf="@+id/tvPrePrepare"
+                app:layout_constraintLeft_toRightOf="@+id/tvPrePrepare"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/tvPrePrepare" />
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guidelinePrePare"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.35" />
+
+            <com.comix.rounded.RoundedCornerImageView
+                android:id="@+id/ivPrePrepare"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="10dp"
+                android:scaleType="fitXY"
+                android:src="@drawable/ic_ver_rice"
+                app:cornerRadius="3dp"
+                app:layout_constraintDimensionRatio="w, 1:1"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toLeftOf="@+id/guidelinePrePare"
+                app:layout_constraintTop_toBottomOf="@+id/tvPrePrepare">
+
+            </com.comix.rounded.RoundedCornerImageView>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivPlyPause"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_play_black"
+                app:layout_constraintBottom_toBottomOf="@+id/ivPrePrepare"
+                app:layout_constraintLeft_toLeftOf="@+id/ivPrePrepare"
+                app:layout_constraintRight_toRightOf="@+id/ivPrePrepare"
+                app:layout_constraintTop_toTopOf="@+id/ivPrePrepare">
+
+            </androidx.appcompat.widget.AppCompatImageView>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="10dp"
+                android:layout_marginBottom="10dp"
+                android:src="@drawable/ic_expand"
+                app:layout_constraintBottom_toBottomOf="@+id/ivPrePrepare"
+                app:layout_constraintRight_toRightOf="@+id/ivPrePrepare">
+
+            </androidx.appcompat.widget.AppCompatImageView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvStep"
+                style="@style/regular_10_dark_gey_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="Step 1 of 3"
+                app:layout_constraintBottom_toTopOf="@+id/tvPrePrepareTitle"
+                app:layout_constraintLeft_toLeftOf="@+id/guidelinePrePare"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/ivPrePrepare"
+                app:layout_constraintVertical_chainStyle="packed">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivPlaySound"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="8dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_sound"
+                app:layout_constraintBottom_toBottomOf="@+id/tvStep"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/tvStep">
+
+            </androidx.appcompat.widget.AppCompatImageView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvPrePrepareTitle"
+                style="@style/bold_12_dark_gey_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Wash and Rice 1 Cup Rice"
+                app:layout_constraintBottom_toTopOf="@+id/tvPrePrepareDesc"
+                app:layout_constraintLeft_toLeftOf="@+id/tvStep"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvStep">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvPrePrepareDesc"
+                style="@style/regular_10_dark_gey_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Take 1 cup(300g) of rice in a bowl and Wash and rinse it atleast thrice to remove the excess starch"
+                app:layout_constraintBottom_toTopOf="@+id/btnSkip"
+                app:layout_constraintLeft_toLeftOf="@+id/tvStep"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvPrePrepareTitle">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnSkip"
+                style="@style/regular_12_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="35dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/ic_round_corner_button_white"
+                android:text="Skip"
+                android:textAllCaps="false"
+                app:layout_constraintBottom_toBottomOf="@+id/ivPrePrepare"
+                app:layout_constraintLeft_toLeftOf="@+id/tvStep"
+                app:layout_constraintTop_toBottomOf="@+id/tvPrePrepareDesc">
+
+            </androidx.appcompat.widget.AppCompatButton>
+            <!--            android:enabled="false"-->
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnNext"
+                style="@style/bold_12_white"
+                android:layout_width="wrap_content"
+                android:layout_height="35dp"
+                android:layout_marginLeft="10dp"
+                android:background="@drawable/ic_round_corner_button_orange_deselect"
+                android:text="Next"
+                android:textAllCaps="false"
+                app:layout_constraintBottom_toBottomOf="@+id/btnSkip"
+                app:layout_constraintLeft_toRightOf="@+id/btnSkip"
+                app:layout_constraintTop_toTopOf="@+id/btnSkip">
+
+            </androidx.appcompat.widget.AppCompatButton>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvCookingSteps"
+                style="@style/regular_14_dark_gey_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Cooking Steps"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/ivPrePrepare">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+            <View
+                android:id="@+id/viewCookingSteps"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:background="@color/dark_grey5"
+                app:layout_constraintBottom_toBottomOf="@+id/tvCookingSteps"
+                app:layout_constraintLeft_toRightOf="@+id/tvCookingSteps"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/tvCookingSteps" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvTimeline"
+                style="@style/regular_10_dark_gey_8"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Timeline"
+                app:layout_constraintLeft_toLeftOf="@+id/ivPrePrepare"
+                app:layout_constraintRight_toRightOf="@+id/ivPrePrepare"
+                app:layout_constraintTop_toBottomOf="@+id/tvCookingSteps">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:id="@+id/tvInstruction"
+                style="@style/regular_10_dark_gey_8"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text=" Instructions"
+                app:layout_constraintLeft_toLeftOf="@+id/viewCookingSteps"
+                app:layout_constraintRight_toRightOf="@+id/viewCookingSteps"
+                app:layout_constraintTop_toBottomOf="@+id/tvCookingSteps">
+
+            </androidx.appcompat.widget.AppCompatTextView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guidelineBottom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.93">
+
+        </androidx.constraintlayout.widget.Guideline>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clCurrentStep"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginRight="8dp"
+            android:layout_marginBottom="110dp"
+            android:background="@drawable/ic_round_corner_light_orange"
+            android:paddingLeft="10dp"
+            android:paddingTop="14dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="14dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@+id/guidelineBottom"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent">
+
+            <TextView
+                android:id="@+id/tvCurrentStepTime"
+                style="@style/bold_18_white"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="00:39"
+                android:visibility="visible"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivSpeakIng"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_sound_white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="@+id/tvCurrentStepTime"
+                app:layout_constraintTop_toBottomOf="@+id/tvCurrentStepTime">
+
+            </androidx.appcompat.widget.AppCompatImageView>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivReload"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:src="@drawable/ic_reload"
+                app:layout_constraintBottom_toBottomOf="@+id/ivSpeakIng"
+                app:layout_constraintLeft_toRightOf="@+id/ivSpeakIng"
+                app:layout_constraintTop_toTopOf="@+id/ivSpeakIng">
+
+            </androidx.appcompat.widget.AppCompatImageView>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="0dp"
+                android:layout_marginRight="16dp"
+                android:background="#55FFFFFF"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toLeftOf="@+id/ivBottomCurrentProgress"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvBottomTitle"
+                style="@style/bold_16_white"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="Add Garlic"
+                app:layout_constraintBottom_toTopOf="@+id/tvBottomDesc"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_chainStyle="packed" />
+
+            <TextView
+                android:id="@+id/tvBottomDesc"
+                style="@style/semi_bole_14_white"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:ellipsize="end"
+                android:singleLine="true"
+                android:text="Sauteing ..."
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tvBottomTitle" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivBottomCurrentProgress"
+                android:layout_width="70dp"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_current_step"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <com.qhutch.bottomsheetlayout.BottomSheetLayout
+            android:id="@+id/viewDetailsBottomSheet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:collapsedHeight="103dp"
+            app:layout_constraintBottom_toTopOf="@+id/guidelineBottom"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/dark_grey"
+                android:minHeight="200dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:paddingBottom="40dp">
+
+                <ImageView
+                    android:id="@+id/ivEditTime"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginRight="10dp"
+                    android:src="@drawable/ic_more_time"
+                    android:visibility="visible"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvBottomStepTitle"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/tvBottomStepTitle" />
+
+                <View
+                    android:id="@+id/viewIndicator"
+                    android:layout_width="160dp"
+                    android:layout_height="2dp"
+                    android:background="@color/yellow"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/tvStepNo"
+                    style="@style/regular_12_dark_gey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:text="4/6"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/viewIndicator"></TextView>
+
+                <TextView
+                    android:id="@+id/tvBottomStepTitle"
+                    style="@style/bold_16_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:text="Add Vegetables"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvStepNo" />
+
+                <TextView
+                    android:id="@+id/tvBottomStepDesc"
+                    style="@style/regular_12_dark_gey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:text="Fry for 2m"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvBottomStepTitle" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnDone"
+                    style="@style/semi_bold_12_dark_grey_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="35dp"
+                    android:background="@drawable/ic_round_corner_button_white"
+                    android:text="Done"
+                    android:textAllCaps="false"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="@+id/tvBottomStepDesc"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/tvBottomStepTitle" />
+
+                <TextView
+                    android:id="@+id/tvBottomStepTime"
+                    style="@style/bold_18_dark_gey_4"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="10dp"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:text=""
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toLeftOf="@+id/tvBottomStepTitle"
+                    app:layout_constraintTop_toTopOf="@+id/tvBottomStepTitle" />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/ivSound"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:src="@drawable/ic_sound"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvBottomStepTime">
+
+                </androidx.appcompat.widget.AppCompatImageView>
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/ivShaking"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="6dp"
+                    android:src="@drawable/ic_shaking"
+                    app:layout_constraintBottom_toBottomOf="@+id/ivSound"
+                    app:layout_constraintLeft_toRightOf="@+id/ivSound"
+                    app:layout_constraintTop_toTopOf="@+id/ivSound">
+
+                </androidx.appcompat.widget.AppCompatImageView>
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="6dp"
+                    android:src="@drawable/ic_cooking"
+                    app:layout_constraintBottom_toBottomOf="@+id/ivSound"
+                    app:layout_constraintLeft_toRightOf="@+id/ivShaking"
+                    app:layout_constraintTop_toTopOf="@+id/ivSound">
+
+                </androidx.appcompat.widget.AppCompatImageView>
+
+                <View
+                    android:id="@+id/viewBottomStepLine"
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
+                    android:background="@color/dark_grey5"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tvBottomStepDesc">
+
+                </View>
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/tab"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/viewBottomStepLine"
+                    app:tabIndicatorColor="@color/yellow"
+                    app:tabIndicatorGravity="top"
+                    app:tabPaddingTop="-10dp"
+                    app:tabSelectedTextColor="@color/dark_grey4"
+                    app:tabTextAppearance="@style/tabAppereance"
+                    app:tabTextColor="@color/dark_grey2">
+
+                </com.google.android.material.tabs.TabLayout>
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/viewPagerDetails"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toRightOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/tab">
+
+                </androidx.viewpager2.widget.ViewPager2>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.qhutch.bottomsheetlayout.BottomSheetLayout>
+
+        <include
+            android:id="@+id/viewFooter"
+            layout="@layout/view_footer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent" />
+        <ProgressBar
+            android:id="@+id/progressView"
+            android:layout_width="wrap_content"
+            android:visibility="gone"
+            android:layout_height="wrap_content"
+            android:indeterminateTint="@color/orange"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="70dp">
+
+        <include layout="@layout/bottom_sheet_view" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+

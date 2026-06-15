@@ -1,0 +1,634 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_grey"
+    tools:context=".MainActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/viewHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/dark_grey"
+        android:padding="20dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:id="@+id/ivLeft"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:padding="6dp"
+            android:src="@drawable/ic_back"
+            android:visibility="visible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvPageTitle"
+            style="@style/regular_20_dark_gey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="@string/txt_home"
+            app:layout_constraintBottom_toTopOf="@+id/tvSubTitle"
+            app:layout_constraintEnd_toStartOf="@+id/btnDone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed" />
+
+        <TextView
+            android:id="@+id/tvSubTitle"
+            style="@style/regular_14_light_black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Recipe details"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/btnDone"
+            app:layout_constraintTop_toBottomOf="@+id/tvPageTitle" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnDone"
+            style="@style/semi_bold_12_white"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:background="@drawable/ic_round_corner_button_orange"
+            android:text="Done"
+            android:textAllCaps="false"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TextView
+        android:id="@+id/tvServings"
+        style="@style/regular_14_light_black"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Servings"
+        app:layout_constraintBottom_toBottomOf="@+id/qtyView"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/qtyView"
+        app:layout_constraintTop_toTopOf="@+id/qtyView" />
+
+    <me.himanshusoni.quantityview.QuantityView
+        android:id="@+id/qtyView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:background="@drawable/ic_round_corner_20_white"
+        app:layout_constraintLeft_toRightOf="@+id/tvServings"
+        app:layout_constraintRight_toLeftOf="@+id/tvQtyUnits"
+        app:layout_constraintTop_toBottomOf="@+id/viewHeader"
+        app:qv_addButtonBackground="@android:color/transparent"
+        app:qv_addButtonText="  +  "
+        app:qv_addButtonTextColor="@color/orange"
+        app:qv_quantity="1"
+        app:qv_quantityBackground="@android:color/transparent"
+        app:qv_quantityPadding="6dp"
+        app:qv_removeButtonBackground="@android:color/transparent"
+        app:qv_removeButtonText="  -  ">
+
+    </me.himanshusoni.quantityview.QuantityView>
+
+    <TextView
+        android:id="@+id/tvQtyUnits"
+        style="@style/regular_12_dark_gey_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:text="250g (Serves 1)"
+        app:layout_constraintBottom_toBottomOf="@+id/qtyView"
+        app:layout_constraintLeft_toRightOf="@+id/qtyView"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/qtyView" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clCookingStepHeader"
+        android:layout_width="match_parent"
+        android:visibility="gone"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/qtyView"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvCookingSteps"
+            style="@style/regular_14_dark_gey_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="10dp"
+            android:text="Cooking Steps"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </androidx.appcompat.widget.AppCompatTextView>
+
+        <View
+            android:id="@+id/viewCookingSteps"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="20dp"
+            android:background="@color/dark_grey5"
+            app:layout_constraintBottom_toBottomOf="@+id/tvCookingSteps"
+            app:layout_constraintLeft_toRightOf="@+id/tvCookingSteps"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tvCookingSteps" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guidelineCurrentPro"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.4" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvTimeline"
+            style="@style/regular_10_dark_gey_8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Timeline"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="@+id/guidelineCurrentPro"
+            app:layout_constraintTop_toBottomOf="@+id/tvCookingSteps">
+
+        </androidx.appcompat.widget.AppCompatTextView>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvInstruction"
+            style="@style/regular_10_dark_gey_8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text=" Instructions"
+            app:layout_constraintLeft_toLeftOf="@+id/guidelineCurrentPro"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvCookingSteps">
+
+        </androidx.appcompat.widget.AppCompatTextView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollSeekBar"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/dark_grey"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/clCookingStepHeader">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clSeekBarView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guideline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_percent="0.4" />
+
+                <com.masoudss.lib.WaveformSeekBar
+                    android:id="@+id/viewStoveProgress"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_gravity="center"
+                    android:layout_marginRight="6dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintRight_toLeftOf="@+id/viewMicrowaveProgress"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.masoudss.lib.WaveformSeekBar
+                    android:id="@+id/viewMicrowaveProgress"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_gravity="center"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintLeft_toRightOf="@+id/viewStoveProgress"
+                    app:layout_constraintRight_toRightOf="@+id/guideline"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <params.com.stepprogressview.StepProgressView
+                    android:id="@+id/stepProgress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:currentProgress="0"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="@+id/guideline"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:markerWidth="2dp"
+                    app:markers=""
+                    app:progressBackgroundColor="@android:color/transparent"
+                    app:progressBarHeight="350dp"
+                    app:progressBarWidth="14dp"
+                    app:progressColor="@android:color/black"
+                    app:textSize="12sp"
+                    app:totalProgress="100" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <FrameLayout
+                android:id="@+id/viewCurrentProContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/viewContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+            </FrameLayout>
+
+        </FrameLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideLineCenter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.48">
+
+    </androidx.constraintlayout.widget.Guideline>
+
+    <FrameLayout
+        android:id="@+id/flProgressContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/progressView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+
+        </ProgressBar>
+
+    </FrameLayout>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/btnAddNewSteps"
+        android:src="@drawable/ic_add_new_white"
+        android:paddingTop="10dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingBottom="6dp"
+        android:visibility="gone"
+        android:background="@drawable/ic_round_corner_top_orange"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+    </androidx.appcompat.widget.AppCompatImageView>
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintBottomSheet"
+            app:behavior_hideable="true"
+            app:behavior_peekHeight="0dp"
+            android:background="@drawable/ic_round_corner_dark_grey"
+            app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="20dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tvNewStep"
+                        style="@style/regular_14_light_black"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="New Step"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                    </androidx.appcompat.widget.AppCompatTextView>
+
+                    <androidx.constraintlayout.widget.Guideline
+                        android:id="@+id/guideLineNewStep"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        app:layout_constraintGuide_percent="0.4">
+
+                    </androidx.constraintlayout.widget.Guideline>
+
+                    <View
+                        android:id="@+id/viewNewStep"
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="20dp"
+                        android:background="@color/dark_grey5"
+                        app:layout_constraintBottom_toBottomOf="@+id/tvNewStep"
+                        app:layout_constraintLeft_toRightOf="@+id/tvNewStep"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/tvNewStep"></View>
+
+                    <TextView
+                        android:id="@+id/tvProcess"
+                        style="@style/regular_12_dark_gey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="20dp"
+                        android:text="Process"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvNewStep"></TextView>
+
+                    <Spinner
+                        android:id="@+id/spinnerProcess"
+                        style="@style/spinner"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        app:layout_constraintBottom_toBottomOf="@+id/clSelectImage"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="@+id/guideLineNewStep"
+                        app:layout_constraintTop_toTopOf="@+id/clSelectImage" />
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:id="@+id/clSelectImage"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginTop="4dp"
+                        android:background="@drawable/ic_round_corner_white"
+                        android:padding="4dp"
+                        app:layout_constraintLeft_toRightOf="@+id/guideLineNewStep"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvProcess">
+
+                        <androidx.appcompat.widget.AppCompatButton
+                            android:id="@+id/btnChooseImage"
+                            style="@style/semi_bold_12_white"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:background="@drawable/ic_round_corner_button_orange"
+                            android:text="Selects"
+                            android:textAllCaps="false"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintRight_toRightOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
+
+                        </androidx.appcompat.widget.AppCompatButton>
+
+                        <TextView
+                            android:id="@+id/tvImageName"
+                            style="@style/regular_12_dark_gey_4"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginRight="10dp"
+                            android:text="Add Image"
+                            app:layout_constraintBottom_toBottomOf="@+id/btnChooseImage"
+                            app:layout_constraintRight_toLeftOf="@+id/btnChooseImage"
+                            app:layout_constraintTop_toTopOf="@+id/btnChooseImage"></TextView>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <TextView
+                        android:id="@+id/tvDescription"
+                        style="@style/regular_12_dark_gey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Description"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/clSelectImage"></TextView>
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/etDescription"
+                        style="@style/et_regular_14_light_black"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="top"
+                        android:hint="Describe the step in few words"
+                        android:lines="2"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvDescription" />
+
+                    <TextView
+                        android:id="@+id/tvIngredient"
+                        style="@style/regular_12_dark_gey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Ingredient"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/etDescription"></TextView>
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/etSearchIngrd"
+                        style="@style/et_regular_14_light_black"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:drawableRight="@drawable/ic_search"
+                        android:drawablePadding="8dp"
+                        android:gravity="center_vertical"
+                        android:hint="Search"
+                        android:lines="1"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="@+id/guideLineNewStep"
+                        app:layout_constraintTop_toBottomOf="@+id/tvIngredient" />
+
+                    <Spinner
+                        android:id="@+id/spinnerQty"
+                        style="@style/spinner"
+                        android:layout_width="0dp"
+                        android:layout_height="0dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        app:layout_constraintBottom_toBottomOf="@+id/etSearchIngrd"
+                        app:layout_constraintLeft_toRightOf="@+id/guideLineNewStep"
+                        app:layout_constraintRight_toLeftOf="@+id/btnAddIngrd"
+                        app:layout_constraintTop_toTopOf="@+id/etSearchIngrd" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnAddIngrd"
+                        style="@style/semi_bold_12_white"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:background="@drawable/ic_round_corner_button_orange"
+                        android:text="Add"
+                        app:layout_constraintBottom_toBottomOf="@+id/etSearchIngrd"
+                        app:layout_constraintLeft_toRightOf="@+id/spinnerQty"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/etSearchIngrd" />
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvIngredients"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/etSearchIngrd">
+
+                    </androidx.recyclerview.widget.RecyclerView>
+
+                    <TextView
+                        android:id="@+id/tvMicrowave"
+                        style="@style/regular_12_dark_gey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Microwave"
+                        app:layout_constraintBottom_toBottomOf="@+id/cbMicrowave"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/cbMicrowave" />
+
+                    <androidx.appcompat.widget.AppCompatCheckBox
+                        android:id="@+id/cbMicrowave"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="10dp"
+                        android:buttonTint="@color/orange"
+                        app:layout_constraintLeft_toRightOf="@+id/tvMicrowave"
+                        app:layout_constraintTop_toBottomOf="@+id/rvIngredients">
+
+                    </androidx.appcompat.widget.AppCompatCheckBox>
+
+                    <Spinner
+                        android:id="@+id/spinnerMicrowavePower"
+                        style="@style/spinner"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="6dp"
+                        android:layout_width="90dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/cbMicrowave" />
+
+                    <Spinner
+                        android:id="@+id/spinnerMicrowaveTime"
+                        style="@style/spinner"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="6dp"
+                        android:layout_width="90dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintLeft_toRightOf="@+id/spinnerMicrowavePower"
+                        app:layout_constraintTop_toBottomOf="@+id/cbMicrowave" />
+
+                    <TextView
+                        android:id="@+id/tvInduction"
+                        style="@style/regular_12_dark_gey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Induction"
+                        app:layout_constraintBottom_toBottomOf="@+id/cbInduction"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/cbInduction" />
+
+                    <androidx.appcompat.widget.AppCompatCheckBox
+                        android:id="@+id/cbInduction"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/orange"
+                        android:layout_marginLeft="10dp"
+                        app:layout_constraintLeft_toRightOf="@+id/tvMicrowave"
+                        app:layout_constraintTop_toBottomOf="@+id/spinnerMicrowavePower">
+
+                    </androidx.appcompat.widget.AppCompatCheckBox>
+
+                    <Spinner
+                        android:id="@+id/spinnerInductionPower"
+                        style="@style/spinner"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="6dp"
+                        android:layout_width="90dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/cbInduction" />
+
+                    <Spinner
+                        android:id="@+id/spinnerInductionTime"
+                        style="@style/spinner"
+                        android:paddingTop="6dp"
+                        android:paddingBottom="6dp"
+                        android:layout_width="90dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintLeft_toRightOf="@+id/spinnerInductionPower"
+                        app:layout_constraintTop_toBottomOf="@+id/cbInduction" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/etOverallStepTime"
+                        style="@style/et_regular_14_light_black"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginTop="20dp"
+                        android:gravity="center_vertical"
+                        android:hint="Overall Step time"
+                        app:layout_constraintLeft_toRightOf="@+id/tvOverallStepTime"
+                        app:layout_constraintTop_toBottomOf="@+id/spinnerInductionPower" />
+
+                    <TextView
+                        android:id="@+id/tvOverallStepTime"
+                        style="@style/regular_12_dark_gey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Overall Step time"
+                        app:layout_constraintBottom_toBottomOf="@+id/etOverallStepTime"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintTop_toTopOf="@+id/etOverallStepTime" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/btnAddStep"
+                        style="@style/semi_bold_14_white"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="30dp"
+                        android:background="@drawable/ic_round_corner_button_gradient"
+                        android:text="Add step"
+                        android:textAllCaps="false"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintLeft_toLeftOf="parent"
+                        app:layout_constraintRight_toRightOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/etOverallStepTime" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.core.widget.NestedScrollView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

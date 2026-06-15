@@ -1,0 +1,62 @@
+[
+  {
+    "id": "VEGETABLE UPMA",
+    "recipeName": "VEGETABLE UPMA",
+    "zipName": "VEGETABLE UPMA.zip",
+    "zipUrl": "./data/order_recipes/VEGETABLE%20UPMA.zip"
+  },
+  {
+    "id": "VEG HAKKA NOODLE",
+    "recipeName": "VEG HAKKA NOODLE",
+    "zipName": "VEG HAKKA NOODLE.zip",
+    "zipUrl": "./data/order_recipes/VEG%20HAKKA%20NOODLE.zip"
+  },
+  {
+    "id": "PAAL PAYASAM",
+    "recipeName": "PAAL PAYASAM",
+    "zipName": "PAAL PAYASAM .zip",
+    "zipUrl": "./data/order_recipes/PAAL%20PAYASAM%20.zip"
+  },
+  {
+    "id": "SPINACH OMELETTE",
+    "recipeName": "SPINACH OMELETTE",
+    "zipName": "SPINACH OMELETTE.zip",
+    "zipUrl": "./data/order_recipes/SPINACH%20OMELETTE.zip"
+  },
+  {
+    "id": "VEG BURGER PATTY",
+    "recipeName": "VEG BURGER PATTY",
+    "zipName": "VEG BURGER PATTY.zip",
+    "zipUrl": "./data/order_recipes/VEG%20BURGER%20PATTY.zip"
+  },
+  {
+    "id": "CHI LEMON COR SP",
+    "recipeName": "CHI LEMON COR SP",
+    "zipName": "CHI LEMON COR SP .zip",
+    "zipUrl": "./data/order_recipes/CHI%20LEMON%20COR%20SP%20.zip"
+  },
+  {
+    "id": "ONION PAKODA",
+    "recipeName": "ONION PAKODA",
+    "zipName": "ONION PAKODA .zip",
+    "zipUrl": "./data/order_recipes/ONION%20PAKODA%20.zip"
+  },
+  {
+    "id": "DAL MAKHANI",
+    "recipeName": "DAL MAKHANI",
+    "zipName": "DAL MAKHANI.zip",
+    "zipUrl": "./data/order_recipes/DAL%20MAKHANI.zip"
+  },
+  {
+    "id": "KUNG PAO CHICKEN",
+    "recipeName": "KUNG PAO CHICKEN",
+    "zipName": "KUNG PAO CHICKEN.zip",
+    "zipUrl": "./data/order_recipes/KUNG%20PAO%20CHICKEN.zip"
+  },
+  {
+    "id": "MASOOR DAL",
+    "recipeName": "MASOOR DAL",
+    "zipName": "MASOOR DAL .zip",
+    "zipUrl": "./data/order_recipes/MASOOR%20DAL%20.zip"
+  }
+]

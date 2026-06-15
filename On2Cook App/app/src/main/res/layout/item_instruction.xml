@@ -1,0 +1,1024 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/cl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/dark_grey"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
+
+        <RelativeLayout
+            android:id="@+id/rlTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginTop="10dp"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tvTitle"
+                style="@style/regular_20_dark_gey_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Step"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tvSubTitle"
+                style="@style/regular_17_dark_gey_6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_toStartOf="@id/ivEditTime"
+                android:layout_toEndOf="@id/tvTitle"
+                android:ellipsize="marquee"
+                android:paddingHorizontal="10dp"
+                android:singleLine="true"
+                android:visibility="gone" />
+
+
+            <ImageView
+                android:id="@+id/ivEditTime"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="end"
+                android:layout_marginRight="10dp"
+                android:layout_toLeftOf="@+id/ivDelete"
+                android:src="@drawable/ic_edit"
+                android:visibility="visible" />
+
+            <ImageView
+                android:id="@+id/ivDelete"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_alignParentRight="true"
+                android:layout_gravity="end"
+                android:layout_marginRight="10dp"
+                android:src="@drawable/ic_delete"
+                android:visibility="visible" />
+        </RelativeLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/clInsItem"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="15dp"
+            android:layout_marginVertical="10dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/divider"
+            app:layout_constraintVertical_bias="0.479">
+
+            <androidx.constraintlayout.widget.Guideline
+                android:id="@+id/guideline1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintGuide_percent="0.32" />
+
+            <TextView
+                android:id="@+id/tvName"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enter Item"
+                app:layout_constraintBottom_toBottomOf="@id/etName"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etName" />
+
+            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                android:id="@+id/etName"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:gravity="top"
+                android:hint="Item name"
+                android:imeOptions="actionNext"
+                android:inputType="textCapWords"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+
+            <RadioGroup
+                android:id="@+id/ingAudioSelect"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="@dimen/dp_10"
+                android:orientation="horizontal"
+                app:layout_constraintLeft_toRightOf="@+id/tvAudio"
+                app:layout_constraintRight_toLeftOf="@+id/ivSpeakIng"
+                app:layout_constraintTop_toBottomOf="@+id/etName">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/rbUploadIng"
+                    style="@style/Widget.AppCompat.CompoundButton.RadioButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/orange"
+                    android:checked="true"
+                    android:text="@string/txt_upload" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/rbRecordIng"
+                    style="@style/Widget.AppCompat.CompoundButton.RadioButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/orange"
+                    android:text="@string/txt_record" />
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/tvAudio"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:text="@string/txt_audio"
+                app:layout_constraintBottom_toBottomOf="@+id/ingAudioSelect"
+                app:layout_constraintRight_toLeftOf="@id/etIngAudio"
+                app:layout_constraintTop_toTopOf="@+id/ingAudioSelect" />
+
+            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                android:id="@+id/etIngAudio"
+                style="@style/et_create_recipe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:gravity="top"
+                android:hint="@string/txt_audio"
+                android:imeOptions="actionNext"
+                android:inputType="textCapWords"
+                android:singleLine="true"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintRight_toLeftOf="@+id/ivRecordIng"
+                app:layout_constraintTop_toBottomOf="@id/ingAudioSelect">
+
+            </androidx.appcompat.widget.AppCompatAutoCompleteTextView>
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivRecord"
+                android:layout_width="@dimen/icon_size_create_recipe"
+                android:layout_height="@dimen/icon_size_create_recipe"
+                android:layout_gravity="end"
+                android:scaleType="fitEnd"
+                android:src="@drawable/ic_mic"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="@id/etIngAudio"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/ivRecordIng"
+                app:layout_constraintTop_toTopOf="@id/etIngAudio"
+                app:tint="@color/black" />
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/ivRecordIng"
+                android:layout_width="@dimen/dp_40"
+                android:layout_height="@dimen/dp_40"
+                app:layout_constraintBottom_toBottomOf="@id/etIngAudio"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/etIngAudio"
+                app:layout_constraintTop_toTopOf="@id/etIngAudio"
+                app:lottie_autoPlay="false"
+                app:lottie_loop="true"
+                app:lottie_rawRes="@raw/mic" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivSpeakIng"
+                android:layout_width="@dimen/icon_size_create_recipe"
+                android:layout_height="@dimen/icon_size_create_recipe"
+                android:layout_gravity="end"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:padding="@dimen/dp_5"
+                android:scaleType="fitEnd"
+                android:src="@drawable/ic_speaker"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="@id/ingAudioSelect"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/ingAudioSelect"
+                app:layout_constraintTop_toTopOf="@id/ingAudioSelect"
+                app:tint="@color/black" />
+
+            <TextView
+                android:id="@+id/tvQty"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Qty"
+                app:layout_constraintBottom_toBottomOf="@+id/etQty"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etQty" />
+
+            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                android:id="@+id/etQty"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:gravity="top"
+                android:hint="Quantity"
+                android:imeOptions="actionNext"
+                android:inputType="numberDecimal"
+                android:maxLength="7"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/etIngAudio" />
+
+            <TextView
+                android:id="@+id/tvQtyAudio"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:text="@string/txt_audio"
+                app:layout_constraintBottom_toBottomOf="@+id/qtyAudioSelect"
+                app:layout_constraintRight_toLeftOf="@id/etIngAudio"
+                app:layout_constraintTop_toTopOf="@+id/qtyAudioSelect" />
+
+            <RadioGroup
+                android:id="@+id/qtyAudioSelect"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="@dimen/dp_10"
+                android:orientation="horizontal"
+                app:layout_constraintLeft_toRightOf="@+id/tvAudio"
+                app:layout_constraintRight_toLeftOf="@+id/ivSpeakIng"
+                app:layout_constraintTop_toBottomOf="@+id/etQty">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/rbQtyUpload"
+                    style="@style/Widget.AppCompat.CompoundButton.RadioButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/orange"
+                    android:checked="true"
+                    android:text="@string/txt_upload" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/rbQtyRecord"
+                    style="@style/Widget.AppCompat.CompoundButton.RadioButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/orange"
+                    android:text="@string/txt_record" />
+            </RadioGroup>
+
+            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                android:id="@+id/etQtyAudio"
+                style="@style/et_create_recipe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:gravity="top"
+                android:hint="@string/txt_audio"
+                android:imeOptions="actionNext"
+                android:inputType="textCapWords"
+                android:singleLine="true"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintRight_toLeftOf="@+id/ivRecordQty"
+                app:layout_constraintTop_toBottomOf="@id/qtyAudioSelect">
+
+            </androidx.appcompat.widget.AppCompatAutoCompleteTextView>
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/ivRecordQty"
+                android:layout_width="@dimen/dp_40"
+                android:layout_height="@dimen/dp_40"
+                app:layout_constraintBottom_toBottomOf="@id/etQtyAudio"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/etQtyAudio"
+                app:layout_constraintTop_toTopOf="@id/etQtyAudio"
+                app:lottie_autoPlay="false"
+                app:lottie_loop="true"
+                app:lottie_rawRes="@raw/mic" />
+
+            <TextView
+                android:id="@+id/tvType"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Action"
+                app:layout_constraintBottom_toBottomOf="@+id/etType"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etType" />
+
+            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                android:id="@+id/etType"
+                style="@style/et_regular_14_light"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:gravity="top"
+                android:hint="Action"
+                android:imeOptions="actionNext"
+                android:inputType="textCapWords"
+                android:maxLength="10"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/etQtyAudio"
+                app:layout_constraintWidth_percent="0.4" />
+
+            <TextView
+                android:id="@+id/tvTypeAudio"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:text="@string/txt_audio"
+                app:layout_constraintBottom_toBottomOf="@+id/typeAudioSelect"
+                app:layout_constraintRight_toLeftOf="@id/etIngAudio"
+                app:layout_constraintTop_toTopOf="@+id/typeAudioSelect" />
+
+            <RadioGroup
+                android:id="@+id/typeAudioSelect"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="@dimen/dp_10"
+                android:orientation="horizontal"
+                app:layout_constraintLeft_toRightOf="@+id/tvAudio"
+                app:layout_constraintRight_toLeftOf="@+id/ivSpeakIng"
+                app:layout_constraintTop_toBottomOf="@+id/etType">
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/rbTypeUpload"
+                    style="@style/Widget.AppCompat.CompoundButton.RadioButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/orange"
+                    android:checked="true"
+                    android:text="@string/txt_upload" />
+
+                <com.google.android.material.radiobutton.MaterialRadioButton
+                    android:id="@+id/rbTypeRecord"
+                    style="@style/Widget.AppCompat.CompoundButton.RadioButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/orange"
+                    android:text="@string/txt_record" />
+            </RadioGroup>
+
+            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                android:id="@+id/etTypeAudio"
+                style="@style/et_create_recipe"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:gravity="top"
+                android:hint="@string/txt_audio"
+                android:imeOptions="actionNext"
+                android:inputType="textCapWords"
+                android:singleLine="true"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintRight_toLeftOf="@+id/ivRecordType"
+                app:layout_constraintTop_toBottomOf="@id/typeAudioSelect">
+                //</androidx.appcompat.widget.AppCompatAutoCompleteTextView>
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/ivRecordType"
+                android:layout_width="@dimen/dp_40"
+                android:layout_height="@dimen/dp_40"
+                app:layout_constraintBottom_toBottomOf="@id/etTypeAudio"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/etTypeAudio"
+                app:layout_constraintTop_toTopOf="@id/etTypeAudio"
+                app:lottie_autoPlay="false"
+                app:lottie_loop="true"
+                app:lottie_rawRes="@raw/mic" />
+
+            <ImageView
+                android:id="@+id/ivSpeakerType"
+                android:layout_width="@dimen/icon_size_create_recipe"
+                android:layout_height="@dimen/icon_size_create_recipe"
+                android:layout_gravity="end"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:padding="@dimen/dp_5"
+                android:scaleType="fitEnd"
+                android:src="@drawable/ic_speaker"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="@id/typeAudioSelect"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/typeAudioSelect"
+                app:layout_constraintTop_toTopOf="@id/typeAudioSelect"
+                app:tint="@color/black" />
+
+            <ImageView
+                android:id="@+id/ivSpeakQty"
+                android:layout_width="@dimen/icon_size_create_recipe"
+                android:layout_height="@dimen/icon_size_create_recipe"
+                android:layout_gravity="end"
+                android:layout_marginEnd="@dimen/dp_10"
+                android:padding="@dimen/dp_5"
+                android:scaleType="fitEnd"
+                android:src="@drawable/ic_speaker"
+                android:visibility="visible"
+                app:layout_constraintBottom_toBottomOf="@id/qtyAudioSelect"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/qtyAudioSelect"
+                app:layout_constraintTop_toTopOf="@id/qtyAudioSelect"
+                app:tint="@color/black" />
+
+            <TextView
+                android:id="@+id/tvThreshold"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Threshold Temp"
+                app:layout_constraintBottom_toBottomOf="@+id/etThreshold"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etThreshold" />
+
+            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+                android:id="@+id/etThreshold"
+                style="@style/et_regular_14_light"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:gravity="top"
+                android:hint="Threshold"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="4"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/etTypeAudio"
+                app:layout_constraintWidth_percent="0.4" />
+
+            <TextView
+                android:id="@+id/tvThresholdRange"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="0 - 1000"
+                android:textColor="@color/gray"
+                app:layout_constraintBottom_toBottomOf="@+id/etThreshold"
+                app:layout_constraintLeft_toRightOf="@+id/etThreshold" />
+
+            <Spinner
+                android:id="@+id/qtyItemSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="0dp"
+                android:theme="@style/MatchSpinnerTheme"
+                app:layout_constraintBottom_toBottomOf="@id/etQty"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toTopOf="@id/etQty" />
+
+            <View
+                android:id="@+id/divider1"
+                style="@style/divider"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="10dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/etThreshold" />
+
+
+            <TextView
+                android:id="@+id/tvInduction"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Induction"
+                app:layout_constraintBottom_toBottomOf="@+id/cbInduction"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/cbInduction" />
+
+            <View
+                android:id="@+id/divider2"
+                style="@style/divider"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="10dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/clMag" />
+
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/cbInduction"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:buttonTint="@color/orange"
+                android:checked="true"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/divider2" />
+
+            <TextView
+                android:id="@+id/tvInductionTime"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Time"
+                app:layout_constraintBottom_toBottomOf="@+id/etInductionTimeMin"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etInductionTimeMin" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etInductionTimeMin"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="top"
+                android:hint="Min"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/cbInduction" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etInductionTimeSec"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:gravity="top"
+                android:hint="Sec"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/etInductionTimeMin"
+                app:layout_constraintTop_toBottomOf="@+id/cbInduction" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etInductionTime"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="top"
+                android:hint="Time"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="5"
+                android:visibility="gone"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/cbInduction" />
+
+            <TextView
+                android:id="@+id/tvIndPower"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Power"
+                app:layout_constraintBottom_toBottomOf="@+id/etIndPower"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etIndPower" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etIndPower"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="top"
+                android:hint="Power"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/etInductionTimeMin" />
+
+            <TextView
+                android:id="@+id/tvIndPowerRange"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="10 - 100"
+                android:textColor="@color/gray"
+                app:layout_constraintBottom_toBottomOf="@+id/etIndPower"
+                app:layout_constraintLeft_toRightOf="@+id/etIndPower" />
+
+            <View
+                android:id="@+id/divider3"
+                style="@style/divider"
+                android:layout_marginStart="0dp"
+                android:layout_marginTop="10dp"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/etIndPower" />
+
+            <TextView
+                android:id="@+id/tvLid"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lid"
+                app:layout_constraintBottom_toBottomOf="@+id/lidSpinner"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/lidSpinner" />
+
+            <Spinner
+                android:id="@+id/lidSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:theme="@style/MatchSpinnerTheme"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/divider1" />
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/clMag"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/lidSpinner">
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guidelineInner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_percent="0.32" />
+
+                <androidx.appcompat.widget.AppCompatCheckBox
+                    android:id="@+id/cbMicrowave"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:buttonTint="@color/orange"
+                    android:checked="true"
+                    app:layout_constraintLeft_toRightOf="@+id/guidelineInner"
+                    app:layout_constraintTop_toBottomOf="@+id/etIndLidTimeMin" />
+
+                <TextView
+                    android:id="@+id/tvMicrowave"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Microwave"
+                    app:layout_constraintBottom_toBottomOf="@+id/cbMicrowave"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/cbMicrowave" />
+
+                <TextView
+                    android:id="@+id/tvPowerRange"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:text="10 - 100"
+                    android:textColor="@color/gray"
+                    app:layout_constraintBottom_toBottomOf="@+id/etMagPower"
+                    app:layout_constraintLeft_toRightOf="@+id/etMagPower" />
+
+                <TextView
+                    android:id="@+id/tvSeverity"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mag Severity"
+                    app:layout_constraintBottom_toBottomOf="@+id/severitySpinner"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/severitySpinner" />
+
+                <Spinner
+                    android:id="@+id/severitySpinner"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_marginTop="10dp"
+                    android:theme="@style/MatchSpinnerTheme"
+                    app:layout_constraintLeft_toRightOf="@+id/guidelineInner"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/tvMicrowaveTime"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Time"
+                    app:layout_constraintBottom_toBottomOf="@+id/etMicrowaveTimeMin"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/etMicrowaveTimeMin" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/etMicrowaveTimeMin"
+                    style="@style/et_regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:hint="Min"
+                    android:imeOptions="actionNext"
+                    android:inputType="number"
+                    android:maxLength="2"
+                    app:layout_constraintLeft_toRightOf="@+id/guidelineInner"
+                    app:layout_constraintTop_toBottomOf="@+id/cbMicrowave" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/etMicrowaveTimeSec"
+                    style="@style/et_regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:gravity="top"
+                    android:hint="Sec"
+                    android:imeOptions="actionNext"
+                    android:inputType="number"
+                    android:maxLength="2"
+                    app:layout_constraintLeft_toRightOf="@+id/etMicrowaveTimeMin"
+                    app:layout_constraintTop_toBottomOf="@+id/cbMicrowave" />
+
+                <TextView
+                    android:id="@+id/tvPower"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Power"
+                    app:layout_constraintBottom_toBottomOf="@+id/etMagPower"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/etMagPower" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/etMagPower"
+                    style="@style/et_regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="top"
+                    android:hint="Power"
+                    android:imeOptions="actionNext"
+                    android:inputType="number"
+                    android:text=""
+                    app:layout_constraintLeft_toRightOf="@+id/guidelineInner"
+                    app:layout_constraintTop_toBottomOf="@+id/etMicrowaveTimeMin" />
+
+                <TextView
+                    android:id="@+id/tvUpdationTime"
+                    style="@style/regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Updation Time"
+                    app:layout_constraintBottom_toBottomOf="@+id/etIndLidTimeMin"
+                    app:layout_constraintLeft_toLeftOf="parent"
+                    app:layout_constraintTop_toTopOf="@+id/etIndLidTimeMin" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/etIndLidTimeMin"
+                    style="@style/et_regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="top"
+                    android:hint="Min"
+                    android:imeOptions="actionNext"
+                    android:inputType="number"
+                    android:maxLength="2"
+                    app:layout_constraintLeft_toRightOf="@+id/guidelineInner"
+                    app:layout_constraintTop_toBottomOf="@+id/severitySpinner" />
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/etIndLidTimeSec"
+                    style="@style/et_regular_14_light_black"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="10dp"
+                    android:gravity="top"
+                    android:hint="Sec"
+                    android:imeOptions="actionNext"
+                    android:inputType="number"
+                    android:maxLength="2"
+                    app:layout_constraintLeft_toRightOf="@+id/etIndLidTimeMin"
+                    app:layout_constraintTop_toBottomOf="@+id/severitySpinner" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <TextView
+                android:id="@+id/tvWarmTime"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Warm Time"
+                app:layout_constraintBottom_toBottomOf="@+id/etWarmTimeMin"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etWarmTimeMin" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etWarmTimeMin"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="top"
+                android:hint="Min"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/divider3" />
+
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etWarmTimeSec"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:gravity="top"
+                android:hint="Sec"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/etWarmTimeMin"
+                app:layout_constraintTop_toBottomOf="@+id/divider3" />
+
+
+            <TextView
+                android:id="@+id/tvWaitTime"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Wait Time"
+                app:layout_constraintBottom_toBottomOf="@+id/etWaitTimeMin"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etWaitTimeMin" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etWaitTimeMin"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="top"
+                android:hint="Min"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/etWarmTimeMin" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etWaitTimeSec"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:gravity="top"
+                android:hint="Sec"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/etWaitTimeMin"
+                app:layout_constraintTop_toBottomOf="@+id/etWarmTimeMin" />
+
+            <TextView
+                android:id="@+id/tvStirrerTime"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stirrer"
+                app:layout_constraintBottom_toBottomOf="@+id/spinnerStirrer"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/spinnerStirrer" />
+
+            <!--According changes for stirrer min-->
+            <androidx.appcompat.widget.AppCompatEditText
+                android:visibility="gone"
+                android:id="@+id/etStirrerTimeMin"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="top"
+                android:hint="Min"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/etWaitTimeMin" />
+
+            <!--According changes for stirrer min-->
+            <androidx.appcompat.widget.AppCompatEditText
+                android:visibility="gone"
+                android:id="@+id/etStirrerTimeSec"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginTop="10dp"
+                android:gravity="top"
+                android:hint="Sec"
+                android:imeOptions="actionNext"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/etStirrerTimeMin"
+                app:layout_constraintTop_toBottomOf="@+id/etWaitTimeMin" />
+
+            <Spinner
+                android:id="@+id/spinnerStirrer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:theme="@style/MatchSpinnerTheme"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/etWaitTimeMin"  />
+
+            <TextView
+                android:id="@+id/tvSprinkleLabel"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/txt_sprinkle"
+                app:layout_constraintBottom_toBottomOf="@+id/etPumpTimeMin"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etPumpTimeMin" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etPumpTimeMin"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="top"
+                android:hint="@string/hint_count"
+                android:imeOptions="actionDone"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/spinnerStirrer" />
+
+            <TextView
+                android:id="@+id/tvSprayLabel"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/txt_spray"
+                app:layout_constraintBottom_toBottomOf="@+id/etSprayValue"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/etSprayValue" />
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/etSprayValue"
+                style="@style/et_regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="top"
+                android:hint="@string/hint_ml"
+                android:imeOptions="actionDone"
+                android:inputType="number"
+                android:maxLength="2"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@id/etPumpTimeMin"/>
+
+            <TextView
+                android:id="@+id/tvSkip"
+                style="@style/regular_14_light_black"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Skip"
+                app:layout_constraintBottom_toBottomOf="@+id/cbSkip"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/cbSkip" />
+
+            <androidx.appcompat.widget.AppCompatCheckBox
+                android:id="@+id/cbSkip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:buttonTint="@color/orange"
+                app:layout_constraintLeft_toRightOf="@+id/guideline1"
+                app:layout_constraintTop_toBottomOf="@+id/etSprayValue" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <View
+            android:id="@+id/divider"
+            style="@style/divider"
+            android:layout_width="0dp"
+            android:layout_height="0.01dp"
+            android:layout_marginHorizontal="10dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="10dp"
+            android:background="@color/black_a85"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/rlTitle" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.3" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

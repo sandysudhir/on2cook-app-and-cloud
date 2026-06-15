@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="110dp"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent"
+    android:padding="4dp">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvItem"
+        style="@style/bold_16_dark_grey_4"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/ic_round_white"
+        android:gravity="center"
+        android:layout_margin="10dp"
+        android:scaleType="fitXY"
+        android:src="@drawable/ic_recent_item"
+        android:text="51%"
+        app:layout_constraintDimensionRatio="w, 1:1"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </androidx.appcompat.widget.AppCompatTextView>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvItemName"
+        style="@style/regular_14_light_black_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:text="Carbs"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvItem" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvQty"
+        style="@style/regular_10_light_black_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="1500 gms"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvItemName">
+
+    </androidx.appcompat.widget.AppCompatTextView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

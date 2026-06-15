@@ -1,0 +1,25 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:tint="?attr/colorControlNormal"
+    android:viewportWidth="24.0"
+    android:viewportHeight="24.0">
+
+    <group android:translateX="@integer/bluetooth_search_icon_translation_x">
+        <path
+            android:name="bluetooth_icon"
+            android:fillColor="#FF000000"
+            android:pathData="@string/bluetooth_path_sharp" />
+    </group>
+
+    <path
+        android:name="level_1"
+        android:fillColor="#FF000000"
+        android:pathData="@string/bluetooth_search_path_level_1_sharp" />
+
+    <path
+        android:name="level_2"
+        android:fillColor="#FF000000"
+        android:pathData="@string/bluetooth_search_path_level_2_sharp" />
+
+</vector>

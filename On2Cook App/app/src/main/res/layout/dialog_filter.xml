@@ -1,0 +1,845 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/dark_grey">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/ivClose"
+            android:layout_width="@dimen/dp_35"
+            android:layout_height="@dimen/dp_35"
+            android:layout_marginHorizontal="@dimen/dp_20"
+            android:padding="8dp"
+            android:src="@drawable/ic_back"
+            app:layout_constraintBottom_toBottomOf="@id/tv_title"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tv_title" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnApply"
+            style="@style/semi_bold_12_white"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginHorizontal="@dimen/dp_20"
+            android:background="@drawable/ic_round_corner_button_orange_deselect"
+            android:text="@string/txt_apply"
+            android:textAllCaps="false"
+            app:layout_constraintBottom_toBottomOf="@id/tv_title"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tv_title" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_title"
+            style="@style/bold_18_dark_grey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="?actionBarSize"
+            android:gravity="center"
+            android:singleLine="false"
+            android:text="@string/title_filter"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:fillViewport="true"
+            android:paddingHorizontal="@dimen/dp_20"
+            android:paddingBottom="20dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_title">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <View
+                    android:id="@+id/divider2"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginLeft="@dimen/dp_10"
+                    android:layout_marginRight="@dimen/dp_10"
+                    android:background="@color/dark_grey5"
+                    app:layout_constraintBottom_toBottomOf="@id/tv_title_current"
+                    app:layout_constraintLeft_toRightOf="@id/tv_title_current"
+                    app:layout_constraintTop_toTopOf="@+id/tv_title_current" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_title_current"
+                    style="@style/semi_bole_16_dark_grey_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_10"
+                    android:singleLine="false"
+                    android:text="@string/title_current"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_microwave"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_microwave"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintMicorwave"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintMicorwave" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintMicorwave"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_title_current">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_microwave_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_microwave_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_microwave_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_microwave_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_microwave_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_microwave_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_microwave_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_induction"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_induction"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintInduction"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintInduction" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintInduction"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintMicorwave">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_induction_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_induction_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_induction_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_induction_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_induction_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_induction_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_induction_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <View
+                    android:id="@+id/divider3"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginLeft="@dimen/dp_10"
+                    android:layout_marginRight="@dimen/dp_10"
+                    android:background="@color/dark_grey5"
+                    app:layout_constraintBottom_toBottomOf="@id/tv_title_temp"
+                    app:layout_constraintLeft_toRightOf="@+id/tv_title_temp"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintInduction"
+                    app:layout_constraintTop_toTopOf="@id/tv_title_temp" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_title_temp"
+                    style="@style/semi_bole_16_dark_grey_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    android:singleLine="false"
+                    android:text="@string/title_temp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintInduction" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_magnatron"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_magnetron"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintMagnatron"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintMagnatron" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintMagnatron"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_20"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_title_temp">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_magnatron_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_magnatron_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_magnatron_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_magnatron_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_magnatron_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_magnatron_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_magnatron_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_coil"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_coil"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintCoil"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintCoil" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintCoil"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintMagnatron">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_coil_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_coil_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_coil_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_coil_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_coil_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_coil_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_coil_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_ambient"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_ambient"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintAmbient"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintAmbient" />
+
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintAmbient"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintCoil">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_ambient_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_ambient_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_ambient_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_ambient_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_ambient_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_ambient_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_ambient_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_Pan"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_pan"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintPan"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintPan" />
+
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintPan"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintAmbient">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_pan_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_pan_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_pan_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_pan_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_pan_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_pan_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_pan_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_PCB"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_pcb"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintPCB"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintPCB" />
+
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintPCB"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintPan">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_pcb_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_pcb_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_pcb_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_pcb_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_pcb_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_pcb_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_pcb_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_oil"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_oil"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintOil"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintOil" />
+
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintOil"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintPCB">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_oil_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_oil_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_oil_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_oil_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_oil_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_oil_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_oil_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_title_time"
+                    style="@style/semi_bole_16_dark_grey_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    android:singleLine="false"
+                    android:text="@string/title_time"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintOil" />
+
+                <View
+                    android:id="@+id/divider4"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_marginLeft="@dimen/dp_10"
+                    android:layout_marginRight="@dimen/dp_10"
+                    android:background="@color/dark_grey5"
+                    app:layout_constraintBottom_toBottomOf="@id/tv_title_time"
+                    app:layout_constraintLeft_toRightOf="@+id/tv_title_time"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintInduction"
+                    app:layout_constraintTop_toTopOf="@id/tv_title_time" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_device_on"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_device_on"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintDeviceON"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintDeviceON" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintDeviceON"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/tv_title_time">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_device_on_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_device_on_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_device_on_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_device_on_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_device_on_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_device_on_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_device_on_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_device_off"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:singleLine="false"
+                    android:text="@string/text_device_of"
+                    app:layout_constraintBottom_toBottomOf="@+id/constraintDeviceOFF"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintDeviceOFF" />
+
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintDeviceOFF"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintDeviceON">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_device_off_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_device_off_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_device_off_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_device_off_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_device_off_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_device_off_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_device_off_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_induction_on"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:gravity="center_horizontal"
+                    android:singleLine="false"
+                    android:text="@string/text_induction_on"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintInductionON" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintInductionON"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintDeviceOFF">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_InductionON_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_InductionON_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_InductionON_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_InductionON_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_InductionON_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_InductionON_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_InductionON_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tv_microwave_on"
+                    style="@style/semi_bole_14_dark_grey_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/dp_5"
+                    android:gravity="center_horizontal"
+                    android:singleLine="false"
+                    android:text="@string/text_microwave_on"
+                    app:layout_constraintEnd_toStartOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toTopOf="@+id/constraintMicrowaveON" />
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/constraintMicrowaveON"
+                    style="@style/bg_parent_layout_search_log_filter"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/dp_15"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/guidelineStart"
+                    app:layout_constraintTop_toBottomOf="@+id/constraintInductionON">
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_MicrowaveON_from"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/tv_MicrowaveON_to"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/tv_MicrowaveON_to"
+                        style="@style/semi_bole_14_dark_grey_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="0dp"
+                        android:gravity="center"
+                        android:paddingHorizontal="@dimen/dp_10"
+                        android:singleLine="false"
+                        android:text="@string/text_to"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/ed_MicrowaveON_to"
+                        app:layout_constraintStart_toEndOf="@+id/ed_MicrowaveON_from"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:id="@+id/ed_MicrowaveON_to"
+                        style="@style/et_search_log_filter"
+                        android:layout_width="0dp"
+                        android:imeOptions="actionDone"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/tv_MicrowaveON_to"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/guidelineStart"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    app:layout_constraintGuide_percent="0.25" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.core.widget.NestedScrollView>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

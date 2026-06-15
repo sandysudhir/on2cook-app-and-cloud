@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/clItem"
+        android:layout_width="@dimen/dp_110"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/dp_4">
+
+        <LinearLayout
+            android:id="@+id/clImage"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_0"
+            android:clipChildren="true"
+            android:orientation="vertical"
+            app:layout_constraintDimensionRatio="w, 1:1"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.comix.rounded.RoundedCornerImageView
+                android:id="@+id/ivItem"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/placeholder"
+                app:cornerBottomDisable="true"
+                app:cornerColor="@color/dark_grey"
+                app:cornerRadius="2dp" />
+
+        </LinearLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvDifficulty"
+            style="@style/semi_bold_12_white"
+            android:layout_width="@dimen/dp_0"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/dp_10"
+            android:layout_marginRight="@dimen/dp_10"
+            android:background="@drawable/ic_round_corner_button_yellow"
+            android:gravity="center"
+            android:padding="4dp"
+            android:text="@string/txt_medium"
+            app:layout_constraintBottom_toBottomOf="@+id/clImage"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/clImage" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvItemName"
+            style="@style/bold_12_grey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/dp_6"
+            android:gravity="center"
+            android:text="Vegetable Manchurian"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvDifficulty" />
+
+        <View
+            android:id="@+id/viewLine"
+            android:layout_width="@dimen/dp_0"
+            android:layout_height="@dimen/dp_1"
+            android:layout_marginTop="@dimen/dp_4"
+            android:background="@color/dark_grey5"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvItemName" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvTime"
+            style="@style/regular_10_dark_gey_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="9 mins"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/viewLine" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

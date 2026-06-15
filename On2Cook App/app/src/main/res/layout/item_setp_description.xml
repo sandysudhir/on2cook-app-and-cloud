@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvCookingSteps"
+        style="@style/regular_12_dark_gey_2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:text="Add 1/2 cup finely chopped carrots, 1/4 cup fine chopped french beans, 1/4 cup bell peppers, 1/4 cup chopped cabbage, 1/4 cup spring onions, 2 slit green chillies. "
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </androidx.appcompat.widget.AppCompatTextView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:orientation="horizontal"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvCookingSteps">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvPlusTenSecond"
+            style="@style/semi_bold_12_dark_grey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:background="@drawable/ic_round_corner_button_white"
+            android:ellipsize="end"
+            android:paddingLeft="14dp"
+            android:paddingTop="8dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="8dp"
+            android:singleLine="true"
+            android:text="+10s"
+            android:textAllCaps="false" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvPlusThirtySecond"
+            style="@style/semi_bold_12_dark_grey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:background="@drawable/ic_round_corner_button_white"
+            android:ellipsize="end"
+            android:paddingLeft="14dp"
+            android:paddingTop="8dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="8dp"
+            android:singleLine="true"
+            android:text="+30s"
+            android:textAllCaps="false"></androidx.appcompat.widget.AppCompatTextView>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvMinusTenSecond"
+            style="@style/semi_bold_12_dark_grey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:background="@drawable/ic_round_corner_button_white"
+            android:ellipsize="end"
+            android:paddingLeft="14dp"
+            android:paddingTop="8dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="8dp"
+            android:singleLine="true"
+            android:text="-10s"
+            android:textAllCaps="false"></androidx.appcompat.widget.AppCompatTextView>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvMinusThirtySecond"
+            style="@style/semi_bold_12_dark_grey_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:background="@drawable/ic_round_corner_button_white"
+            android:ellipsize="end"
+            android:paddingLeft="14dp"
+            android:paddingTop="8dp"
+            android:paddingRight="14dp"
+            android:paddingBottom="8dp"
+            android:singleLine="true"
+            android:text="-30s"
+            android:textAllCaps="false"></androidx.appcompat.widget.AppCompatTextView>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
