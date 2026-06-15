@@ -32,6 +32,8 @@ coverage/
 .env.local
 .env.*
 !.env.example
+**/config.local.php
+**/ftp-deploy.local.json
 
 # Python cache
 __pycache__/
