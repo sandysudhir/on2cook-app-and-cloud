@@ -258,6 +258,18 @@
   padding: 10px 16px 16px;
 }
 
+.pro-end-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid rgba(239, 68, 68, 0.24);
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  font-weight: 900;
+}
+
 .pro-live-overlay {
   position: absolute;
   inset: 0;
@@ -323,6 +335,99 @@
   color: #c2410c;
   font-weight: 800;
   font-size: 0.82rem;
+}
+
+.pro-result-modal {
+  min-height: 430px;
+  background: #f7f9ff;
+}
+
+.pro-result-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+}
+
+.pro-result-body {
+  min-height: 330px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.pro-result-icon {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.08);
+  color: #d97706;
+  font-size: 1.8rem;
+  font-weight: 900;
+  box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.08);
+}
+
+.pro-result-body h2 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.pro-result-metrics,
+.last-run-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: min(430px, 100%);
+}
+
+.pro-result-metrics > div,
+.last-run-metrics > div {
+  display: grid;
+  gap: 3px;
+  padding: 14px;
+  border: 1px solid rgba(45, 108, 223, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.pro-result-metrics span,
+.last-run-metrics span {
+  color: #8b95aa;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pro-result-metrics strong,
+.last-run-metrics strong {
+  color: #2e5bd8;
+  font-size: 1.45rem;
+}
+
+.pro-result-metrics small,
+.last-run-metrics small {
+  color: var(--muted);
+}
+
+.last-run-metrics {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.last-run-metrics > div {
+  padding: 10px;
+  background: rgba(46, 91, 216, 0.04);
+}
+
+.last-run-metrics strong {
+  font-size: 1.08rem;
 }
 
 .pro-editor-actions {

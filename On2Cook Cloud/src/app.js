@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615g";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615g";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615h";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615h";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615g";
+} from "./ncb-services.js?v=20260615h";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615g";
+} from "./data-store.js?v=20260615h";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -1428,6 +1428,7 @@ function markRecipeComplete(slot, message, at = nowIso()) {
       startedAt: device.activeRun?.startedAt || nowIso(),
       finishedAt: at,
       durationSeconds: device.activeRun?.durationSeconds || getRecipeDuration(recipe),
+      actualDurationSeconds: elapsedSecondsBetween(device.activeRun?.startedAt || nowIso(), at),
       outcome: "completed",
       note: "Completed on device",
       stepNo: Array.isArray(recipe?.recipeJson?.Instruction) ? recipe.recipeJson.Instruction.length : Number(device.telemetry.stepNo) || 0
@@ -1492,6 +1493,7 @@ function markRecipeAborted(slot, message, at = nowIso()) {
       startedAt: device.activeRun?.startedAt || nowIso(),
       finishedAt: at,
       durationSeconds: device.activeRun?.durationSeconds || getRecipeDuration(recipe),
+      actualDurationSeconds: elapsedSecondsBetween(device.activeRun?.startedAt || nowIso(), at),
       outcome: "aborted",
       note: `Aborted by device (${message})`,
       stepNo: Number(device.telemetry.stepNo) || 0
@@ -2859,6 +2861,21 @@ function formatProClock(seconds) {
   return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
 }
 
+function elapsedSecondsBetween(startAt, endAt = nowIso()) {
+  const start = new Date(startAt || "").getTime();
+  const end = new Date(endAt || "").getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return 0;
+  return Math.max(0, Math.round((end - start) / 1000));
+}
+
+function getRunActualSeconds(run) {
+  return Number(run?.actualDurationSeconds) || elapsedSecondsBetween(run?.startedAt, run?.finishedAt);
+}
+
+function getSinceRunFinishedSeconds(run) {
+  return run?.finishedAt ? elapsedSecondsBetween(run.finishedAt, nowIso()) : 0;
+}
+
 function getProLive(draft) {
   if (!draft.live) {
     draft.live = {
@@ -2883,12 +2900,18 @@ function shouldHoldAtMinute(draft, minuteIndex) {
 function advanceProLiveSecond() {
   updateProDraft((draft) => {
     const live = getProLive(draft);
+    if (live.outcome) {
+      live.resultTick = Number(live.resultTick || 0) + 1;
+      return;
+    }
     if (!["running", "hold"].includes(live.phase) || live.paused || live.outcome) return;
     if (live.phase === "hold") {
       live.holdElapsed = Math.min(PRO_MAX_HOLD_SECONDS, Number(live.holdElapsed || 0) + 1);
       if (live.holdElapsed >= PRO_MAX_HOLD_SECONDS) {
         live.phase = "aborted";
         live.outcome = "aborted";
+        live.finishedAt = nowIso();
+        live.actualDurationSeconds = Number(live.elapsed || 0);
       }
       return;
     }
@@ -2903,6 +2926,8 @@ function advanceProLiveSecond() {
     if (live.elapsed >= draft.minutes.length * 60) {
       live.phase = "completed";
       live.outcome = "completed";
+      live.finishedAt = nowIso();
+      live.actualDurationSeconds = Number(live.elapsed || 0);
     }
   });
 }
@@ -3713,6 +3738,27 @@ function renderRecipeTimeline(snapshot, device, recipe, active = false) {
   `;
 }
 
+function renderLastRunMetrics(run) {
+  if (!run?.finishedAt) return "";
+  const actualSeconds = getRunActualSeconds(run);
+  const plannedSeconds = Number(run.durationSeconds) || actualSeconds;
+  const sinceSeconds = getSinceRunFinishedSeconds(run);
+  return `
+    <div class="last-run-metrics">
+      <div>
+        <span>${run.outcome === "aborted" ? "Ran before abort" : "Cook time"}</span>
+        <strong>${formatProClock(actualSeconds)}</strong>
+        <small>of ${formatProClock(plannedSeconds)} planned</small>
+      </div>
+      <div>
+        <span>Since ${run.outcome === "aborted" ? "abort" : "completion"}</span>
+        <strong>+${formatProClock(sinceSeconds)}</strong>
+        <small>${formatAgo(run.finishedAt)}</small>
+      </div>
+    </div>
+  `;
+}
+
 function renderDevicePhone(snapshot, device) {
   const currentOrder = getCurrentJob(snapshot, device);
   const queueOrders = getQueueOrders(snapshot, device);
@@ -3787,6 +3833,7 @@ function renderDevicePhone(snapshot, device) {
                       ${renderStatusPill(headline.status)}
                     </div>
                     <div class="subtle">${escapeHtml(headline.note)}</div>
+                    ${renderLastRunMetrics(device.lastRun)}
                     <div class="meta-grid top-gap">
                       <span>Step ${escapeHtml(device.telemetry.stepNo || device.lastRun?.stepNo || 0)}</span>
                       <span>Induction ${escapeHtml(`${clampPercent(device.telemetry.indPower)}%`)}</span>
@@ -4084,10 +4131,48 @@ function renderProReadyOverlay(draft, live) {
   `;
 }
 
+function renderProLiveResult(draft, live) {
+  const plannedSeconds = draft.minutes.length * 60;
+  const actualSeconds = Number(live.actualDurationSeconds) || Number(live.elapsed || 0);
+  const sinceSeconds = live.finishedAt ? elapsedSecondsBetween(live.finishedAt, nowIso()) : 0;
+  const aborted = live.outcome === "aborted";
+  return `
+    <div class="modal-backdrop pro-live-backdrop">
+      <div class="modal-card pro-live-modal pro-result-modal">
+        <div class="pro-result-top">
+          <strong>${escapeHtml(draft.displayName)}</strong>
+          <span class="status-pill ${aborted ? "failed" : "complete"}">${aborted ? "Manual End" : "Completed"} - ${Math.min(100, Math.round((actualSeconds / Math.max(1, plannedSeconds)) * 100))}% done</span>
+        </div>
+        <div class="pro-result-body">
+          <div class="pro-result-icon">${aborted ? "!" : "✓"}</div>
+          <div class="eyebrow">${aborted ? "Recipe ended early" : "Recipe completed"}</div>
+          <h2>${aborted ? "Recipe Aborted" : "Recipe Completed"}</h2>
+          <div class="pro-result-metrics">
+            <div>
+              <span>${aborted ? "Time before abort" : "Time to completion"}</span>
+              <strong>${formatProClock(actualSeconds)}</strong>
+              <small>of ${formatProClock(plannedSeconds)} planned</small>
+            </div>
+            <div>
+              <span>Since ${aborted ? "abort" : "completion"}</span>
+              <strong>+${formatProClock(sinceSeconds)}</strong>
+              <small>still counting</small>
+            </div>
+          </div>
+          <button class="secondary-button" data-action="pro-live-back-editor">View Recipe Sheet</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderProLiveCookModal(snapshot, modal) {
   const draft = getProDraft(snapshot);
   if (!draft) return "";
   const live = getProLive(draft);
+  if (live.outcome) {
+    return renderProLiveResult(draft, live);
+  }
   const totalSeconds = draft.minutes.length * 60;
   const minuteIndex = Math.min(draft.minutes.length - 1, Math.floor((live.elapsed || 0) / 60));
   const subIndex = Math.min(3, Math.floor(((live.elapsed || 0) % 60) / 15));
@@ -4133,7 +4218,11 @@ function renderProLiveCookModal(snapshot, modal) {
           <button class="secondary-button" data-action="pro-live-next">›</button>
           <span class="grow"></span>
           <button class="secondary-button" data-action="pro-live-pause">${live.paused ? "Resume" : "Pause"}</button>
-          <button class="primary-button" data-action="pro-live-end">End Recipe</button>
+          ${
+            live.confirmEnd
+              ? `<div class="pro-end-confirm"><span>End early?</span><button class="danger-button small" data-action="pro-live-confirm-end">Proceed</button><button class="secondary-button small" data-action="pro-live-cancel-end">x</button></div>`
+              : `<button class="primary-button" data-action="pro-live-end">End Recipe</button>`
+          }
           <button class="danger-button" data-action="pro-live-abort">Stop</button>
         </div>
         ${showOverlay ? renderProReadyOverlay(draft, live) : ""}
@@ -5264,6 +5353,12 @@ async function handleClick(event) {
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const action = button.dataset.action;
+  const activeDraft = state().ui.activeModal?.type === "professional-editor" ? state().ui.activeModal.payload?.draft : null;
+  if (activeDraft?.live?.confirmEnd && !["pro-live-confirm-end", "pro-live-cancel-end", "pro-live-end"].includes(action)) {
+    updateProDraft((draft) => {
+      if (draft.live) draft.live.confirmEnd = false;
+    });
+  }
 
   if (action === "switch-tab") {
     mutate((draft) => {
@@ -5584,11 +5679,28 @@ async function handleClick(event) {
   if (action === "pro-live-end") {
     updateProDraft((draft) => {
       const live = getProLive(draft);
-      live.phase = "completed";
-      live.outcome = "completed";
-      live.paused = false;
+      live.confirmEnd = true;
     });
-    stopProLiveTimer();
+    return;
+  }
+  if (action === "pro-live-cancel-end") {
+    updateProDraft((draft) => {
+      const live = getProLive(draft);
+      live.confirmEnd = false;
+    });
+    return;
+  }
+  if (action === "pro-live-confirm-end") {
+    updateProDraft((draft) => {
+      const live = getProLive(draft);
+      live.phase = "aborted";
+      live.outcome = "aborted";
+      live.confirmEnd = false;
+      live.paused = false;
+      live.finishedAt = nowIso();
+      live.actualDurationSeconds = Number(live.elapsed || 0);
+    });
+    ensureProLiveTimer();
     return;
   }
   if (action === "pro-live-abort") {
@@ -5596,9 +5708,12 @@ async function handleClick(event) {
       const live = getProLive(draft);
       live.phase = "aborted";
       live.outcome = "aborted";
+      live.confirmEnd = false;
       live.paused = false;
+      live.finishedAt = nowIso();
+      live.actualDurationSeconds = Number(live.elapsed || 0);
     });
-    stopProLiveTimer();
+    ensureProLiveTimer();
     return;
   }
   if (action === "pro-live-back-editor") {
