@@ -34,13 +34,8 @@ class SplashActivity : AppCompatActivity() {
         handler = Handler(Looper.getMainLooper())
 
         handler.postDelayed({
-//            startActivity(Intent(this@SplashActivity, HomeActivity::class.java))
-            if (tabletSize) {
-                Constants.IS_TABLET = true
-                startActivity(Intent(this@SplashActivity, HomeTvActivity::class.java))
-            } else {
-                startActivity(Intent(this@SplashActivity, HomeActivity::class.java))
-            }
+            Constants.IS_TABLET = tabletSize
+            startActivity(Intent(this@SplashActivity, CloudWebActivity::class.java))
             finish()
         }, 1500)
     }

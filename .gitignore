@@ -9,6 +9,7 @@ Thumbs.db
 *.log
 .git.backup-codex
 **/.git.backup-codex
+.tooling/
 
 # Android / Gradle build outputs
 .gradle/

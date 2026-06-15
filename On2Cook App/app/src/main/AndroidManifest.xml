@@ -86,6 +86,11 @@
             android:name=".multiple_connection.HomeActivity"
             android:exported="true"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".multiple_connection.CloudWebActivity"
+            android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize"
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
         <activity
             android:name=".create_recipe.CreateNewRecipe"
