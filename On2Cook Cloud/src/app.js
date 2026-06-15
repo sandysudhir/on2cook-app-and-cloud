@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615e";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615e";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615f";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615f";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615e";
+} from "./ncb-services.js?v=20260615f";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615e";
+} from "./data-store.js?v=20260615f";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -1136,6 +1136,9 @@ function syncSelectedRecipesToAllDevices(draft) {
 }
 
 function clearStartupRecipeUploadState(draft) {
+  if (draft.ui?.activeModal?.type === "professional-editor") {
+    draft.ui.activeModal = null;
+  }
   draft.devices.forEach((device) => {
     device.baselineRecipeSyncPending = false;
     device.startupGuardUntil = "";
@@ -2550,6 +2553,17 @@ function renderStatusPill(status) {
 const PRO_POWER_STEPS = [0, 40, 60, 80, 100];
 const PRO_MICROWAVE_STEPS = [0, 180, 360, 540, 720, 800, 900];
 const PRO_STIRRER_SPEEDS = ["low", "medium", "high", "very-high"];
+const PRO_DIET_TYPES = [
+  { id: "veg", label: "Veg", icon: "Veg" },
+  { id: "non-veg", label: "Non-Veg", icon: "Non" },
+  { id: "vegan", label: "Vegan", icon: "Vegan" }
+];
+const PRO_RECIPE_TYPES = ["gravy", "semi-dry", "dry", "saute", "boil", "fry", "steam"];
+const PRO_CONSISTENCIES = [
+  { id: "thin", label: "Thin", hint: "Flowing, light" },
+  { id: "medium", label: "Medium", hint: "Balanced body" },
+  { id: "thick", label: "Thick", hint: "Dense, rich" }
+];
 
 function toInt(value, fallback = 0) {
   const parsed = Number.parseInt(value, 10);
@@ -2612,6 +2626,99 @@ function makeProMinute(index, overrides = {}) {
   };
 }
 
+function normalizeRecipeType(value) {
+  const key = String(value || "").toLowerCase().replace(/\s+/g, "-");
+  if (key.includes("semi")) return "semi-dry";
+  if (key.includes("dry")) return "dry";
+  if (key.includes("saute") || key.includes("sauté")) return "saute";
+  if (key.includes("boil")) return "boil";
+  if (key.includes("fry")) return "fry";
+  if (key.includes("steam")) return "steam";
+  return "gravy";
+}
+
+function inferDietType(recipe) {
+  const text = [
+    recipe?.displayName,
+    recipe?.category,
+    recipe?.recipeJson?.category,
+    recipe?.recipeJson?.description,
+    Array.isArray(recipe?.aliases) ? recipe.aliases.join(" ") : ""
+  ]
+    .join(" ")
+    .toLowerCase();
+  if (/(chicken|mutton|fish|egg|prawn|meat|keema|non.?veg)/i.test(text)) return "non-veg";
+  if (/(vegan|plant.?based)/i.test(text)) return "vegan";
+  return "veg";
+}
+
+function parseQuantityText(value, fallbackQuantity = 500, fallbackUnit = "g") {
+  const text = String(value || "");
+  const match = text.match(/(\d+(?:\.\d+)?)\s*(kg|g|gm|gram|grams|ml|l|litre|liter|piece|pcs|number)?/i);
+  if (!match) return { quantity: fallbackQuantity, unit: fallbackUnit };
+  const rawUnit = String(match[2] || fallbackUnit).toLowerCase();
+  const unit = rawUnit === "gm" || rawUnit.startsWith("gram") ? "g" : rawUnit === "litre" || rawUnit === "liter" ? "l" : rawUnit;
+  return { quantity: Number(match[1]) || fallbackQuantity, unit };
+}
+
+function inferRecipeQuantity(recipeJson) {
+  return parseQuantityText(
+    [
+      recipeJson?.quantity,
+      recipeJson?.servings,
+      recipeJson?.weight,
+      recipeJson?.title,
+      recipeJson?.description
+    ]
+      .filter(Boolean)
+      .join(" "),
+    500,
+    "g"
+  );
+}
+
+function splitIngredientNameWeight(item, index) {
+  const title = item?.title || item?.name || item?.Text || item?.text || item?.Ingredient || item?.ingredient || "";
+  const weight = item?.weight || item?.Weight || item?.quantity || item?.Quantity || item?.qty || item?.audioQ || "";
+  const parsed = parseQuantityText(weight, 0, item?.unit || item?.Unit || "g");
+  return {
+    id: item?.id ? String(item.id) : `ing-${index}-${safeRandomId("item")}`,
+    name: String(title || `Ingredient ${index + 1}`).trim(),
+    quantity: parsed.quantity || 0,
+    unit: String(item?.unit || item?.Unit || parsed.unit || "g").trim() || "g",
+    source: structuredClone(item || {})
+  };
+}
+
+function recipeJsonToConfigIngredients(recipeJson) {
+  const ingredientSource = Array.isArray(recipeJson?.Ingredients)
+    ? recipeJson.Ingredients
+    : Array.isArray(recipeJson?.Ingredient)
+      ? recipeJson.Ingredient
+      : [];
+  if (ingredientSource.length) {
+    return ingredientSource.slice(0, 40).map(splitIngredientNameWeight);
+  }
+  const steps = Array.isArray(recipeJson?.Instruction) ? recipeJson.Instruction : [];
+  return steps
+    .filter((step) => step?.Weight || step?.Text)
+    .slice(0, 12)
+    .map((step, index) => splitIngredientNameWeight({ title: step.Text, weight: step.Weight }, index));
+}
+
+function configIngredientsToFirmware(ingredients) {
+  return ingredients
+    .filter((ingredient) => ingredient.name)
+    .map((ingredient, index) => ({
+      ...(ingredient.source || {}),
+      id: ingredient.source?.id || index + 1,
+      title: ingredient.name,
+      name: ingredient.name,
+      weight: `${ingredient.quantity || 0} ${ingredient.unit || "g"}`.trim(),
+      Weight: `${ingredient.quantity || 0} ${ingredient.unit || "g"}`.trim()
+    }));
+}
+
 function recipeJsonToProMinutes(recipeJson) {
   const steps = Array.isArray(recipeJson?.Instruction) ? recipeJson.Instruction : [];
   if (steps.length === 0) return [makeProMinute(0)];
@@ -2658,11 +2765,20 @@ function getProDraft(snapshot) {
 }
 
 function recipeToProDraft(recipe) {
+  const quantity = inferRecipeQuantity(recipe.recipeJson);
+  const ingredients = recipeJsonToConfigIngredients(recipe.recipeJson);
   return {
     recipeId: recipe.id,
+    step: "configure",
     displayName: recipe.displayName,
     firmwareName: recipe.firmwareName,
     aliases: Array.isArray(recipe.aliases) ? recipe.aliases.join(", ") : recipe.displayName,
+    dietType: inferDietType(recipe),
+    recipeType: normalizeRecipeType(recipe.recipeJson?.type || recipe.recipeJson?.recipeType || recipe.category),
+    consistency: recipe.recipeJson?.consistency || "medium",
+    quantity: quantity.quantity,
+    quantityUnit: quantity.unit,
+    ingredients,
     selectedMinute: 0,
     selectedBlock: 0,
     minutes: recipeJsonToProMinutes(recipe.recipeJson)
@@ -2671,6 +2787,11 @@ function recipeToProDraft(recipe) {
 
 function proDraftToFirmwareRecipe(sourceRecipe, draft) {
   const recipeJson = cloneRecipeForEditing(sourceRecipe);
+  recipeJson.consistency = draft.consistency || "medium";
+  recipeJson.recipeType = draft.recipeType || "gravy";
+  recipeJson.dietType = draft.dietType || "veg";
+  recipeJson.quantity = `${draft.quantity || 0}${draft.quantityUnit || "g"}`;
+  recipeJson.Ingredients = configIngredientsToFirmware(draft.ingredients || []);
   const originalSteps = Array.isArray(recipeJson.Instruction) ? recipeJson.Instruction : [];
   const fallbackStep = originalSteps[0] || {};
   recipeJson.Instruction = draft.minutes.flatMap((minute) =>
@@ -3741,10 +3862,128 @@ function renderProMinuteCell(minute, selectedMinute, selectedBlock) {
   `;
 }
 
+function renderProConfigureModal(snapshot, draft, sourceRecipe) {
+  const recipeImageUrl = safeOptionalUrl(sourceRecipe.imageDataUrl, "recipe image");
+  const timelineMinutes = Math.max(1, Math.ceil((draft.minutes.length * 60) / 60));
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card pro-config-modal">
+        <div class="pro-config-shell">
+          <div class="pro-config-nav">
+            <button class="secondary-button small" data-action="close-modal">Back</button>
+            <div>
+              <div class="eyebrow">Configure Recipe</div>
+              <strong>${escapeHtml(draft.displayName)}</strong>
+            </div>
+            <span class="status-pill cooking">Step 1 of 2</span>
+          </div>
+          <div class="pro-config-hero ${recipeImageUrl ? "has-image" : ""}">
+            ${recipeImageUrl ? `<img src="${escapeHtml(recipeImageUrl)}" alt="${escapeHtml(draft.displayName)}">` : ""}
+            <div class="pro-config-hero-copy">
+              <h3>${escapeHtml(draft.displayName)}</h3>
+              <div class="chip-row">
+                <span class="chip-button selected static-chip">${escapeHtml(draft.recipeType)}</span>
+                <span class="chip-button selected static-chip">${escapeHtml(draft.dietType)}</span>
+              </div>
+            </div>
+          </div>
+          <div class="pro-config-body">
+            <section class="pro-config-section diet">
+              <div class="mini-title">Diet type</div>
+              <div class="pro-choice-grid three">
+                ${PRO_DIET_TYPES.map(
+                  (item) => `
+                    <button class="pro-choice ${draft.dietType === item.id ? "selected" : ""}" data-action="pro-set-diet" data-value="${item.id}">
+                      <span>${escapeHtml(item.icon)}</span>
+                      <strong>${escapeHtml(item.label)}</strong>
+                      ${draft.dietType === item.id ? `<small>Selected</small>` : ""}
+                    </button>
+                  `
+                ).join("")}
+              </div>
+            </section>
+            <section class="pro-config-section type">
+              <div class="mini-title">Recipe type</div>
+              <div class="pro-pill-grid">
+                ${PRO_RECIPE_TYPES.map(
+                  (type) => `<button class="chip-button ${draft.recipeType === type ? "selected" : ""}" data-action="pro-set-recipe-type" data-value="${type}">${escapeHtml(type.replace("-", " "))}</button>`
+                ).join("")}
+              </div>
+            </section>
+            <section class="pro-config-section quantity">
+              <div class="mini-title">Quantity</div>
+              <div class="pro-quantity-row">
+                <button class="secondary-button square" data-action="pro-adjust-quantity" data-delta="-50">-</button>
+                <input class="field-input pro-quantity-input" type="number" min="1" data-input="pro-quantity" value="${escapeHtml(draft.quantity || 500)}">
+                <button class="secondary-button square" data-action="pro-adjust-quantity" data-delta="50">+</button>
+                <button class="chip-button ${draft.quantityUnit === "g" ? "selected" : ""}" data-action="pro-set-quantity-unit" data-value="g">g</button>
+                <button class="chip-button ${draft.quantityUnit === "ml" ? "selected" : ""}" data-action="pro-set-quantity-unit" data-value="ml">ml</button>
+              </div>
+              <div class="pro-estimate-row"><span>Estimated timeline</span><strong>~${timelineMinutes} minutes</strong></div>
+            </section>
+            <section class="pro-config-section consistency">
+              <div class="mini-title">Consistency</div>
+              <div class="pro-choice-grid three">
+                ${PRO_CONSISTENCIES.map(
+                  (item) => `
+                    <button class="pro-choice consistency ${draft.consistency === item.id ? "selected" : ""}" data-action="pro-set-consistency" data-value="${item.id}">
+                      <span class="bars">${item.id === "thin" ? "|" : item.id === "medium" ? "||" : "|||"}</span>
+                      <strong>${escapeHtml(item.label)}</strong>
+                      <small>${escapeHtml(item.hint)}</small>
+                    </button>
+                  `
+                ).join("")}
+              </div>
+            </section>
+            <section class="pro-config-section ingredients">
+              <div class="row space">
+                <div class="mini-title">Ingredients</div>
+                <span class="subtle">${draft.ingredients.length} items</span>
+              </div>
+              <div class="pro-ingredient-list">
+                ${draft.ingredients.map((ingredient, index) => renderProIngredientRow(ingredient, index)).join("") || `<div class="empty-card">No ingredients found in this recipe yet.</div>`}
+              </div>
+              <button class="secondary-button full-width dashed" data-action="pro-add-ingredient">Add Ingredient</button>
+            </section>
+            <section class="pro-config-preview">
+              <div class="mini-title">Recipe preview</div>
+              <div class="pro-preview-grid">
+                <span>Dish<strong>${escapeHtml(draft.displayName)}</strong></span>
+                <span>Diet<strong>${escapeHtml(draft.dietType)}</strong></span>
+                <span>Type<strong>${escapeHtml(draft.recipeType)}</strong></span>
+                <span>Quantity<strong>${escapeHtml(`${draft.quantity}${draft.quantityUnit}`)}</strong></span>
+                <span>Consistency<strong>${escapeHtml(draft.consistency)}</strong></span>
+                <span>Ingredients<strong>${draft.ingredients.length} items</strong></span>
+              </div>
+            </section>
+          </div>
+          <button class="primary-button pro-open-timeline" data-action="pro-open-timeline-editor">Open Pro Timeline Editor</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderProIngredientRow(ingredient, index) {
+  return `
+    <div class="pro-ingredient-row">
+      <input class="field-input ingredient-name" data-input="pro-ingredient-name" data-index="${index}" value="${escapeHtml(ingredient.name)}" aria-label="Ingredient name">
+      <input class="field-input ingredient-qty" type="number" min="0" step="0.5" data-input="pro-ingredient-quantity" data-index="${index}" value="${escapeHtml(ingredient.quantity)}" aria-label="Ingredient quantity">
+      <select class="field-input ingredient-unit" data-input="pro-ingredient-unit" data-index="${index}" aria-label="Ingredient unit">
+        ${["g", "ml", "piece", "tsp", "tbsp"].map((unit) => `<option value="${unit}" ${ingredient.unit === unit ? "selected" : ""}>${unit}</option>`).join("")}
+      </select>
+      <button class="danger-button icon-only" data-action="pro-remove-ingredient" data-index="${index}" aria-label="Remove ingredient">x</button>
+    </div>
+  `;
+}
+
 function renderProfessionalEditorModal(snapshot, modal) {
   const sourceRecipe = findRecipeById(snapshot, modal.payload.recipeId);
   const draft = getProDraft(snapshot);
   if (!sourceRecipe || !draft) return "";
+  if (draft.step !== "timeline") {
+    return renderProConfigureModal(snapshot, draft, sourceRecipe);
+  }
   const minute = getSelectedProMinute(draft);
   const block = getSelectedProBlock(draft);
   const selectedMinute = Number(draft.selectedMinute) || 0;
@@ -3755,11 +3994,14 @@ function renderProfessionalEditorModal(snapshot, modal) {
       <div class="modal-card pro-editor-modal">
         <div class="row space pro-editor-topbar">
           <div>
-            <div class="eyebrow">Edit Recipe</div>
+            <div class="eyebrow">Pro Timeline Editor</div>
             <h3>${escapeHtml(draft.displayName)}</h3>
-            <p class="subtle">${draft.minutes.length} minutes | ${secondsLabel(totalSeconds)} | 4 x 15-second chunks per minute</p>
+            <p class="subtle">${escapeHtml(draft.recipeType)} | ${escapeHtml(draft.consistency)} | ${escapeHtml(`${draft.quantity}${draft.quantityUnit}`)} | ${draft.minutes.length} minutes | 4 x 15-second chunks per minute</p>
           </div>
-          <button class="icon-button" data-action="close-modal">x</button>
+          <div class="action-row">
+            <button class="secondary-button small" data-action="pro-back-to-config">Configure</button>
+            <button class="icon-button" data-action="close-modal">x</button>
+          </div>
         </div>
         <div class="pro-editor-layout">
           <section class="pro-timeline-panel">
@@ -5058,6 +5300,69 @@ async function handleClick(event) {
     });
     return;
   }
+  if (action === "pro-set-diet") {
+    updateProDraft((draft) => {
+      draft.dietType = button.dataset.value || "veg";
+    });
+    return;
+  }
+  if (action === "pro-set-recipe-type") {
+    updateProDraft((draft) => {
+      draft.recipeType = button.dataset.value || "gravy";
+    });
+    return;
+  }
+  if (action === "pro-set-consistency") {
+    updateProDraft((draft) => {
+      draft.consistency = button.dataset.value || "medium";
+    });
+    return;
+  }
+  if (action === "pro-set-quantity-unit") {
+    updateProDraft((draft) => {
+      draft.quantityUnit = button.dataset.value || "g";
+    });
+    return;
+  }
+  if (action === "pro-adjust-quantity") {
+    updateProDraft((draft) => {
+      const delta = Number(button.dataset.delta) || 0;
+      draft.quantity = Math.max(1, Math.round((Number(draft.quantity) || 500) + delta));
+    });
+    return;
+  }
+  if (action === "pro-add-ingredient") {
+    updateProDraft((draft) => {
+      draft.ingredients.push({
+        id: safeRandomId("ingredient"),
+        name: "New Ingredient",
+        quantity: 0,
+        unit: draft.quantityUnit === "ml" ? "ml" : "g",
+        source: {}
+      });
+    });
+    return;
+  }
+  if (action === "pro-remove-ingredient") {
+    updateProDraft((draft) => {
+      const index = Number(button.dataset.index);
+      if (!Number.isFinite(index)) return;
+      draft.ingredients.splice(index, 1);
+    });
+    return;
+  }
+  if (action === "pro-open-timeline-editor") {
+    updateProDraft((draft) => {
+      draft.step = "timeline";
+    });
+    return;
+  }
+  if (action === "pro-back-to-config") {
+    updateProDraft((draft) => {
+      draft.step = "configure";
+    });
+    return;
+  }
   if (action === "pro-save-final" || action === "pro-save-and-run") {
     const savedRecipe = saveProfessionalRecipe();
     if (!savedRecipe) return;
@@ -5369,6 +5674,7 @@ async function handleChange(event) {
       if (key === "pro-display-name") draft.displayName = input.value;
       if (key === "pro-firmware-name") draft.firmwareName = input.value;
       if (key === "pro-aliases") draft.aliases = input.value;
+      if (key === "pro-quantity") draft.quantity = Math.max(1, Number(input.value) || 1);
       if (key === "pro-minute-title" && minute) minute.title = input.value;
       if (key === "pro-minute-weight" && minute) minute.weight = input.value;
       if (key === "pro-lid-open" && minute) {
@@ -5390,6 +5696,18 @@ async function handleChange(event) {
       }
       if (key === "pro-water-block" && minute) {
         minute.waterBlocks[Number(draft.selectedBlock) || 0] = input.checked;
+      }
+      if (key === "pro-ingredient-name") {
+        const ingredient = draft.ingredients[Number(input.dataset.index)];
+        if (ingredient) ingredient.name = input.value;
+      }
+      if (key === "pro-ingredient-quantity") {
+        const ingredient = draft.ingredients[Number(input.dataset.index)];
+        if (ingredient) ingredient.quantity = Math.max(0, Number(input.value) || 0);
+      }
+      if (key === "pro-ingredient-unit") {
+        const ingredient = draft.ingredients[Number(input.dataset.index)];
+        if (ingredient) ingredient.unit = input.value || "g";
       }
     });
     return;
