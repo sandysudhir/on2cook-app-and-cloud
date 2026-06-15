@@ -16,3 +16,5 @@
 - Bumped web cache version to `20260615e` / service-worker cache `v25`.
 - Added the Figma-style Configure Recipe step before the timeline editor, including diet type, recipe type, quantity/unit, consistency, editable ingredients, recipe preview, and an explicit Open Pro Timeline Editor handoff.
 - Prevented stale professional editor drafts from reopening after refresh and bumped web cache version to `20260615f` / service-worker cache `v26`.
+- Expanded the Pro Timeline editor toward the Figma landscape workflow: 5% induction control per 15-second block, microwave on/off blocks, four stirrer modes, per-block water quantity, Edit button back to main ingredients, and Live Cook simulation with ready/ingredients prompts, 180-second ingredient hold, pause/resume, moving playhead, completion, and abort states.
+- Bumped web cache version to `20260615g` / service-worker cache `v27`.

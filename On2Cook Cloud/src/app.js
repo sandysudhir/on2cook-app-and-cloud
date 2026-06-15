@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615f";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615f";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615g";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615g";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615f";
+} from "./ncb-services.js?v=20260615g";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615f";
+} from "./data-store.js?v=20260615g";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -30,6 +30,7 @@ let store = null;
 let toastTimer = 0;
 let statusTimer = 0;
 let orderFeedTimer = 0;
+let proLiveTimer = 0;
 const recipeMissingRetryCounts = new Map();
 const RECIPE_ARCHIVE_VERSION = "20260612q";
 const cloudRuntime = {
@@ -983,6 +984,7 @@ function openModal(type, payload = {}) {
 }
 
 function closeModal() {
+  stopProLiveTimer();
   mutate((draft) => {
     draft.ui.activeModal = null;
   });
@@ -2550,9 +2552,10 @@ function renderStatusPill(status) {
   return `<span class="status-pill ${tone}">${escapeHtml(status.replaceAll("_", " "))}</span>`;
 }
 
-const PRO_POWER_STEPS = [0, 40, 60, 80, 100];
-const PRO_MICROWAVE_STEPS = [0, 180, 360, 540, 720, 800, 900];
+const PRO_POWER_STEPS = Array.from({ length: 21 }, (_, index) => index * 5);
+const PRO_MICROWAVE_STEPS = [0, 800];
 const PRO_STIRRER_SPEEDS = ["low", "medium", "high", "very-high"];
+const PRO_MAX_HOLD_SECONDS = 180;
 const PRO_DIET_TYPES = [
   { id: "veg", label: "Veg", icon: "Veg" },
   { id: "non-veg", label: "Non-Veg", icon: "Non" },
@@ -2621,7 +2624,7 @@ function makeProMinute(index, overrides = {}) {
     lidOpen: Boolean(overrides.lidOpen),
     lidOpenDuration: Math.max(0, Math.min(60, toInt(overrides.lidOpenDuration, overrides.lidOpen ? 60 : 0))),
     subBlocks: overrides.subBlocks || [makeProSubBlock(), makeProSubBlock(), makeProSubBlock(), makeProSubBlock()],
-    waterBlocks: overrides.waterBlocks || [false, false, false, false],
+    waterBlocks: overrides.waterBlocks || [0, 0, 0, 0],
     ingredients: overrides.ingredients || []
   };
 }
@@ -2751,7 +2754,7 @@ function recipeJsonToProMinutes(recipeJson) {
           lidOpen: String(step.lid || "").toLowerCase().includes("open"),
           lidOpenDuration: String(step.lid || "").toLowerCase().includes("open") ? Math.min(60, Math.max(0, duration - minuteOffset)) : 0,
           subBlocks,
-          waterBlocks: [waterOn, false, false, false],
+          waterBlocks: [waterOn ? 150 : 0, 0, 0, 0],
           ingredients: step.Weight || step.Text ? [{ id: `step-${stepIndex}-${partIndex}-ingredient`, name: step.Text || `Step ${stepIndex + 1}`, quantity: 0, unit: step.Weight || "" }] : []
         })
       );
@@ -2797,7 +2800,7 @@ function proDraftToFirmwareRecipe(sourceRecipe, draft) {
   recipeJson.Instruction = draft.minutes.flatMap((minute) =>
     minute.subBlocks.map((subBlock, blockIndex) => {
       const original = originalSteps[minute.sourceStepIndex] || fallbackStep;
-      const waterOn = Boolean(minute.waterBlocks?.[blockIndex]);
+      const waterMl = Number(minute.waterBlocks?.[blockIndex] || 0);
       return {
         ...structuredClone(original),
         id: draft.minutes.indexOf(minute) * 4 + blockIndex + 1,
@@ -2810,7 +2813,7 @@ function proDraftToFirmwareRecipe(sourceRecipe, draft) {
         Magnetron_on_time: subBlock.microwaveActive ? "15" : "0",
         Magnetron_power: String(subBlock.microwaveActive ? subBlock.microwavePower || 800 : 0),
         stirrer_on: subBlock.stirrerActive ? firmwareStirrerFromSpeed(subBlock.stirrerSpeed) : "0",
-        pump_on: waterOn ? "15" : "",
+        pump_on: waterMl > 0 ? String(waterMl) : "",
         wait_time: original.wait_time || "0",
         warm_time: original.warm_time || "0",
         threshold: original.threshold || "0"
@@ -2845,6 +2848,82 @@ function getSelectedProBlock(draft) {
   const minute = getSelectedProMinute(draft);
   if (!minute) return null;
   return minute.subBlocks[Math.max(0, Math.min(3, Number(draft.selectedBlock) || 0))] || null;
+}
+
+function getMinuteIngredients(minute) {
+  return Array.isArray(minute?.ingredients) ? minute.ingredients.filter((item) => item?.name) : [];
+}
+
+function formatProClock(seconds) {
+  const safe = Math.max(0, Math.floor(Number(seconds) || 0));
+  return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
+}
+
+function getProLive(draft) {
+  if (!draft.live) {
+    draft.live = {
+      phase: "ready",
+      elapsed: 0,
+      holdElapsed: 0,
+      holds: [],
+      paused: false,
+      outcome: ""
+    };
+  }
+  return draft.live;
+}
+
+function shouldHoldAtMinute(draft, minuteIndex) {
+  const minute = draft.minutes[minuteIndex];
+  if (!minute || !minute.lidOpen || getMinuteIngredients(minute).length === 0) return false;
+  const live = draft.live || {};
+  return !(live.holds || []).some((hold) => Number(hold.minuteIndex) === minuteIndex && hold.type === "ingredients");
+}
+
+function advanceProLiveSecond() {
+  updateProDraft((draft) => {
+    const live = getProLive(draft);
+    if (!["running", "hold"].includes(live.phase) || live.paused || live.outcome) return;
+    if (live.phase === "hold") {
+      live.holdElapsed = Math.min(PRO_MAX_HOLD_SECONDS, Number(live.holdElapsed || 0) + 1);
+      if (live.holdElapsed >= PRO_MAX_HOLD_SECONDS) {
+        live.phase = "aborted";
+        live.outcome = "aborted";
+      }
+      return;
+    }
+    const minuteIndex = Math.floor((Number(live.elapsed) || 0) / 60);
+    if (shouldHoldAtMinute(draft, minuteIndex)) {
+      live.phase = "hold";
+      live.holdMinuteIndex = minuteIndex;
+      live.holdElapsed = 0;
+      return;
+    }
+    live.elapsed = Math.min(draft.minutes.length * 60, Number(live.elapsed || 0) + 1);
+    if (live.elapsed >= draft.minutes.length * 60) {
+      live.phase = "completed";
+      live.outcome = "completed";
+    }
+  });
+}
+
+function ensureProLiveTimer() {
+  if (proLiveTimer) return;
+  proLiveTimer = window.setInterval(() => {
+    const snapshot = state();
+    if (snapshot.ui.activeModal?.type !== "professional-editor" || !snapshot.ui.activeModal.payload?.draft?.live) {
+      window.clearInterval(proLiveTimer);
+      proLiveTimer = 0;
+      return;
+    }
+    advanceProLiveSecond();
+  }, 1000);
+}
+
+function stopProLiveTimer() {
+  if (!proLiveTimer) return;
+  window.clearInterval(proLiveTimer);
+  proLiveTimer = 0;
 }
 
 function renderControlTabs(snapshot) {
@@ -3850,9 +3929,9 @@ function renderProMinuteCell(minute, selectedMinute, selectedBlock) {
       <div class="pro-row chunk-row">
         ${minute.waterBlocks
           .map(
-            (active, blockIndex) => `
-              <button class="pro-chunk water ${active ? "on" : ""}" data-action="pro-toggle-water" data-minute="${minute.minuteIndex}" data-block="${blockIndex}">
-                ${active ? "150" : "0"}
+            (amount, blockIndex) => `
+              <button class="pro-chunk water ${Number(amount) > 0 ? "on" : ""}" data-action="pro-select-block" data-minute="${minute.minuteIndex}" data-block="${blockIndex}">
+                ${Number(amount) > 0 ? `${amount}` : "0"}
               </button>
             `
           )
@@ -3977,10 +4056,99 @@ function renderProIngredientRow(ingredient, index) {
   `;
 }
 
+function renderProReadyOverlay(draft, live) {
+  const firstIngredients = (Array.isArray(draft.ingredients) ? draft.ingredients : getMinuteIngredients(draft.minutes[0])).slice(0, 8);
+  return `
+    <div class="pro-live-overlay">
+      <div class="pro-live-dialog">
+        <div class="mini-title">${live.phase === "ready" ? "Ready to Start?" : `Add Ingredients - Min ${Number(live.holdMinuteIndex || 0) + 1}`}</div>
+        <p class="subtle">${live.phase === "ready" ? "Prepare your ingredients first" : "Recipe paused - hold heat at 30%"}</p>
+        ${
+          live.phase === "hold"
+            ? `<div class="pro-hold-meter"><span style="width:${Math.min(100, ((live.holdElapsed || 0) / PRO_MAX_HOLD_SECONDS) * 100)}%"></span></div>
+               <div class="row space"><span class="subtle">Hold duration</span><strong>${live.holdElapsed || 0}s / ${PRO_MAX_HOLD_SECONDS}s</strong></div>
+               <div class="pro-hold-note">Induction at 30% - keeping food warm</div>`
+            : ""
+        }
+        <div class="mini-title">${live.phase === "ready" ? "Add to pot before starting" : "Add now"}</div>
+        <div class="pro-live-ingredients">
+          ${(live.phase === "hold" ? getMinuteIngredients(draft.minutes[live.holdMinuteIndex]) : firstIngredients)
+            .map((item) => `<div class="pro-live-ingredient"><span></span>${escapeHtml([item.quantity || "", item.unit || "", item.name || ""].filter(Boolean).join(" "))}</div>`)
+            .join("") || `<div class="empty-card">No ingredient prompt is defined for this stage.</div>`}
+        </div>
+        <button class="primary-button full-width" data-action="${live.phase === "ready" ? "pro-live-start" : "pro-live-resume"}">
+          ${live.phase === "ready" ? "Ingredients Added - Start Cooking" : "Ingredients Added - Resume"}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderProLiveCookModal(snapshot, modal) {
+  const draft = getProDraft(snapshot);
+  if (!draft) return "";
+  const live = getProLive(draft);
+  const totalSeconds = draft.minutes.length * 60;
+  const minuteIndex = Math.min(draft.minutes.length - 1, Math.floor((live.elapsed || 0) / 60));
+  const subIndex = Math.min(3, Math.floor(((live.elapsed || 0) % 60) / 15));
+  const remaining = Math.max(0, totalSeconds - (live.elapsed || 0));
+  const playheadPct = totalSeconds > 0 ? Math.min(100, ((live.elapsed || 0) / totalSeconds) * 100) : 0;
+  const showOverlay = live.phase === "ready" || live.phase === "hold";
+  return `
+    <div class="modal-backdrop pro-live-backdrop">
+      <div class="modal-card pro-live-modal">
+        <div class="pro-live-topbar">
+          <button class="secondary-button small" data-action="pro-live-back-editor">Editor</button>
+          <strong>${escapeHtml(draft.displayName)}</strong>
+          <span class="status-pill ${live.outcome === "aborted" ? "failed" : live.outcome === "completed" ? "complete" : "failed"}">${live.outcome || "Live"}</span>
+          <div class="pro-live-clock"><strong>${formatProClock(remaining)}</strong><small>remaining</small></div>
+        </div>
+        <div class="pro-live-grid-wrap">
+          <div class="pro-live-playhead" style="left:calc(58px + ${playheadPct}%);"><span>${formatProClock(live.elapsed || 0)}</span></div>
+          <div class="pro-grid-shell pro-live-grid">
+            <div class="pro-labels">
+              <div class="pro-label head">${live.phase === "hold" ? "HOLD" : "Live"}</div>
+              <div class="pro-label">L</div>
+              <div class="pro-label">I</div>
+              <div class="pro-label">M</div>
+              <div class="pro-label">S</div>
+              <div class="pro-label">W</div>
+            </div>
+            <div class="pro-minutes">
+              ${draft.minutes
+                .map((minute, index) => {
+                  const isCurrent = live.phase !== "ready" && index === minuteIndex;
+                  const adjustedMinute =
+                    live.phase === "hold" && index === live.holdMinuteIndex
+                      ? { ...minute, subBlocks: minute.subBlocks.map((block) => ({ ...block, inductionPower: 30, microwaveActive: false })) }
+                      : minute;
+                  return renderProMinuteCell(adjustedMinute, isCurrent ? index : -1, isCurrent ? subIndex : -1);
+                })
+                .join("")}
+            </div>
+          </div>
+        </div>
+        <div class="pro-live-actions">
+          <button class="secondary-button" data-action="pro-live-prev">‹</button>
+          <button class="secondary-button" data-action="pro-live-next">›</button>
+          <span class="grow"></span>
+          <button class="secondary-button" data-action="pro-live-pause">${live.paused ? "Resume" : "Pause"}</button>
+          <button class="primary-button" data-action="pro-live-end">End Recipe</button>
+          <button class="danger-button" data-action="pro-live-abort">Stop</button>
+        </div>
+        ${showOverlay ? renderProReadyOverlay(draft, live) : ""}
+      </div>
+    </div>
+  `;
+}
+
 function renderProfessionalEditorModal(snapshot, modal) {
   const sourceRecipe = findRecipeById(snapshot, modal.payload.recipeId);
   const draft = getProDraft(snapshot);
   if (!sourceRecipe || !draft) return "";
+  if (draft.step === "live") {
+    return renderProLiveCookModal(snapshot, modal);
+  }
   if (draft.step !== "timeline") {
     return renderProConfigureModal(snapshot, draft, sourceRecipe);
   }
@@ -3999,7 +4167,7 @@ function renderProfessionalEditorModal(snapshot, modal) {
             <p class="subtle">${escapeHtml(draft.recipeType)} | ${escapeHtml(draft.consistency)} | ${escapeHtml(`${draft.quantity}${draft.quantityUnit}`)} | ${draft.minutes.length} minutes | 4 x 15-second chunks per minute</p>
           </div>
           <div class="action-row">
-            <button class="secondary-button small" data-action="pro-back-to-config">Configure</button>
+            <button class="secondary-button small" data-action="pro-back-to-config">Edit</button>
             <button class="icon-button" data-action="close-modal">x</button>
           </div>
         </div>
@@ -4046,9 +4214,9 @@ function renderProfessionalEditorModal(snapshot, modal) {
                 </select>
               </label>
               <label class="field-label">
-                Microwave power
+                Microwave
                 <select class="field-input" data-input="pro-microwave-power">
-                  ${PRO_MICROWAVE_STEPS.map((value) => `<option value="${value}" ${Number(block?.microwaveActive ? block?.microwavePower : 0) === value ? "selected" : ""}>${value === 0 ? "Off" : `${value} W`}</option>`).join("")}
+                  ${PRO_MICROWAVE_STEPS.map((value) => `<option value="${value}" ${Number(block?.microwaveActive ? 800 : 0) === value ? "selected" : ""}>${value === 0 ? "Off" : "On"}</option>`).join("")}
                 </select>
               </label>
               <label class="field-label">
@@ -4058,7 +4226,7 @@ function renderProfessionalEditorModal(snapshot, modal) {
                   ${PRO_STIRRER_SPEEDS.map((value, index) => `<option value="${value}" ${block?.stirrerActive !== false && block?.stirrerSpeed === value ? "selected" : ""}>Speed ${index + 1}${value === "medium" ? " default" : ""}</option>`).join("")}
                 </select>
               </label>
-              <label class="toggle-row"><input type="checkbox" data-input="pro-water-block" ${minute?.waterBlocks?.[selectedBlock] ? "checked" : ""}> Water on for this 15s block</label>
+              <label class="field-label">Water in this 15s block (ml)<input class="field-input" type="number" min="0" step="10" data-input="pro-water-block" value="${escapeHtml(minute?.waterBlocks?.[selectedBlock] || 0)}"></label>
             </div>
             <div class="settings-card compact-card">
               <div class="mini-title">Run Recipe</div>
@@ -4073,6 +4241,7 @@ function renderProfessionalEditorModal(snapshot, modal) {
               <div class="action-row">
                 <button class="primary-button small" data-action="pro-save-final">Save final</button>
                 <button class="secondary-button small" data-action="pro-save-and-run">Save and run</button>
+                <button class="primary-button small" data-action="pro-live-cook">Live Cook</button>
               </div>
             </div>
           </aside>
@@ -5363,6 +5532,90 @@ async function handleClick(event) {
     });
     return;
   }
+  if (action === "pro-live-cook") {
+    updateProDraft((draft) => {
+      draft.step = "live";
+      draft.live = {
+        phase: "ready",
+        elapsed: 0,
+        holdElapsed: 0,
+        holds: [],
+        paused: false,
+        outcome: ""
+      };
+    });
+    ensureProLiveTimer();
+    return;
+  }
+  if (action === "pro-live-start") {
+    updateProDraft((draft) => {
+      const live = getProLive(draft);
+      live.phase = "running";
+      live.paused = false;
+      live.holds = [{ minuteIndex: 0, type: "ingredients", durationSec: 0 }];
+    });
+    ensureProLiveTimer();
+    return;
+  }
+  if (action === "pro-live-resume") {
+    updateProDraft((draft) => {
+      const live = getProLive(draft);
+      live.holds = [
+        ...(live.holds || []),
+        {
+          minuteIndex: Number(live.holdMinuteIndex || 0),
+          type: "ingredients",
+          durationSec: Number(live.holdElapsed || 0)
+        }
+      ];
+      live.phase = "running";
+      live.holdElapsed = 0;
+    });
+    ensureProLiveTimer();
+    return;
+  }
+  if (action === "pro-live-pause") {
+    updateProDraft((draft) => {
+      const live = getProLive(draft);
+      live.paused = !live.paused;
+    });
+    return;
+  }
+  if (action === "pro-live-end") {
+    updateProDraft((draft) => {
+      const live = getProLive(draft);
+      live.phase = "completed";
+      live.outcome = "completed";
+      live.paused = false;
+    });
+    stopProLiveTimer();
+    return;
+  }
+  if (action === "pro-live-abort") {
+    updateProDraft((draft) => {
+      const live = getProLive(draft);
+      live.phase = "aborted";
+      live.outcome = "aborted";
+      live.paused = false;
+    });
+    stopProLiveTimer();
+    return;
+  }
+  if (action === "pro-live-back-editor") {
+    stopProLiveTimer();
+    updateProDraft((draft) => {
+      draft.step = "timeline";
+    });
+    return;
+  }
+  if (action === "pro-live-prev" || action === "pro-live-next") {
+    updateProDraft((draft) => {
+      const live = getProLive(draft);
+      const delta = action === "pro-live-prev" ? -15 : 15;
+      live.elapsed = Math.max(0, Math.min(draft.minutes.length * 60, Number(live.elapsed || 0) + delta));
+    });
+    return;
+  }
   if (action === "pro-save-final" || action === "pro-save-and-run") {
     const savedRecipe = saveProfessionalRecipe();
     if (!savedRecipe) return;
@@ -5687,7 +5940,7 @@ async function handleChange(event) {
       if (key === "pro-microwave-power" && block) {
         const power = normalizeMicrowavePower(input.value);
         block.microwaveActive = power > 0;
-        block.microwavePower = power || 800;
+        block.microwavePower = 800;
       }
       if (key === "pro-stirrer-speed" && block) {
         block.stirrerActive = input.value !== "off";
@@ -5695,7 +5948,7 @@ async function handleChange(event) {
         block.stirrerMode = input.value === "off" ? "off" : "continuous";
       }
       if (key === "pro-water-block" && minute) {
-        minute.waterBlocks[Number(draft.selectedBlock) || 0] = input.checked;
+        minute.waterBlocks[Number(draft.selectedBlock) || 0] = Math.max(0, Number(input.value) || 0);
       }
       if (key === "pro-ingredient-name") {
         const ingredient = draft.ingredients[Number(input.dataset.index)];
