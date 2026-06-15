@@ -3,6 +3,7 @@ import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } f
 import {
   authService,
   profileService,
+  recipeService,
   recipeSignatureFromJson,
   syncService
 } from "./ncb-services.js?v=20260615a";
@@ -171,6 +172,98 @@ async function loadGlobalRecipeCatalog() {
     console.warn("Global recipe catalog could not be loaded.", error);
     return [];
   }
+}
+
+function normalizeCatalogKey(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function buildCatalogEntryFromRecipe(record, options = {}) {
+  const signature = record.recipeSignature || recipeSignatureFromJson(record.recipeJson);
+  return {
+    id: options.catalogEntryId || `imported-${crypto.randomUUID()}`,
+    recipeName: record.displayName,
+    zipName: options.sourceName || record.zipName || `${record.displayName}.zip`,
+    zipUrl: options.zipUrl || "",
+    source: options.source || "imported",
+    importedAt: nowIso(),
+    recipeSignature: signature,
+    embeddedRecipe: {
+      recipeJson: structuredClone(record.recipeJson),
+      recipeText: options.recipeText || record.rawRecipeText || JSON.stringify(record.recipeJson || {}),
+      recipeTextEntryName: options.recipeTextEntryName || record.recipeTextEntryName || "",
+      imageDataUrl: options.imageDataUrl || record.imageDataUrl || "",
+      entries: Array.isArray(options.entries) ? structuredClone(options.entries) : Array.isArray(record.recipeEntries) ? structuredClone(record.recipeEntries) : []
+    }
+  };
+}
+
+function buildImportedCatalogEntry(result, record, options = {}) {
+  return buildCatalogEntryFromRecipe(record, {
+    ...options,
+    sourceName: result.sourceName || `${record.displayName}.zip`,
+    recipeText: result.recipeText || record.rawRecipeText || JSON.stringify(record.recipeJson || {}),
+    recipeTextEntryName: result.recipeTextEntryName || record.recipeTextEntryName || "",
+    imageDataUrl: result.imageDataUrl || record.imageDataUrl || "",
+    entries: Array.isArray(result.entries) ? structuredClone(result.entries) : Array.isArray(record.recipeEntries) ? structuredClone(record.recipeEntries) : []
+  });
+}
+
+function upsertImportedCatalogEntry(draft, entry) {
+  if (!entry) return;
+  if (!Array.isArray(draft.importedRecipeCatalog)) {
+    draft.importedRecipeCatalog = [];
+  }
+  const signatureKey = normalizeCatalogKey(entry.recipeSignature);
+  const zipKey = normalizeCatalogKey(entry.zipName);
+  const nameKey = normalizeCatalogKey(entry.recipeName);
+  const existingIndex = draft.importedRecipeCatalog.findIndex((item) => {
+    return (
+      (signatureKey && normalizeCatalogKey(item.recipeSignature) === signatureKey) ||
+      (zipKey && normalizeCatalogKey(item.zipName) === zipKey) ||
+      (nameKey && normalizeCatalogKey(item.recipeName) === nameKey)
+    );
+  });
+  if (existingIndex >= 0) {
+    draft.importedRecipeCatalog[existingIndex] = {
+      ...draft.importedRecipeCatalog[existingIndex],
+      ...structuredClone(entry)
+    };
+    return;
+  }
+  draft.importedRecipeCatalog.unshift(structuredClone(entry));
+}
+
+function getRecipeCatalog(snapshot) {
+  const imported = Array.isArray(snapshot.importedRecipeCatalog) ? snapshot.importedRecipeCatalog : [];
+  const combined = [];
+  const seen = new Set();
+  [...imported, ...globalRecipeCatalog].forEach((entry, index) => {
+    if (!entry) return;
+    const key =
+      normalizeCatalogKey(entry.recipeSignature) ||
+      normalizeCatalogKey(entry.zipName) ||
+      `${normalizeCatalogKey(entry.recipeName)}:${index}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    combined.push(entry);
+  });
+  return combined;
+}
+
+function createImportResultFromCatalogEntry(entry) {
+  const embedded = entry?.embeddedRecipe;
+  if (!embedded?.recipeJson) {
+    throw new Error(`Recipe ZIP payload is not stored locally for ${entry?.recipeName || entry?.zipName || "this recipe"}.`);
+  }
+  return {
+    recipeJson: structuredClone(embedded.recipeJson),
+    recipeText: embedded.recipeText || JSON.stringify(embedded.recipeJson || {}),
+    recipeTextEntryName: embedded.recipeTextEntryName || "",
+    imageDataUrl: embedded.imageDataUrl || "",
+    sourceName: entry.zipName || `${entry.recipeName || "recipe"}.zip`,
+    entries: Array.isArray(embedded.entries) ? structuredClone(embedded.entries) : []
+  };
 }
 
 function getRecipeRetryKey(slot, orderId) {
@@ -358,6 +451,11 @@ function findRecipeByZipName(snapshot, zipName) {
 
 function findRecipeForGlobalCatalogEntry(snapshot, entry) {
   return (
+    snapshot.recipes.find(
+      (recipe) =>
+        normalizeCatalogKey(recipe.recipeSignature) &&
+        normalizeCatalogKey(recipe.recipeSignature) === normalizeCatalogKey(entry.recipeSignature)
+    ) ||
     findRecipeByZipName(snapshot, entry.zipName) ||
     findRecipeByFirmwareName(snapshot, entry.recipeName || entry.id || "") ||
     snapshot.recipes.find((recipe) => recipe.displayName.toLowerCase() === String(entry.recipeName || "").trim().toLowerCase()) ||
@@ -959,6 +1057,7 @@ function mergeCloudRecipesIntoStore(rows) {
         draft.recipes.find((recipe) => String(recipe.cloudRecordId || "") === String(row.id || "")) ||
         draft.recipes.find((recipe) => String(recipe.recipeSignature || "") === String(signature)) ||
         draft.recipes.find((recipe) => String(recipe.displayName || "").trim() === String(row.title || "").trim());
+      let libraryRecord = null;
       if (existing) {
         try {
           existing.recipeJson = JSON.parse(row.firmware_recipe_json || "{}");
@@ -977,8 +1076,26 @@ function mergeCloudRecipesIntoStore(rows) {
         existing.cloudUserId = row.user_id || existing.cloudUserId || "";
         existing.recipeSignature = signature;
         existing.updatedAt = row.updated_at || nowIso();
+        libraryRecord = existing;
       } else {
-        draft.recipes.push(createRecipeRecordFromCloudRow(row));
+        const created = createRecipeRecordFromCloudRow(row);
+        draft.recipes.push(created);
+        libraryRecord = created;
+      }
+      if (libraryRecord) {
+        upsertImportedCatalogEntry(
+          draft,
+          buildCatalogEntryFromRecipe(libraryRecord, {
+            catalogEntryId: `cloud-${row.id || signature}`,
+            source: "cloud",
+            sourceName: row.base_zip_name || libraryRecord.zipName || `${libraryRecord.displayName}.zip`,
+            recipeText: row.firmware_recipe_json || libraryRecord.rawRecipeText || JSON.stringify(libraryRecord.recipeJson || {}),
+            recipeTextEntryName: libraryRecord.recipeTextEntryName || "",
+            imageDataUrl: libraryRecord.imageDataUrl || "",
+            entries: Array.isArray(libraryRecord.recipeEntries) ? structuredClone(libraryRecord.recipeEntries) : [],
+            zipUrl: libraryRecord.zipUrl || ""
+          })
+        );
       }
       mergedCount += 1;
     });
@@ -2483,9 +2600,10 @@ function renderControlTabs(snapshot) {
 }
 
 function renderGlobalRecipesTab(snapshot) {
+  const recipeCatalog = getRecipeCatalog(snapshot);
   const search = String(snapshot.ui.globalRecipeSearch || "").trim().toLowerCase();
   const picked = new Set(snapshot.ui.globalRecipePickedIds || []);
-  const filteredCatalog = globalRecipeCatalog.filter((entry) => {
+  const filteredCatalog = recipeCatalog.filter((entry) => {
     if (!search) return true;
     return (
       String(entry.recipeName || "").toLowerCase().includes(search) ||
@@ -2497,7 +2615,7 @@ function renderGlobalRecipesTab(snapshot) {
       <div class="mini-title">Global recipe library</div>
       <div class="settings-card">
         <div class="queue-summary">
-          <div class="summary-chip">Library ${globalRecipeCatalog.length}</div>
+          <div class="summary-chip">Library ${recipeCatalog.length}</div>
           <div class="summary-chip">Showing ${filteredCatalog.length}</div>
           <div class="summary-chip">Picked ${picked.size}</div>
         </div>
@@ -2528,7 +2646,9 @@ function renderGlobalRecipesTab(snapshot) {
                     : existingRecipe.selected
                       ? "In Recipe list"
                       : "Imported"
-                  : "Library only";
+                  : entry.source === "imported"
+                    ? "Local library"
+                    : "Library only";
                 const statusTone = existingRecipe ? (existingRecipe.source === "seed" || existingRecipe.selected ? "cooking" : "queued") : "pending";
                 return `
                   <article class="queue-device-card">
@@ -2975,7 +3095,7 @@ function renderRecipesTab(snapshot, perms) {
                 <span>Import a local recipe ZIP</span>
                 <input type="file" accept=".zip" data-input="recipe-zip-file">
               </label>
-              <p class="subtle">ZIP importer expects one JSON recipe file and can also pick up one image for the card thumbnail.</p>
+              <p class="subtle">Imported ZIPs are added to the local recipe library, selected for cooking, and made available for device assignment. ZIP importer expects one JSON recipe file and can also pick up one image for the card thumbnail.</p>
             </div>
           `
           : ""
@@ -3961,6 +4081,7 @@ function applyRecipeEditor(formData) {
 async function importRecipeRecord(result, options = {}) {
   const recipeJson = structuredClone(result.recipeJson);
   const displayName = Array.isArray(recipeJson.name) ? recipeJson.name[0] : recipeJson.name;
+  const recipeSignature = recipeSignatureFromJson(recipeJson);
   const record = {
     id: crypto.randomUUID(),
     type: "base",
@@ -3977,6 +4098,7 @@ async function importRecipeRecord(result, options = {}) {
     imageDataUrl: result.imageDataUrl || "",
     recipeEntries: Array.isArray(result.entries) ? structuredClone(result.entries) : [],
     recipeJson,
+    recipeSignature,
     selected: options.selected !== false,
     createdAt: nowIso(),
     updatedAt: nowIso()
@@ -3986,8 +4108,64 @@ async function importRecipeRecord(result, options = {}) {
   } else {
     record.recipeJson.name[0] = record.firmwareName;
   }
+  const existingRecipe =
+    state().recipes.find((recipe) => normalizeCatalogKey(recipe.recipeSignature) === normalizeCatalogKey(recipeSignature)) ||
+    findRecipeByZipName(state(), record.zipName) ||
+    findRecipeByFirmwareName(state(), record.firmwareName) ||
+    null;
+  if (existingRecipe) {
+    mutate((draft) => {
+      const recipe = draft.recipes.find((item) => item.id === existingRecipe.id);
+      if (!recipe) return draft;
+      recipe.zipName = record.zipName;
+      recipe.zipUrl = record.zipUrl;
+      recipe.recipeTextEntryName = record.recipeTextEntryName;
+      recipe.rawRecipeText = record.rawRecipeText;
+      recipe.displayName = record.displayName;
+      recipe.firmwareName = record.firmwareName;
+      recipe.aliases = Array.from(new Set([...(recipe.aliases || []), ...record.aliases]));
+      recipe.category = record.category;
+      recipe.imageDataUrl = record.imageDataUrl || recipe.imageDataUrl || "";
+      recipe.recipeEntries = Array.isArray(record.recipeEntries) ? structuredClone(record.recipeEntries) : [];
+      recipe.recipeJson = structuredClone(record.recipeJson);
+      recipe.recipeSignature = recipeSignature;
+      recipe.selected = options.selected !== false ? true : recipe.selected;
+      recipe.updatedAt = nowIso();
+      if (options.addToCatalog !== false) {
+        upsertImportedCatalogEntry(
+          draft,
+          buildImportedCatalogEntry(result, recipe, {
+            zipUrl: options.zipUrl || "",
+            source: options.source || "imported",
+            catalogEntryId: options.catalogEntryId || ""
+          })
+        );
+      }
+      if (recipe.selected) {
+        syncSelectedRecipesToAllDevices(draft);
+      }
+      if (options.activateRecipesTab !== false) {
+        draft.ui.recipeMode = "selected";
+        draft.ui.activeTab = "recipes";
+      }
+    });
+    if (options.showToast !== false) {
+      showToast(`Updated ${record.displayName}`, "success");
+    }
+    return state().recipes.find((recipe) => recipe.id === existingRecipe.id) || existingRecipe;
+  }
   mutate((draft) => {
     draft.recipes.unshift(record);
+    if (options.addToCatalog !== false) {
+      upsertImportedCatalogEntry(
+        draft,
+        buildImportedCatalogEntry(result, record, {
+          zipUrl: options.zipUrl || "",
+          source: options.source || "imported",
+          catalogEntryId: options.catalogEntryId || ""
+        })
+      );
+    }
     if (record.selected) {
       syncSelectedRecipesToAllDevices(draft);
     }
@@ -4043,14 +4221,60 @@ async function ensureGlobalCatalogRecipeImported(entry, options = {}) {
     }
     return findRecipeForGlobalCatalogEntry(state(), entry);
   }
-  const result = await importRecipeZipUrl(`${entry.zipUrl}?v=${RECIPE_ARCHIVE_VERSION}`);
+  const result = entry.zipUrl
+    ? await importRecipeZipUrl(`${entry.zipUrl}?v=${RECIPE_ARCHIVE_VERSION}`)
+    : createImportResultFromCatalogEntry(entry);
   return importRecipeRecord(result, {
     zipUrl: entry.zipUrl,
-    source: "library",
+    source: entry.source === "imported" ? "imported" : "library",
     selected: options.ensureSelected !== false,
     activateRecipesTab: false,
-    showToast: false
+    showToast: false,
+    addToCatalog: entry.source === "imported",
+    catalogEntryId: entry.id || ""
   });
+}
+
+async function syncImportedRecipeToCloud(recipe) {
+  try {
+    if (!cloudRuntime.ready || !cloudRuntime.session?.id) {
+      return { synced: false, reason: "not-signed-in" };
+    }
+    const existingRows = await recipeService.listMine();
+    const result = await recipeService.upsertLocalRecipe(recipe, existingRows);
+    mutate((draft) => {
+      const localRecipe = draft.recipes.find((item) => item.id === recipe.id);
+      if (!localRecipe) return draft;
+      localRecipe.cloudRecordId = result.cloudId || localRecipe.cloudRecordId || "";
+      localRecipe.cloudUserId = cloudRuntime.session?.id || localRecipe.cloudUserId || "";
+      localRecipe.recipeSignature = result.signature || localRecipe.recipeSignature || "";
+      upsertImportedCatalogEntry(
+        draft,
+        buildCatalogEntryFromRecipe(localRecipe, {
+          catalogEntryId: localRecipe.cloudRecordId ? `cloud-${localRecipe.cloudRecordId}` : "",
+          source: "cloud",
+          sourceName: localRecipe.zipName || `${localRecipe.displayName}.zip`,
+          recipeText: localRecipe.rawRecipeText || JSON.stringify(localRecipe.recipeJson || {}),
+          recipeTextEntryName: localRecipe.recipeTextEntryName || "",
+          imageDataUrl: localRecipe.imageDataUrl || "",
+          entries: Array.isArray(localRecipe.recipeEntries) ? structuredClone(localRecipe.recipeEntries) : [],
+          zipUrl: localRecipe.zipUrl || ""
+        })
+      );
+    });
+    setCloudRuntime({
+      lastSyncAt: nowIso(),
+      lastSummary: `Recipe synced to cloud: ${recipe.displayName}`,
+      lastError: ""
+    });
+    return { synced: true, cloudId: result.cloudId || "", signature: result.signature || "" };
+  } catch (error) {
+    setCloudRuntime({
+      lastError: error.message || `Unable to sync ${recipe.displayName} to cloud.`
+    });
+    showToast(`Imported locally, but cloud sync failed for ${recipe.displayName}`, "warning");
+    return { synced: false, reason: "error", error };
+  }
 }
 
 async function addPickedGlobalRecipesToRecipeList() {
@@ -4059,7 +4283,7 @@ async function addPickedGlobalRecipesToRecipeList() {
     showToast("Pick one or more global recipes first", "warning");
     return;
   }
-  const entries = globalRecipeCatalog.filter((entry) => pickedIds.includes(entry.id));
+  const entries = getRecipeCatalog(state()).filter((entry) => pickedIds.includes(entry.id));
   let importedCount = 0;
   let activatedCount = 0;
   for (const entry of entries) {
@@ -4090,7 +4314,7 @@ async function addPickedGlobalRecipesToOrders() {
     showToast("Pick one or more global recipes first", "warning");
     return;
   }
-  const entries = globalRecipeCatalog.filter((entry) => pickedIds.includes(entry.id));
+  const entries = getRecipeCatalog(state()).filter((entry) => pickedIds.includes(entry.id));
   const newOrders = [];
   for (const entry of entries) {
     const recipe = await ensureGlobalCatalogRecipeImported(entry, { ensureSelected: true });
@@ -4119,7 +4343,7 @@ function removePickedGlobalRecipesFromRecipeList() {
   let skippedBundled = 0;
   let skippedActive = 0;
   mutate((draft) => {
-    const entryMap = new Map(globalRecipeCatalog.map((entry) => [entry.id, entry]));
+    const entryMap = new Map(getRecipeCatalog(draft).map((entry) => [entry.id, entry]));
     const removableIds = new Set();
     draft.recipes.forEach((recipe) => {
       if (recipe.type === "final") {
@@ -4249,7 +4473,15 @@ async function handleSubmit(event) {
     updateNestedSetting("recipeFinder.lastZipUrl", zipUrl);
     try {
       const result = await importRecipeZipUrl(zipUrl);
-      await importRecipeRecord(result, { zipUrl });
+      const recipe = await importRecipeRecord(result, { zipUrl, showToast: false });
+      const syncResult = await syncImportedRecipeToCloud(recipe);
+      if (syncResult.synced) {
+        showToast(`Imported and synced ${recipe.displayName}`, "success");
+      } else if (syncResult.reason === "not-signed-in") {
+        showToast(`Imported ${recipe.displayName} locally. Sign in to sync it to cloud.`, "info");
+      } else if (syncResult.reason !== "error") {
+        showToast(`Imported ${recipe.displayName}`, "success");
+      }
     } catch (error) {
       showToast(error.message, "error");
     }
@@ -4689,7 +4921,15 @@ async function handleChange(event) {
   if (input.dataset.input === "recipe-zip-file" && input.files?.[0]) {
     try {
       const result = await importRecipeZipFile(input.files[0]);
-      await importRecipeRecord(result);
+      const recipe = await importRecipeRecord(result, { showToast: false });
+      const syncResult = await syncImportedRecipeToCloud(recipe);
+      if (syncResult.synced) {
+        showToast(`Imported and synced ${recipe.displayName}`, "success");
+      } else if (syncResult.reason === "not-signed-in") {
+        showToast(`Imported ${recipe.displayName} locally. Sign in to sync it to cloud.`, "info");
+      } else if (syncResult.reason !== "error") {
+        showToast(`Imported ${recipe.displayName}`, "success");
+      }
       input.value = "";
     } catch (error) {
       showToast(error.message, "error");

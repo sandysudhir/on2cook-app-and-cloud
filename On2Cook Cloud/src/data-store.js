@@ -637,6 +637,7 @@ export function createInitialState(seedRecipes) {
     currentFacilityId: auth.facilityId,
     settings: createDefaultSettings(),
     ui: createUiState(),
+    importedRecipeCatalog: [],
     recipes: baseRecipes,
     orders: {
       current: createSeedOrders(baseRecipes),
@@ -859,6 +860,7 @@ export function loadState(seedRecipes) {
         ...(merged.settings?.recipeFinder || {})
       }
     };
+    merged.importedRecipeCatalog = Array.isArray(merged.importedRecipeCatalog) ? merged.importedRecipeCatalog : [];
     merged.orders = shouldReseedOrders(merged.orders, merged.recipes)
       ? {
           current: createSeedOrders(merged.recipes),
@@ -1023,6 +1025,7 @@ export function importState(rawText, seedRecipes) {
       ...(merged.settings?.recipeFinder || {})
     }
   };
+  merged.importedRecipeCatalog = Array.isArray(merged.importedRecipeCatalog) ? merged.importedRecipeCatalog : [];
   merged.orders = shouldReseedOrders(merged.orders, merged.recipes || [])
     ? {
         current: createSeedOrders(merged.recipes || []),
