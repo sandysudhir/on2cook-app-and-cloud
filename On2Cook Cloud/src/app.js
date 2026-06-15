@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615j";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615j";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615k";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615k";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615j";
+} from "./ncb-services.js?v=20260615k";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615j";
+} from "./data-store.js?v=20260615k";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -988,6 +988,15 @@ function closeModal() {
   mutate((draft) => {
     draft.ui.activeModal = null;
   });
+}
+
+function returnToQueueContext() {
+  stopProLiveTimer();
+  mutate((draft) => {
+    draft.ui.activeModal = null;
+    draft.ui.activeTab = "queue";
+  });
+  queueIdleWork();
 }
 
 function setCloudRuntime(patch) {
@@ -3827,7 +3836,7 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
   return `
     <div class="recipe-sheet-phone">
       <div class="recipe-sheet-nav">
-        <button class="secondary-button small" data-action="close-modal">Back</button>
+        <button class="secondary-button small" data-action="${draft ? "close-live-sheet-to-queue" : "close-modal"}">Back</button>
         <strong>Recipe Sheet</strong>
         <span class="subtle">${escapeHtml(sourceLabel)}</span>
       </div>
@@ -3892,7 +3901,7 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
               <div class="action-row">
                 <button class="primary-button" data-action="save-live-recipe-library">Save to Library</button>
                 <button class="secondary-button" data-action="reopen-live-editor">Back to Editor</button>
-                <button class="secondary-button" data-action="close-modal">Return Home</button>
+                <button class="secondary-button" data-action="close-live-sheet-to-queue">Return to Queue</button>
               </div>
             </section>
           `
@@ -4282,7 +4291,7 @@ function renderProLiveResult(draft, live) {
   const sinceSeconds = live.finishedAt ? elapsedSecondsBetween(live.finishedAt, nowIso()) : 0;
   const aborted = live.outcome === "aborted";
   return `
-    <div class="modal-backdrop pro-live-backdrop">
+    <div class="modal-backdrop pro-live-backdrop dismissable-result" data-action="close-live-result-to-queue" title="Tap to return to queue">
       <div class="modal-card pro-live-modal pro-result-modal">
         <div class="pro-result-top">
           <strong>${escapeHtml(draft.displayName)}</strong>
@@ -4305,6 +4314,7 @@ function renderProLiveResult(draft, live) {
             </div>
           </div>
           <button class="secondary-button" data-action="pro-live-view-sheet">View Recipe Sheet</button>
+          <p class="subtle">Tap anywhere else to return to the device queue. Saving this sheet is optional and will not block the next queued recipe.</p>
         </div>
       </div>
     </div>
@@ -5162,8 +5172,7 @@ async function saveLiveDraftToLibrary(newName) {
   finalRecipe.selected = true;
   mutate((draftState) => {
     draftState.recipes.unshift(finalRecipe);
-    draftState.ui.activeTab = "recipes";
-    draftState.ui.recipeMode = "final";
+    draftState.ui.activeTab = "queue";
     syncSelectedRecipesToAllDevices(draftState);
   });
   const saved = state().recipes.find((recipe) => recipe.id === finalRecipe.id) || finalRecipe;
@@ -5175,7 +5184,7 @@ async function saveLiveDraftToLibrary(newName) {
   } else {
     showToast(`${saved.displayName} saved locally. Cloud sync can retry later.`, "warning");
   }
-  closeModal();
+  returnToQueueContext();
   return saved;
 }
 
@@ -5680,6 +5689,10 @@ async function handleClick(event) {
     closeModal();
     return;
   }
+  if (action === "close-live-result-to-queue" || action === "close-live-sheet-to-queue") {
+    returnToQueueContext();
+    return;
+  }
   if (action === "connect-device") {
     await connectDevice(button.dataset.slot);
     return;
@@ -5980,6 +5993,7 @@ async function handleClick(event) {
     if (!draft) return;
     stopProLiveTimer();
     openModal("live-recipe-sheet", { draft });
+    queueIdleWork();
     return;
   }
   if (action === "reopen-live-editor") {

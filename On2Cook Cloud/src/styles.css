@@ -484,6 +484,18 @@
   background: rgba(46, 91, 216, 0.06);
 }
 
+.dismissable-result {
+  cursor: pointer;
+}
+
+.dismissable-result button,
+.dismissable-result input,
+.dismissable-result select,
+.dismissable-result textarea,
+.dismissable-result label {
+  cursor: auto;
+}
+
 .recipe-sheet-modal {
   width: min(430px, calc(100vw - 24px));
   max-height: min(880px, calc(100vh - 24px));

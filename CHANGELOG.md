@@ -27,3 +27,7 @@
 - Added post-cook library saving from the Recipe Sheet with required new recipe name validation, separate final recipe creation, automatic recipe/device availability updates, and cloud sync attempt.
 - Added finished-dish photo capture/upload placeholders and Back to Editor / Return Home finish-session actions.
 - Bumped web cache version to `20260615j` / service-worker cache `v30`.
+- Made the completed/aborted Live Cook result screen dismissible by tapping anywhere outside its action button, returning operators to the Queue screen.
+- Changed post-cook Recipe Sheet Back/Return actions and Save to Library to return to Queue, and removed the disruptive automatic switch to the Recipes tab after saving.
+- Ensured viewing or saving a post-cook sheet nudges queue scheduling so photo/save work does not block the next queued recipe.
+- Bumped web cache version to `20260615k` / service-worker cache `v31`.
