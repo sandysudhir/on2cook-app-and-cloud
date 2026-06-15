@@ -21,3 +21,6 @@
 - Added End Recipe confirmation in Live Cook, requiring an explicit Proceed action before aborting early; any other action cancels the pending abort.
 - Added completed/aborted Live Cook result screen with actual run time, planned time, and time since completion/abort, plus the same last-run metrics on each device card.
 - Bumped web cache version to `20260615h` / service-worker cache `v28`.
+- Added a Recipe Sheet modal for Live Cook results and device last-run history, showing outcome, actual/planned time, time since finish, ingredients, profile data, and cooking steps.
+- Added compact last-recipe and active-run tabs on device cards so operators can open the latest recipe sheet/details directly above the queue.
+- Bumped web cache version to `20260615i` / service-worker cache `v29`.

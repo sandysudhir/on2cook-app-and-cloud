@@ -1,4 +1,4 @@
-const CACHE_NAME = "on2cook-cloud-v28";
+const CACHE_NAME = "on2cook-cloud-v29";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -15,11 +15,11 @@ const CORE_ASSETS = [
   "./data/order_recipes/DAL%20MAKHANI.zip?v=20260612q",
   "./data/order_recipes/KUNG%20PAO%20CHICKEN.zip?v=20260612q",
   "./data/order_recipes/MASOOR%20DAL%20.zip?v=20260612q",
-  "./src/styles.css?v=20260615h",
-  "./src/app.js?v=20260615h",
-  "./src/ble-transport.js?v=20260615h",
-  "./src/data-store.js?v=20260615h",
-  "./src/zip-reader.js?v=20260615h",
+  "./src/styles.css?v=20260615i",
+  "./src/app.js?v=20260615i",
+  "./src/ble-transport.js?v=20260615i",
+  "./src/data-store.js?v=20260615i",
+  "./src/zip-reader.js?v=20260615i",
   "./assets/app_banner.png"
 ];
 

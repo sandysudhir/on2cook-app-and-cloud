@@ -1,12 +1,12 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615h";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615h";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615i";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615i";
 import {
   authService,
   profileService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615h";
+} from "./ncb-services.js?v=20260615i";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +20,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615h";
+} from "./data-store.js?v=20260615i";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -3759,6 +3759,123 @@ function renderLastRunMetrics(run) {
   `;
 }
 
+function renderLastRunTab(device, label = "Last recipe sheet") {
+  if (!device?.lastRun?.finishedAt) return "";
+  const actualSeconds = getRunActualSeconds(device.lastRun);
+  const sinceSeconds = getSinceRunFinishedSeconds(device.lastRun);
+  return `
+    <button class="last-recipe-tab" data-action="open-device-recipe-sheet" data-slot="${device.slot}">
+      <span class="status-dot ${device.lastRun.outcome === "aborted" ? "failed" : "complete"}"></span>
+      <span>
+        <strong>${escapeHtml(device.lastRun.displayName || device.lastRun.firmwareName || "Last recipe")}</strong>
+        <small>${escapeHtml(device.lastRun.outcome === "aborted" ? "Aborted" : "Completed")} | ran ${formatProClock(actualSeconds)} | ${formatProClock(sinceSeconds)} ago</small>
+      </span>
+      <span class="chevron">›</span>
+    </button>
+  `;
+}
+
+function renderActiveRunTab(device) {
+  if (!device?.activeRun?.firmwareName && !device?.activeRun?.displayName) return "";
+  return `
+    <button class="last-recipe-tab active-run-tab" data-action="open-device-sheet" data-slot="${device.slot}">
+      <span class="status-dot live"></span>
+      <span>
+        <strong>${escapeHtml(device.activeRun.displayName || device.activeRun.firmwareName || "Recipe running")}</strong>
+        <small>Running now | ${formatProClock(elapsedSecondsBetween(device.activeRun.startedAt || nowIso(), nowIso()))} elapsed | tap for details</small>
+      </span>
+      <span class="chevron">›</span>
+    </button>
+  `;
+}
+
+function recipeSheetIngredientsFromRecipe(recipe) {
+  const items = Array.isArray(recipe?.recipeJson?.Ingredients)
+    ? recipe.recipeJson.Ingredients
+    : Array.isArray(recipe?.recipeJson?.Ingredient)
+      ? recipe.recipeJson.Ingredient
+      : [];
+  if (items.length) {
+    return items.slice(0, 40).map((item, index) => splitIngredientNameWeight(item, index));
+  }
+  return recipeJsonToConfigIngredients(recipe?.recipeJson || {});
+}
+
+function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On2Cook Pro" }) {
+  const displayName = title || run?.displayName || recipe?.displayName || draft?.displayName || "Recipe";
+  const imageUrl = safeOptionalUrl(recipe?.imageDataUrl || "", "recipe sheet image");
+  const plannedSeconds = Number(run?.durationSeconds) || (draft?.minutes?.length ? draft.minutes.length * 60 : getRecipeDuration(recipe));
+  const actualSeconds = getRunActualSeconds(run) || Number(run?.actualDurationSeconds) || Number(run?.elapsed || 0);
+  const sinceSeconds = getSinceRunFinishedSeconds(run);
+  const outcome = run?.outcome || "completed";
+  const ingredients = draft?.ingredients || recipeSheetIngredientsFromRecipe(recipe);
+  const steps = draft?.minutes
+    ? draft.minutes.map((minute, index) => ({
+        label: minute.title || `Minute ${index + 1}`,
+        lid: minute.lidOpen ? "Lid open" : "Lid closed",
+        ind: Math.max(...minute.subBlocks.map((block) => Number(block.inductionPower) || 0)),
+        mag: minute.subBlocks.some((block) => block.microwaveActive) ? "On" : "Off"
+      }))
+    : Array.isArray(recipe?.recipeJson?.Instruction)
+      ? recipe.recipeJson.Instruction.map((step, index) => ({
+          label: step.Text || `Step ${index + 1}`,
+          lid: step.lid || "",
+          ind: step.Induction_power || 0,
+          mag: step.Magnetron_on_time ? "On" : "Off"
+        }))
+      : [];
+  return `
+    <div class="recipe-sheet-phone">
+      <div class="recipe-sheet-nav">
+        <button class="secondary-button small" data-action="close-modal">Back</button>
+        <strong>Recipe Sheet</strong>
+        <span class="subtle">${escapeHtml(sourceLabel)}</span>
+      </div>
+      <div class="recipe-sheet-hero ${imageUrl ? "has-image" : ""}">
+        ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(displayName)}">` : ""}
+        <div>
+          <div class="chip-row">
+            <span class="chip-button selected static-chip">${escapeHtml(recipe?.recipeJson?.dietType || draft?.dietType || "veg")}</span>
+            <span class="chip-button selected static-chip">${escapeHtml(recipe?.recipeJson?.recipeType || draft?.recipeType || "boil")}</span>
+          </div>
+          <h2>${escapeHtml(displayName)}</h2>
+        </div>
+      </div>
+      <section class="recipe-sheet-status">
+        <div class="run-icon">${outcome === "aborted" ? "!" : "›"}</div>
+        <div>
+          <strong>${outcome === "aborted" ? "Manually Ended Early" : "Completed"}</strong>
+          <p>${Math.max(0, Math.round(actualSeconds / 60))} of ${Math.max(1, Math.round(plannedSeconds / 60))} planned minutes cooked</p>
+        </div>
+        <strong>${formatProClock(actualSeconds)}</strong>
+      </section>
+      <div class="recipe-sheet-stat-grid">
+        <div><span>On2Cook</span><strong>${formatProClock(actualSeconds)}</strong></div>
+        <div><span>Since finish</span><strong>+${formatProClock(sinceSeconds)}</strong></div>
+        <div><span>Normal cooking</span><strong>${formatProClock(plannedSeconds)}</strong></div>
+      </div>
+      <div class="recipe-sheet-profile">
+        <span>Quantity<strong>${escapeHtml(recipe?.recipeJson?.quantity || (draft ? `${draft.quantity}${draft.quantityUnit}` : ""))}</strong></span>
+        <span>Consistency<strong>${escapeHtml(recipe?.recipeJson?.consistency || draft?.consistency || "medium")}</strong></span>
+        <span>Profile<strong>Healthy</strong></span>
+        <span>Minutes<strong>${Math.ceil(actualSeconds / 60)}/${Math.ceil(plannedSeconds / 60)}</strong></span>
+      </div>
+      <section class="stack-section">
+        <div class="mini-title">Ingredients</div>
+        <div class="recipe-sheet-list">
+          ${ingredients.map((item) => `<div><span>${escapeHtml(item.name)}</span><strong>${escapeHtml([item.quantity || "", item.unit || ""].filter(Boolean).join(" "))}</strong></div>`).join("") || `<div class="empty-card">No ingredient details available.</div>`}
+        </div>
+      </section>
+      <section class="stack-section">
+        <div class="mini-title">Cooking steps</div>
+        <div class="recipe-sheet-list">
+          ${steps.slice(0, 12).map((step, index) => `<div><span>${index + 1}. ${escapeHtml(step.label)} | ${escapeHtml(step.lid)}</span><strong>IH ${escapeHtml(step.ind)} | MW ${escapeHtml(step.mag)}</strong></div>`).join("") || `<div class="empty-card">No cooking steps available.</div>`}
+        </div>
+      </section>
+    </div>
+  `;
+}
+
 function renderDevicePhone(snapshot, device) {
   const currentOrder = getCurrentJob(snapshot, device);
   const queueOrders = getQueueOrders(snapshot, device);
@@ -3821,6 +3938,7 @@ function renderDevicePhone(snapshot, device) {
           </section>
           <section class="stack-section">
             <div class="mini-title">Last cooked recipe</div>
+            ${renderActiveRunTab(device)}
             ${
               headline
                 ? `
@@ -3854,6 +3972,7 @@ function renderDevicePhone(snapshot, device) {
           </section>
           <section class="stack-section">
             <div class="mini-title">Queue</div>
+            ${renderLastRunTab(device)}
             ${
               queueOrders.length
                 ? queueOrders
@@ -4159,7 +4278,7 @@ function renderProLiveResult(draft, live) {
               <small>still counting</small>
             </div>
           </div>
-          <button class="secondary-button" data-action="pro-live-back-editor">View Recipe Sheet</button>
+          <button class="secondary-button" data-action="pro-live-view-sheet">View Recipe Sheet</button>
         </div>
       </div>
     </div>
@@ -4345,6 +4464,38 @@ function renderModal(snapshot) {
   if (!modal) return "";
   if (modal.type === "professional-editor") {
     return renderProfessionalEditorModal(snapshot, modal);
+  }
+  if (modal.type === "recipe-sheet") {
+    const slot = Number(modal.payload.slot || 0);
+    const device = snapshot.devices.find((item) => item.slot === slot);
+    if (!device?.lastRun?.finishedAt) return "";
+    const recipe = getRecipeForRunRecord(snapshot, device.lastRun);
+    return `
+      <div class="modal-backdrop">
+        <div class="modal-card recipe-sheet-modal">
+          ${renderRecipeSheetContent({ title: device.lastRun.displayName, recipe, run: device.lastRun, sourceLabel: device.displayName })}
+        </div>
+      </div>
+    `;
+  }
+  if (modal.type === "live-recipe-sheet") {
+    const draft = modal.payload.draft || {};
+    const live = draft.live || {};
+    const run = {
+      displayName: draft.displayName,
+      startedAt: live.startedAt || "",
+      finishedAt: live.finishedAt || nowIso(),
+      durationSeconds: Array.isArray(draft.minutes) ? draft.minutes.length * 60 : 0,
+      actualDurationSeconds: live.actualDurationSeconds || live.elapsed || 0,
+      outcome: live.outcome || "completed"
+    };
+    return `
+      <div class="modal-backdrop">
+        <div class="modal-card recipe-sheet-modal">
+          ${renderRecipeSheetContent({ title: draft.displayName, recipe: null, run, draft, sourceLabel: "On2Cook Pro" })}
+        </div>
+      </div>
+    `;
   }
   if (modal.type === "manual-order") {
     const options = getSelectedRecipes(snapshot)
@@ -5483,6 +5634,10 @@ async function handleClick(event) {
     openModal("device-sheet", { slot: Number(button.dataset.slot) });
     return;
   }
+  if (action === "open-device-recipe-sheet") {
+    openModal("recipe-sheet", { slot: Number(button.dataset.slot) });
+    return;
+  }
   if (action === "open-recipes-tab") {
     mutate((draft) => {
       draft.ui.activeTab = "recipes";
@@ -5636,7 +5791,8 @@ async function handleClick(event) {
         holdElapsed: 0,
         holds: [],
         paused: false,
-        outcome: ""
+        outcome: "",
+        startedAt: ""
       };
     });
     ensureProLiveTimer();
@@ -5647,6 +5803,7 @@ async function handleClick(event) {
       const live = getProLive(draft);
       live.phase = "running";
       live.paused = false;
+      live.startedAt = live.startedAt || nowIso();
       live.holds = [{ minuteIndex: 0, type: "ingredients", durationSec: 0 }];
     });
     ensureProLiveTimer();
@@ -5721,6 +5878,14 @@ async function handleClick(event) {
     updateProDraft((draft) => {
       draft.step = "timeline";
     });
+    return;
+  }
+  if (action === "pro-live-view-sheet") {
+    const modal = state().ui.activeModal;
+    const draft = modal?.payload?.draft ? structuredClone(modal.payload.draft) : null;
+    if (!draft) return;
+    stopProLiveTimer();
+    openModal("live-recipe-sheet", { draft });
     return;
   }
   if (action === "pro-live-prev" || action === "pro-live-next") {
