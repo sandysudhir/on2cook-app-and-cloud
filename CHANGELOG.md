@@ -11,6 +11,9 @@
 - Bumped web cache version to `20260616b` / service-worker cache `v33`.
 - Preserved page, horizontal device rail, and individual phone-panel scroll positions across app re-renders and service-worker refreshes.
 - Bumped web cache version to `20260616c` / service-worker cache `v34`.
+- Changed completed recipe wait timing so "Since completion" freezes when the next recipe actually starts cooking on firmware.
+- Disabled automatic `ingredients=100`; ingredient completion now requires explicit confirmation on the device or via the web screen button.
+- Bumped web cache version to `20260616d` / service-worker cache `v35`.
 
 ## 2026-06-15
 

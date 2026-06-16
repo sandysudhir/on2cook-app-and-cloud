@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260616c";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260616c";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260616d";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260616d";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260616c";
+} from "./ncb-services.js?v=20260616d";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260616c";
+} from "./data-store.js?v=20260616d";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -1434,6 +1434,9 @@ function applyTelemetry(device, parsed, message, at) {
   } else {
     device.telemetry.workStatus = nextWorkStatus;
   }
+  if (device.currentJobId && device.telemetry.workStatus === "cooking") {
+    markLastRunWaitClosed(device, at);
+  }
   const magTime = readNumeric(parsed.magTime, parsed.MAGTIME, parsed.MAG_RUN, parsed.mag_run);
   const indTime = readNumeric(parsed.indTime, parsed.INDTIME, parsed.IND_RUN, parsed.ind_run);
   const stepNo = readNumeric(parsed.STEPNO, parsed.stepNo, parsed.stepono);
@@ -2170,6 +2173,7 @@ async function startOrderFlow(orderId, preferredSlot = null) {
     const draftOrder = draft.orders.current.find((item) => item.id === orderId);
     const draftDevice = draft.devices.find((item) => item.slot === device.slot);
     if (!draftOrder || !draftDevice) return draft;
+    const runStartedAt = nowIso();
     clearOrderFromDeviceAssignments(draft, orderId, device.slot);
     draftOrder.status = "starting";
     draftOrder.assignedSlot = device.slot;
@@ -2183,7 +2187,7 @@ async function startOrderFlow(orderId, preferredSlot = null) {
       recipeId: recipe.id,
       displayName: recipe.displayName,
       firmwareName: recipe.firmwareName,
-      startedAt: nowIso(),
+      startedAt: runStartedAt,
       durationSeconds: getRecipeDuration(recipe)
     };
     draftDevice.startupGuardUntil = new Date(Date.now() + 8000).toISOString();
@@ -2219,7 +2223,7 @@ async function startOrderFlow(orderId, preferredSlot = null) {
       }
     });
     await ble.runRecipe(device.slot, recipe.firmwareName, {
-      autoStartAfterIngredient: true,
+      autoStartAfterIngredient: false,
       statusDelayMs: 650,
       fallbackMs: 1800
     });
@@ -2994,7 +2998,13 @@ function getRunActualSeconds(run) {
 }
 
 function getSinceRunFinishedSeconds(run) {
-  return run?.finishedAt ? elapsedSecondsBetween(run.finishedAt, nowIso()) : 0;
+  return run?.finishedAt ? elapsedSecondsBetween(run.finishedAt, run.nextStartedAt || nowIso()) : 0;
+}
+
+function markLastRunWaitClosed(device, at = nowIso()) {
+  if (!device?.lastRun?.finishedAt || device.lastRun.nextStartedAt) return;
+  device.lastRun.nextStartedAt = at;
+  device.lastRun.waitAfterCompletionSeconds = elapsedSecondsBetween(device.lastRun.finishedAt, at);
 }
 
 function getProLive(draft) {

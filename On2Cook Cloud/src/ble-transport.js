@@ -735,7 +735,7 @@ export class BleTransport extends EventTarget {
 
   async runRecipe(slot, recipeName, options = {}) {
     const session = this.requireSession(slot);
-    const autoStartAfterIngredient = options.autoStartAfterIngredient !== false;
+    const autoStartAfterIngredient = options.autoStartAfterIngredient === true;
     session.run = {
       recipeName,
       autoStartAfterIngredient,
