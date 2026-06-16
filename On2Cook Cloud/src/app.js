@@ -553,6 +553,10 @@ function getDeviceTimelineRecipe(snapshot, device, runtimeRecipe = null) {
   return runtimeRecipe || getRecipeForRunRecord(snapshot, device.activeRun) || getRecipeForRunRecord(snapshot, device.lastRun);
 }
 
+function shouldRenderLiveTimeline(device, currentOrder) {
+  return Boolean(currentOrder || hasLiveRuntime(device) || device.activeRun?.displayName || device.activeRun?.firmwareName);
+}
+
 function formatShortTime(value) {
   if (!value) return "--:--";
   const parsed = new Date(value);
@@ -3784,6 +3788,18 @@ function renderLastRunTab(device, label = "Last recipe sheet") {
   `;
 }
 
+function renderTimelineIdleState(device) {
+  if (device?.lastRun?.finishedAt) {
+    const outcome = device.lastRun.outcome === "aborted" ? "aborted" : "completed";
+    return `
+      <div class="empty-card timeline-idle-card">
+        Last recipe ${escapeHtml(outcome)}. Open the recipe sheet above the queue to review what happened.
+      </div>
+    `;
+  }
+  return `<div class="empty-card">The recipe timeline will appear here once this device starts cooking.</div>`;
+}
+
 function renderActiveRunTab(device) {
   if (!device?.activeRun?.firmwareName && !device?.activeRun?.displayName) return "";
   return `
@@ -3917,9 +3933,9 @@ function renderDevicePhone(snapshot, device) {
   const selectableRecipes = getDeviceSyncRecipes(snapshot, device);
   const serialPhotoUrl = safeOptionalUrl(device.serialPhotoDataUrl, "serial photo");
   const runtimeRecipe = getRuntimeRecipe(snapshot, device);
-  const timelineRecipe = getDeviceTimelineRecipe(snapshot, device, runtimeRecipe);
+  const activeTimeline = shouldRenderLiveTimeline(device, currentOrder);
+  const timelineRecipe = activeTimeline ? getDeviceTimelineRecipe(snapshot, device, runtimeRecipe) : null;
   const headline = getDeviceRecipeHeadline(snapshot, device, currentOrder, timelineRecipe);
-  const activeTimeline = Boolean(currentOrder || hasLiveRuntime(device) || device.activeRun?.firmwareName);
   const connectionLabel =
     device.connection === "connected"
       ? "connected"
@@ -4000,9 +4016,7 @@ function renderDevicePhone(snapshot, device) {
           <section class="stack-section">
             <div class="mini-title">Execution timeline</div>
             ${
-              timelineRecipe
-                ? renderRecipeTimeline(snapshot, device, timelineRecipe, activeTimeline)
-                : `<div class="empty-card">The recipe timeline will appear here once this device starts cooking.</div>`
+              timelineRecipe ? renderRecipeTimeline(snapshot, device, timelineRecipe, true) : renderTimelineIdleState(device)
             }
           </section>
           <section class="stack-section">

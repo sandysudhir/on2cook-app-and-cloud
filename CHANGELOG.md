@@ -1,5 +1,11 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-06-16
+
+- Fixed device cards so completed or aborted recipes no longer keep rendering as a highlighted live execution timeline.
+- Kept finished/aborted recipe detail available through the last-recipe sheet tab while reserving the execution timeline for active cooking only.
+- Bumped web cache version to `20260616a` / service-worker cache `v32`.
+
 ## 2026-06-15
 
 - Disabled automatic recipe uploads when a BLE device connects.
