@@ -1,6 +1,6 @@
 const STORAGE_KEY = "on2cook-cloud-state-v5";
 const STATE_VERSION = 5;
-const MAX_PERSISTED_DEVICE_ACTIVITY = 30;
+const MAX_PERSISTED_DEVICE_ACTIVITY = 100;
 const MAX_PERSISTED_PREVIOUS_ORDERS = 25;
 
 function uid(prefix) {

@@ -1,12 +1,13 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260615k";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260615k";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260616b";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260616b";
 import {
   authService,
   profileService,
+  cookLogService,
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260615k";
+} from "./ncb-services.js?v=20260616b";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -20,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260615k";
+} from "./data-store.js?v=20260616b";
 
 const app = document.getElementById("app");
 const ble = new BleTransport();
@@ -855,9 +856,65 @@ function appendActivity(device, text, tone = "info", at = nowIso(), meta = null)
     direction: meta?.direction || "",
     channel: meta?.channel || ""
   };
-  device.activity = [item, ...(device.activity || [])].slice(0, 8);
+  device.activity = [item, ...(device.activity || [])].slice(0, 100);
   device.lastUpdatedAt = at;
   device.lastMessage = text;
+  persistDeviceActivityToCloud(device, item);
+}
+
+function persistDeviceActivityToCloud(device, item) {
+  if (!device || !item?.text) return;
+  const deviceSnapshot = JSON.parse(JSON.stringify(device));
+  const itemSnapshot = { ...item };
+  Promise.resolve()
+    .then(async () => {
+      const status = await authService.getStatus().catch(() => null);
+      const localUser = getCurrentUser(state());
+      const cloudUserId = status?.session?.id || localUser.cloudUserId || "";
+      if (!cloudUserId) return;
+      await cookLogService.append({
+        user_id: cloudUserId,
+        device_id: String(
+          deviceSnapshot.browserDeviceId ||
+            deviceSnapshot.bluetoothName ||
+            deviceSnapshot.displayName ||
+            `device-${deviceSnapshot.slot}`
+        ),
+        recipe_id: null,
+        recipe_title:
+          deviceSnapshot.activeRun?.displayName ||
+          deviceSnapshot.lastRun?.displayName ||
+          deviceSnapshot.telemetry?.currentRecipe ||
+          "",
+        order_id: deviceSnapshot.currentJobId || deviceSnapshot.activeRun?.orderId || deviceSnapshot.lastRun?.orderId || "",
+        outcome:
+          itemSnapshot.tone === "error"
+            ? "error"
+            : deviceSnapshot.lastRun?.outcome ||
+              (String(itemSnapshot.text).toLowerCase().includes("disconnect") ? "disconnected" : itemSnapshot.tone || "info"),
+        started_at: deviceSnapshot.activeRun?.startedAt || deviceSnapshot.lastRun?.startedAt || null,
+        finished_at: deviceSnapshot.lastRun?.finishedAt || null,
+        aborted_at:
+          deviceSnapshot.lastRun?.outcome === "aborted" ? deviceSnapshot.lastRun?.finishedAt || itemSnapshot.at : null,
+        telemetry_json: JSON.stringify({
+          slot: deviceSnapshot.slot,
+          displayName: deviceSnapshot.displayName,
+          bluetoothName: deviceSnapshot.bluetoothName,
+          connection: deviceSnapshot.connection,
+          workStatus: deviceSnapshot.telemetry?.workStatus || "",
+          stepNo: deviceSnapshot.telemetry?.stepNo || 0,
+          remainingSeconds: deviceSnapshot.telemetry?.remainingSeconds || 0,
+          label: itemSnapshot.label,
+          direction: itemSnapshot.direction,
+          channel: itemSnapshot.channel
+        }),
+        summary: itemSnapshot.text,
+        created_at: itemSnapshot.at
+      });
+    })
+    .catch((error) => {
+      console.warn("[On2Cook] Cloud cook log append failed.", error);
+    });
 }
 
 function appendTransportActivity(device, direction, channel, message, at = nowIso()) {
@@ -4778,6 +4835,32 @@ function renderModal(snapshot) {
                 <button class="danger-button" type="button" data-action="clear-device-binding" data-slot="${device.slot}">Clear pairing</button>
               </div>
             </div>
+            <div class="settings-card">
+              <div class="row space">
+                <div class="mini-title">Saved device log</div>
+                <span class="subtle">${escapeHtml((device.activity || []).length)} retained locally</span>
+              </div>
+              <div class="activity-list">
+                ${
+                  (device.activity || []).length
+                    ? (device.activity || [])
+                        .slice(0, 40)
+                        .map(
+                          (item) => `
+                            <div class="activity-row ${escapeHtml(item.tone || "info")}">
+                              <div class="activity-copy">
+                                <span class="activity-badge ${escapeHtml(item.direction || item.tone || "info")}">${escapeHtml(item.label || item.tone || "log")}</span>
+                                <span>${escapeHtml(item.text)}</span>
+                              </div>
+                              <span class="subtle">${escapeHtml(formatTimestamp(item.at))}</span>
+                            </div>
+                          `
+                        )
+                        .join("")
+                    : `<div class="empty-card">No saved activity for this device yet.</div>`
+                }
+              </div>
+            </div>
             <div class="action-row">
               <button class="secondary-button" type="button" data-action="close-modal">Close</button>
               <button class="primary-button" type="submit">Save device details</button>
@@ -5728,7 +5811,14 @@ async function handleClick(event) {
     return;
   }
   if (action === "list-logs") {
-    await ble.listLogs(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    const slot = Number(button.dataset.slot);
+    const device = getDevice(slot);
+    if (!device || device.connection !== "connected") {
+      openModal("device-sheet", { slot });
+      showToast("Showing saved device log. Connect the device to fetch firmware logs.", "info");
+      return;
+    }
+    await ble.listLogs(slot).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "auto-assign-order") {

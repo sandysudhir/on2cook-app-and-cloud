@@ -5,6 +5,10 @@
 - Fixed device cards so completed or aborted recipes no longer keep rendering as a highlighted live execution timeline.
 - Kept finished/aborted recipe detail available through the last-recipe sheet tab while reserving the execution timeline for active cooking only.
 - Bumped web cache version to `20260616a` / service-worker cache `v32`.
+- Added durable device activity logging: meaningful device events are retained locally after disconnects and sent to NoCodeBackend `cook_logs` as non-blocking cloud log entries.
+- Increased retained per-device local activity from 30 to 100 entries and added a saved device log section inside Device Details.
+- Changed the Logs button so disconnected devices open saved history instead of trying a BLE firmware log request.
+- Bumped web cache version to `20260616b` / service-worker cache `v33`.
 
 ## 2026-06-15
 
