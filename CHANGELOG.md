@@ -2,6 +2,10 @@
 
 ## 2026-06-16
 
+- Added a native Android BLE bridge for the cloud WebView APK, so Connect, commands, and recipe file packets use the existing `BleService` instead of Web Bluetooth inside Android WebView.
+- Updated the cloud BLE transport to prefer `window.On2CookNativeBle` in the APK while keeping normal Web Bluetooth for Chrome/Edge.
+- Bumped web cache version to `20260616e` / service-worker cache `v36`.
+- Built native-BLE test APK: `On2Cook-Native-BLE-Bridge-2026-06-16.apk`.
 - Fixed device cards so completed or aborted recipes no longer keep rendering as a highlighted live execution timeline.
 - Kept finished/aborted recipe detail available through the last-recipe sheet tab while reserving the execution timeline for active cooking only.
 - Bumped web cache version to `20260616a` / service-worker cache `v32`.

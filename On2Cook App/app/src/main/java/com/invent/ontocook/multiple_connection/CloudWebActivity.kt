@@ -3,13 +3,21 @@ package com.invent.ontocook.multiple_connection
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.bluetooth.BluetoothDevice
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.JavascriptInterface
 import android.webkit.ConsoleMessage
 import android.webkit.GeolocationPermissions
 import android.webkit.PermissionRequest
@@ -24,10 +32,22 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.invent.ontocook.multiple_connection.model.PairedDeviceData
+import com.invent.ontocook.multiple_connection.service.BleService
+import com.invent.ontocook.utils.Constants
+import com.invent.ontocook.utils.SharedPreferencesManager
+import org.json.JSONObject
 
 class CloudWebActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
+    private var bleService: BleService? = null
+    private var isBleBound = false
+    private val pendingConnectSlots = linkedMapOf<Int, String?>()
+    private val slotToMac = linkedMapOf<Int, String>()
+    private val macToSlot = linkedMapOf<String, Int>()
+    private val foundDuringScan = linkedSetOf<String>()
 
     private val filePickerLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -36,6 +56,66 @@ class CloudWebActivity : AppCompatActivity() {
             val uris = WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data)
             callback.onReceiveValue(uris ?: emptyArray())
         }
+
+    private val bleConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
+            bleService = (binder as? BleService.LocalBinder)?.getService()
+            isBleBound = bleService != null
+            dispatchNativeBleEvent("bridge-ready")
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            isBleBound = false
+            bleService = null
+            dispatchNativeBleEvent("bridge-unavailable")
+        }
+    }
+
+    private val bleConnectionReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val receivedIntent = intent ?: return
+            when (receivedIntent.getStringExtra(Constants.EVENT_BLE_ACTION) ?: "") {
+                Constants.EVENT_BLE_CONNECTION_FOUND_DEVICE -> handleFoundDevice(receivedIntent)
+                Constants.EVENT_BLE_CONNECTION_SUCCESS -> handleConnectionSuccess(receivedIntent)
+                Constants.EVENT_BLE_CONNECTION_ABORT,
+                Constants.EVENT_BLE_CONNECTION_ERROR -> handleConnectionLost(receivedIntent)
+            }
+        }
+    }
+
+    private val bleCommunicationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val mac = intent?.getStringExtra(Constants.MAC_ADDRESS).orEmpty()
+            val slot = macToSlot[mac] ?: slotToMac.entries.firstOrNull { it.value == mac }?.key ?: 1
+            val action = intent?.getStringExtra(Constants.EVENT_BLE_ACTION).orEmpty()
+            val message = intent?.getStringExtra(Constants.EVENT_MESSAGE)
+                ?: intent?.getStringExtra(Constants.EVENT_ERROR_MESSAGE)
+                ?: ""
+            when (action) {
+                Constants.EVENT_BLE_NOTIFICATION -> dispatchNativeBleEvent(
+                    "message",
+                    slot,
+                    mac,
+                    message = message,
+                    channel = "command"
+                )
+
+                Constants.EVENT_BLE_WRITE_FAIL -> dispatchNativeBleEvent(
+                    "error",
+                    slot,
+                    mac,
+                    message = message.ifBlank { "Native BLE write failed." }
+                )
+
+                Constants.FILE_UPLOAD_SUCCESS -> dispatchNativeBleEvent(
+                    "file-upload-success",
+                    slot,
+                    mac,
+                    message = message
+                )
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +130,8 @@ class CloudWebActivity : AppCompatActivity() {
         )
         setContentView(webView)
         configureWebView()
+        bindNativeBleService()
+        registerBleReceivers()
         webView.loadUrl(CLOUD_URL)
     }
 
@@ -72,6 +154,7 @@ class CloudWebActivity : AppCompatActivity() {
             userAgentString = "$userAgentString On2CookCloudApk/1.0"
             mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
         }
+        webView.addJavascriptInterface(NativeBleBridge(), "On2CookNativeBle")
 
         webView.overScrollMode = View.OVER_SCROLL_NEVER
         webView.isHorizontalScrollBarEnabled = false
@@ -128,6 +211,174 @@ class CloudWebActivity : AppCompatActivity() {
         }
     }
 
+    private fun bindNativeBleService() {
+        val intent = Intent(this, BleService::class.java)
+        startService(intent)
+        bindService(intent, bleConnection, Context.BIND_AUTO_CREATE)
+    }
+
+    private fun registerBleReceivers() {
+        val manager = LocalBroadcastManager.getInstance(this)
+        manager.registerReceiver(bleConnectionReceiver, IntentFilter(Constants.EVENT_BLE_CONNECTION))
+        manager.registerReceiver(bleCommunicationReceiver, IntentFilter(Constants.EVENT_BLE_COMMUNICATION))
+    }
+
+    private fun handleFoundDevice(intent: Intent) {
+        val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(Constants.DEVICE, BluetoothDevice::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(Constants.DEVICE)
+        } ?: return
+        if (!foundDuringScan.add(device.address)) return
+
+        val paired = SharedPreferencesManager.getMacAddressList(applicationContext)
+        val matches = pendingConnectSlots.entries.firstOrNull { (slot, targetMac) ->
+            targetMac == device.address || (targetMac == null && paired.none { it.id == slot })
+        } ?: return
+        val slot = matches.key
+        pendingConnectSlots.remove(slot)
+        slotToMac[slot] = device.address
+        macToSlot[device.address] = slot
+        bleService?.connect(device)
+    }
+
+    private fun handleConnectionSuccess(intent: Intent) {
+        val mac = intent.getStringExtra(Constants.MAC_ADDRESS).orEmpty()
+        if (mac.isBlank()) return
+        val slot = macToSlot[mac]
+            ?: SharedPreferencesManager.getMacAddressList(applicationContext).firstOrNull { it.macAddress == mac }?.id
+            ?: nextAvailableSlot()
+        val name = intent.getStringExtra(Constants.DEVICE_NAME).orEmpty()
+        slotToMac[slot] = mac
+        macToSlot[mac] = slot
+        ensurePairedDevice(slot, mac, name.ifBlank { "On2Cook-${slot.toString().padStart(2, '0')}" })
+        pendingConnectSlots.remove(slot)
+        dispatchNativeBleEvent("connected", slot, mac, bluetoothName = name.ifBlank { mac.takeLast(5) })
+    }
+
+    private fun handleConnectionLost(intent: Intent?) {
+        val mac = intent?.getStringExtra(Constants.MAC_ADDRESS).orEmpty()
+        val slot = macToSlot[mac] ?: slotToMac.entries.firstOrNull { it.value == mac }?.key ?: 1
+        if (mac.isNotBlank()) {
+            macToSlot.remove(mac)
+            slotToMac.remove(slot)
+        }
+        val message = intent?.getStringExtra(Constants.EVENT_ERROR_MESSAGE).orEmpty()
+        dispatchNativeBleEvent("disconnected", slot, mac, message = message)
+    }
+
+    private fun ensurePairedDevice(slot: Int, mac: String, name: String) {
+        val devices = SharedPreferencesManager.getMacAddressList(applicationContext)
+        val existing = devices.firstOrNull { it.macAddress == mac }
+        if (existing != null) {
+            existing.id = slot
+            existing.name = name
+            existing.isConnected = true
+        } else {
+            devices.add(PairedDeviceData(mac, slot, name, isEdit = false, isConnected = true))
+        }
+        SharedPreferencesManager.updateMacAddressList(applicationContext, devices)
+    }
+
+    private fun nextAvailableSlot(): Int {
+        val used = slotToMac.keys.toSet()
+        return (1..5).firstOrNull { it !in used } ?: 1
+    }
+
+    private fun dispatchNativeBleEvent(
+        type: String,
+        slot: Int = 0,
+        macAddress: String = "",
+        bluetoothName: String = "",
+        message: String = "",
+        channel: String = "command"
+    ) {
+        if (!this::webView.isInitialized) return
+        val detail = JSONObject()
+            .put("type", type)
+            .put("slot", slot)
+            .put("macAddress", macAddress)
+            .put("browserDeviceId", if (macAddress.isBlank()) "" else "native:$macAddress")
+            .put("bluetoothName", bluetoothName)
+            .put("message", message)
+            .put("channel", channel)
+            .put("at", System.currentTimeMillis())
+        val script =
+            "window.dispatchEvent(new CustomEvent('on2cook-native-ble',{detail:$detail}));"
+        webView.post {
+            webView.evaluateJavascript(script, null)
+        }
+    }
+
+    inner class NativeBleBridge {
+        @JavascriptInterface
+        fun isAvailable(): Boolean = true
+
+        @JavascriptInterface
+        fun connect(slot: Int): String {
+            val safeSlot = slot.coerceIn(1, 5)
+            val service = bleService
+            if (!isBleBound || service == null) {
+                return JSONObject().put("ok", false).put("error", "Native BLE service is not ready.").toString()
+            }
+
+            val paired = SharedPreferencesManager.getMacAddressList(applicationContext)
+            val target = paired.firstOrNull { it.id == safeSlot }
+            if (target != null && service.isDeviceConnected(target.macAddress)) {
+                slotToMac[safeSlot] = target.macAddress
+                macToSlot[target.macAddress] = safeSlot
+                dispatchNativeBleEvent(
+                    "connected",
+                    safeSlot,
+                    target.macAddress,
+                    bluetoothName = target.name.ifBlank { service.getConnectedDeviceName(target.macAddress) }
+                )
+                return JSONObject().put("ok", true).put("mode", "already-connected").toString()
+            }
+
+            pendingConnectSlots[safeSlot] = target?.macAddress
+            foundDuringScan.clear()
+            service.stopScan()
+            service.startScan()
+            dispatchNativeBleEvent("scan-started", safeSlot, target?.macAddress.orEmpty())
+            return JSONObject().put("ok", true).put("mode", "scan").toString()
+        }
+
+        @JavascriptInterface
+        fun disconnect(slot: Int): String {
+            val safeSlot = slot.coerceIn(1, 5)
+            val mac = slotToMac[safeSlot].orEmpty()
+            if (mac.isNotBlank()) {
+                bleService?.disconnect(mac)
+                macToSlot.remove(mac)
+                slotToMac.remove(safeSlot)
+            }
+            dispatchNativeBleEvent("disconnected", safeSlot, mac)
+            return JSONObject().put("ok", true).toString()
+        }
+
+        @JavascriptInterface
+        fun sendCommand(slot: Int, message: String): String {
+            val mac = slotToMac[slot].orEmpty()
+            if (mac.isBlank()) {
+                return JSONObject().put("ok", false).put("error", "No native BLE device is mapped to this slot.").toString()
+            }
+            bleService?.writeData(mac, message.toByteArray(Charsets.UTF_8))
+            return JSONObject().put("ok", true).toString()
+        }
+
+        @JavascriptInterface
+        fun sendFile(slot: Int, message: String): String {
+            val mac = slotToMac[slot].orEmpty()
+            if (mac.isBlank()) {
+                return JSONObject().put("ok", false).put("error", "No native BLE device is mapped to this slot.").toString()
+            }
+            bleService?.writeFileData(mac, message.toByteArray(Charsets.UTF_8))
+            return JSONObject().put("ok", true).toString()
+        }
+    }
+
     private fun requestCloudPermissions() {
         val permissions = mutableListOf(
             Manifest.permission.CAMERA,
@@ -160,6 +411,14 @@ class CloudWebActivity : AppCompatActivity() {
     override fun onDestroy() {
         filePathCallback?.onReceiveValue(null)
         filePathCallback = null
+        runCatching {
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(bleConnectionReceiver)
+            LocalBroadcastManager.getInstance(this).unregisterReceiver(bleCommunicationReceiver)
+        }
+        if (isBleBound) {
+            runCatching { unbindService(bleConnection) }
+            isBleBound = false
+        }
         if (this::webView.isInitialized) {
             webView.destroy()
         }

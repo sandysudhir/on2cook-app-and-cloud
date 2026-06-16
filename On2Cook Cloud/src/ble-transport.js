@@ -119,7 +119,14 @@ export class BleTransport extends EventTarget {
   constructor() {
     super();
     this.sessions = new Map();
-    this.supported = Boolean(navigator.bluetooth);
+    this.nativeBridge = globalThis.On2CookNativeBle || null;
+    this.usesNativeBridge = Boolean(this.nativeBridge?.isAvailable?.());
+    this.supported = Boolean(this.usesNativeBridge || navigator.bluetooth);
+    if (this.usesNativeBridge) {
+      window.addEventListener("on2cook-native-ble", (event) => {
+        this.onNativeBleEvent(event.detail || {});
+      });
+    }
   }
 
   getSession(slot) {
@@ -127,6 +134,11 @@ export class BleTransport extends EventTarget {
   }
 
   getConnectedSlots() {
+    if (this.usesNativeBridge) {
+      return Array.from(this.sessions.values())
+        .filter((session) => session.nativeConnected)
+        .map((session) => session.slot);
+    }
     return Array.from(this.sessions.values())
       .filter((session) => session.server?.connected)
       .map((session) => session.slot);
@@ -145,6 +157,9 @@ export class BleTransport extends EventTarget {
   async connect(slot, rememberedBrowserDeviceId = "") {
     if (!this.supported) {
       throw new Error("Web Bluetooth is not available in this browser.");
+    }
+    if (this.usesNativeBridge) {
+      return this.connectNative(slot);
     }
     let device = null;
     if (rememberedBrowserDeviceId && navigator.bluetooth.getDevices) {
@@ -215,6 +230,11 @@ export class BleTransport extends EventTarget {
   async disconnect(slot) {
     const session = this.sessions.get(slot);
     if (!session) return;
+    if (this.usesNativeBridge) {
+      this.nativeBridge?.disconnect?.(Number(slot));
+      this.cleanupSession(session);
+      return;
+    }
     this.cleanupSession(session);
     if (session.device?.gatt?.connected) {
       session.device.gatt.disconnect();
@@ -251,6 +271,128 @@ export class BleTransport extends EventTarget {
     session.run = null;
     session.recipeListRequest = null;
     this.sessions.delete(session.slot);
+  }
+
+  createNativeSession(slot, detail = {}) {
+    const existing = this.sessions.get(slot);
+    if (existing?.nativeConnected) return existing;
+    const session = {
+      slot,
+      nativeConnected: true,
+      browserDeviceId: detail.browserDeviceId || (detail.macAddress ? `native:${detail.macAddress}` : `native:${slot}`),
+      bluetoothName: detail.bluetoothName || "",
+      macAddress: detail.macAddress || "",
+      transfer: null,
+      run: null,
+      recipeListRequest: null,
+      pendingCommand: null,
+      lastDeviceMessage: null,
+      lastActivityAt: new Date().toISOString(),
+      writeChain: Promise.resolve()
+    };
+    this.sessions.set(slot, session);
+    return session;
+  }
+
+  onNativeBleEvent(detail) {
+    const slot = Number(detail.slot || 0);
+    if (!slot && detail.type !== "bridge-ready") return;
+    if (detail.type === "connected") {
+      const session = this.createNativeSession(slot, detail);
+      session.nativeConnected = true;
+      session.browserDeviceId = detail.browserDeviceId || session.browserDeviceId;
+      session.bluetoothName = detail.bluetoothName || session.bluetoothName;
+      session.macAddress = detail.macAddress || session.macAddress;
+      this.dispatch("device-connected", {
+        slot,
+        browserDeviceId: session.browserDeviceId,
+        bluetoothName: session.bluetoothName,
+        serviceUuid: SERVICE_UUID
+      });
+      return;
+    }
+    if (detail.type === "disconnected") {
+      const session = this.sessions.get(slot);
+      if (session) {
+        this.cleanupSession(session);
+      }
+      this.dispatch("device-disconnected", {
+        slot,
+        browserDeviceId: detail.browserDeviceId || `native:${detail.macAddress || slot}`,
+        bluetoothName: detail.bluetoothName || ""
+      });
+      return;
+    }
+    if (detail.type === "message") {
+      const session = this.createNativeSession(slot, detail);
+      const bytes = encoder.encode(String(detail.message || ""));
+      this.onNotification(session.slot, detail.channel || "command", bytes);
+      return;
+    }
+    if (detail.type === "error") {
+      this.dispatch("native-ble-error", {
+        slot,
+        message: detail.message || "Native BLE error.",
+        at: new Date().toISOString()
+      });
+    }
+  }
+
+  async connectNative(slot) {
+    const response = this.callNativeBridge("connect", Number(slot));
+    if (response && response.ok === false) {
+      throw new Error(response.error || "Native BLE connection failed.");
+    }
+    return await this.waitForNativeConnection(slot, 12000);
+  }
+
+  waitForNativeConnection(slot, timeoutMs = 12000) {
+    const existing = this.sessions.get(slot);
+    if (existing?.nativeConnected) {
+      return Promise.resolve({
+        slot,
+        browserDeviceId: existing.browserDeviceId,
+        bluetoothName: existing.bluetoothName || ""
+      });
+    }
+    return new Promise((resolve, reject) => {
+      let timeoutId = 0;
+      const cleanup = () => {
+        clearTimeout(timeoutId);
+        this.removeEventListener("device-connected", handleConnect);
+        this.removeEventListener("native-ble-error", handleError);
+      };
+      const handleConnect = (event) => {
+        if (Number(event.detail.slot) !== Number(slot)) return;
+        cleanup();
+        resolve(event.detail);
+      };
+      const handleError = (event) => {
+        if (Number(event.detail.slot) !== Number(slot)) return;
+        cleanup();
+        reject(new Error(event.detail.message || "Native BLE connection failed."));
+      };
+      timeoutId = window.setTimeout(() => {
+        cleanup();
+        reject(new Error(`Timed out waiting for native BLE connection on Device ${slot}.`));
+      }, timeoutMs);
+      this.addEventListener("device-connected", handleConnect);
+      this.addEventListener("native-ble-error", handleError);
+    });
+  }
+
+  callNativeBridge(method, ...args) {
+    const bridgeMethod = this.nativeBridge?.[method];
+    if (typeof bridgeMethod !== "function") {
+      throw new Error(`Native BLE bridge method ${method} is not available.`);
+    }
+    const raw = bridgeMethod.apply(this.nativeBridge, args);
+    if (typeof raw !== "string" || !raw.trim()) return { ok: true };
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return { ok: true, raw };
+    }
   }
 
   async startNotifications(session, characteristic, channel) {
@@ -486,7 +628,12 @@ export class BleTransport extends EventTarget {
       session.pendingCommand = null;
     }
     await this.enqueueSessionWrite(session, async () => {
-      await this.writeCharacteristic(session.commandCharacteristic, message, true);
+      if (this.usesNativeBridge) {
+        const response = this.callNativeBridge("sendCommand", Number(slot), String(message));
+        if (response?.ok === false) throw new Error(response.error || "Native BLE command failed.");
+      } else {
+        await this.writeCharacteristic(session.commandCharacteristic, message, true);
+      }
     });
     this.dispatch("command-sent", {
       slot,
@@ -499,7 +646,16 @@ export class BleTransport extends EventTarget {
   async sendFile(slot, messageOrBytes) {
     const session = this.requireSession(slot);
     await this.enqueueSessionWrite(session, async () => {
-      await this.writeCharacteristic(session.fileCharacteristic, messageOrBytes, false);
+      if (this.usesNativeBridge) {
+        const payload =
+          typeof messageOrBytes === "string"
+            ? messageOrBytes
+            : decoder.decode(messageOrBytes);
+        const response = this.callNativeBridge("sendFile", Number(slot), payload);
+        if (response?.ok === false) throw new Error(response.error || "Native BLE file write failed.");
+      } else {
+        await this.writeCharacteristic(session.fileCharacteristic, messageOrBytes, false);
+      }
     });
     this.dispatch("command-sent", {
       slot,
@@ -511,6 +667,12 @@ export class BleTransport extends EventTarget {
 
   requireSession(slot) {
     const session = this.sessions.get(slot);
+    if (this.usesNativeBridge) {
+      if (!session || !session.nativeConnected) {
+        throw new Error(`Device slot ${slot} is not connected.`);
+      }
+      return session;
+    }
     if (!session || !session.server?.connected) {
       throw new Error(`Device slot ${slot} is not connected.`);
     }
