@@ -346,6 +346,56 @@ export class BleTransport extends EventTarget {
     return await this.waitForNativeConnection(slot, 12000);
   }
 
+  async connectAllNative(slots = [1, 2, 3, 4, 5]) {
+    if (!this.usesNativeBridge) {
+      const results = [];
+      for (const slot of slots) {
+        try {
+          results.push(await this.connect(slot));
+        } catch (error) {
+          console.warn(`Unable to connect Device ${slot}.`, error);
+        }
+      }
+      return results;
+    }
+    const response = this.callNativeBridge("connectAll");
+    if (response && response.ok === false) {
+      throw new Error(response.error || "Native BLE connect-all failed.");
+    }
+    return await this.waitForNativeConnectSet(slots, 12000);
+  }
+
+  waitForNativeConnectSet(slots, timeoutMs = 12000) {
+    const targetSlots = new Set(slots.map((slot) => Number(slot)));
+    const collectConnected = () =>
+      Array.from(this.sessions.values()).filter((session) => targetSlots.has(Number(session.slot)) && session.nativeConnected);
+    const existing = collectConnected();
+    if (existing.length >= targetSlots.size) {
+      return Promise.resolve(existing);
+    }
+    return new Promise((resolve) => {
+      let timeoutId = 0;
+      const cleanup = () => {
+        clearTimeout(timeoutId);
+        this.removeEventListener("device-connected", handleConnect);
+      };
+      const finishIfReady = () => {
+        const connected = collectConnected();
+        if (connected.length >= targetSlots.size) {
+          cleanup();
+          resolve(connected);
+        }
+      };
+      const handleConnect = () => finishIfReady();
+      timeoutId = window.setTimeout(() => {
+        cleanup();
+        resolve(collectConnected());
+      }, timeoutMs);
+      this.addEventListener("device-connected", handleConnect);
+      finishIfReady();
+    });
+  }
+
   waitForNativeConnection(slot, timeoutMs = 12000) {
     const existing = this.sessions.get(slot);
     if (existing?.nativeConnected) {

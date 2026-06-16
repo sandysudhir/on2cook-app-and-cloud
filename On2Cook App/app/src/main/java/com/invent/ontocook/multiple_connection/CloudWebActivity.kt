@@ -14,7 +14,9 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
@@ -48,6 +50,8 @@ class CloudWebActivity : AppCompatActivity() {
     private val slotToMac = linkedMapOf<Int, String>()
     private val macToSlot = linkedMapOf<String, Int>()
     private val foundDuringScan = linkedSetOf<String>()
+    private val reconnectHandler = Handler(Looper.getMainLooper())
+    private var autoReconnectEnabled = false
 
     private val filePickerLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -233,14 +237,32 @@ class CloudWebActivity : AppCompatActivity() {
         if (!foundDuringScan.add(device.address)) return
 
         val paired = SharedPreferencesManager.getMacAddressList(applicationContext)
-        val matches = pendingConnectSlots.entries.firstOrNull { (slot, targetMac) ->
-            targetMac == device.address || (targetMac == null && paired.none { it.id == slot })
+        val pairedForDevice = paired.firstOrNull { it.macAddress == device.address }
+        val slot = when {
+            pairedForDevice != null && pendingConnectSlots.containsKey(pairedForDevice.id) -> {
+                pairedForDevice.id
+            }
+            pendingConnectSlots.entries.any { it.value == device.address } -> {
+                val entry = pendingConnectSlots.entries.first { it.value == device.address }
+                entry.key
+            }
+            else -> {
+                pendingConnectSlots.entries.firstOrNull { (slot, targetMac) ->
+                    targetMac == null && slotToMac[slot].isNullOrBlank()
+                }?.key
+            }
         } ?: return
-        val slot = matches.key
         pendingConnectSlots.remove(slot)
         slotToMac[slot] = device.address
         macToSlot[device.address] = slot
-        bleService?.connect(device)
+        if (bleService?.isDeviceConnected(device.address) == true) {
+            handleConnectionSuccess(
+                Intent().putExtra(Constants.MAC_ADDRESS, device.address)
+                    .putExtra(Constants.DEVICE_NAME, device.name.orEmpty())
+            )
+        } else {
+            bleService?.connect(device)
+        }
     }
 
     private fun handleConnectionSuccess(intent: Intent) {
@@ -266,6 +288,22 @@ class CloudWebActivity : AppCompatActivity() {
         }
         val message = intent?.getStringExtra(Constants.EVENT_ERROR_MESSAGE).orEmpty()
         dispatchNativeBleEvent("disconnected", slot, mac, message = message)
+        if (autoReconnectEnabled && mac.isNotBlank()) {
+            scheduleReconnect(slot, mac)
+        }
+    }
+
+    private fun scheduleReconnect(slot: Int, mac: String) {
+        reconnectHandler.removeCallbacksAndMessages("reconnect-$slot")
+        reconnectHandler.postDelayed({
+            val service = bleService ?: return@postDelayed
+            if (service.isDeviceConnected(mac)) return@postDelayed
+            pendingConnectSlots[slot] = mac
+            foundDuringScan.clear()
+            service.stopScan()
+            service.startScan()
+            dispatchNativeBleEvent("scan-started", slot, mac, message = "Auto reconnect scan started")
+        }, 1800)
     }
 
     private fun ensurePairedDevice(slot: Int, mac: String, name: String) {
@@ -322,6 +360,7 @@ class CloudWebActivity : AppCompatActivity() {
             if (!isBleBound || service == null) {
                 return JSONObject().put("ok", false).put("error", "Native BLE service is not ready.").toString()
             }
+            autoReconnectEnabled = true
 
             val paired = SharedPreferencesManager.getMacAddressList(applicationContext)
             val target = paired.firstOrNull { it.id == safeSlot }
@@ -346,10 +385,42 @@ class CloudWebActivity : AppCompatActivity() {
         }
 
         @JavascriptInterface
+        fun connectAll(): String {
+            val service = bleService
+            if (!isBleBound || service == null) {
+                return JSONObject().put("ok", false).put("error", "Native BLE service is not ready.").toString()
+            }
+            autoReconnectEnabled = true
+            val paired = SharedPreferencesManager.getMacAddressList(applicationContext)
+            pendingConnectSlots.clear()
+            (1..5).forEach { slot ->
+                val target = paired.firstOrNull { it.id == slot }
+                if (target != null && service.isDeviceConnected(target.macAddress)) {
+                    slotToMac[slot] = target.macAddress
+                    macToSlot[target.macAddress] = slot
+                    dispatchNativeBleEvent(
+                        "connected",
+                        slot,
+                        target.macAddress,
+                        bluetoothName = target.name.ifBlank { service.getConnectedDeviceName(target.macAddress) }
+                    )
+                } else {
+                    pendingConnectSlots[slot] = target?.macAddress
+                }
+            }
+            foundDuringScan.clear()
+            service.stopScan()
+            service.startScan()
+            dispatchNativeBleEvent("scan-started", 0, message = "Connect all scan started")
+            return JSONObject().put("ok", true).put("mode", "scan-all").toString()
+        }
+
+        @JavascriptInterface
         fun disconnect(slot: Int): String {
             val safeSlot = slot.coerceIn(1, 5)
             val mac = slotToMac[safeSlot].orEmpty()
             if (mac.isNotBlank()) {
+                pendingConnectSlots.remove(safeSlot)
                 bleService?.disconnect(mac)
                 macToSlot.remove(mac)
                 slotToMac.remove(safeSlot)
@@ -415,6 +486,7 @@ class CloudWebActivity : AppCompatActivity() {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(bleConnectionReceiver)
             LocalBroadcastManager.getInstance(this).unregisterReceiver(bleCommunicationReceiver)
         }
+        reconnectHandler.removeCallbacksAndMessages(null)
         if (isBleBound) {
             runCatching { unbindService(bleConnection) }
             isBleBound = false

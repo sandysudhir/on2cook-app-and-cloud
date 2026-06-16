@@ -1188,6 +1188,55 @@ button {
   background: #fff;
 }
 
+.bluetooth-home-button {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  background: #fff;
+  color: var(--accent-strong);
+  border: 1px solid rgba(244, 123, 32, 0.22);
+  box-shadow: 0 10px 22px rgba(80, 56, 34, 0.08);
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.bluetooth-home-button.connected {
+  color: #217a5a;
+  border-color: rgba(33, 122, 90, 0.26);
+  background: rgba(232, 248, 241, 0.92);
+}
+
+.bluetooth-glyph {
+  font-size: 1.32rem;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.bluetooth-count {
+  position: absolute;
+  right: -5px;
+  top: -6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  box-shadow: 0 6px 14px rgba(244, 123, 32, 0.28);
+}
+
+.bluetooth-home-button.connected .bluetooth-count {
+  background: #217a5a;
+}
+
 .device-head {
   background: linear-gradient(180deg, rgba(45, 108, 223, 0.08), rgba(45, 108, 223, 0.02));
 }

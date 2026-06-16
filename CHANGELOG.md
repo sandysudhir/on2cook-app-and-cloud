@@ -6,6 +6,11 @@
 - Updated the cloud BLE transport to prefer `window.On2CookNativeBle` in the APK while keeping normal Web Bluetooth for Chrome/Edge.
 - Bumped web cache version to `20260616e` / service-worker cache `v36`.
 - Built native-BLE test APK: `On2Cook-Native-BLE-Bridge-2026-06-16.apk`.
+- Added a home-screen Bluetooth connect-all button on the On2Cook Demo Kitchen panel.
+- Added native APK connect-all scanning so the WebView can connect all discovered On2Cook devices into Device 1-5 slots from one tap.
+- Added native auto-reconnect scanning after unexpected BLE disconnects.
+- Bumped web cache version to `20260616f` / service-worker cache `v37`.
+- Built connect-all APK: `On2Cook-Home-Bluetooth-Connect-All-2026-06-16.apk`.
 - Fixed device cards so completed or aborted recipes no longer keep rendering as a highlighted live execution timeline.
 - Kept finished/aborted recipe detail available through the last-recipe sheet tab while reserving the execution timeline for active cooking only.
 - Bumped web cache version to `20260616a` / service-worker cache `v32`.

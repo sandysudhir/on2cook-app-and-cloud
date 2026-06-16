@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260616e";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260616e";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260616f";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260616f";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260616e";
+} from "./ncb-services.js?v=20260616f";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260616e";
+} from "./data-store.js?v=20260616f";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -2093,6 +2093,45 @@ async function connectDevice(slot) {
   }
 }
 
+async function connectAllDevices() {
+  const slots = [1, 2, 3, 4, 5];
+  mutate((draft) => {
+    draft.devices.forEach((device) => {
+      if (device.connection === "connected") return;
+      device.connection = "connecting";
+      device.lastMessage = ble.usesNativeBridge ? "Scanning for all On2Cook devices" : "Opening Bluetooth connection flow";
+      appendActivity(device, "Kitchen Bluetooth connect-all requested from home screen", "info");
+    });
+  });
+  try {
+    if (typeof ble.connectAllNative === "function") {
+      await ble.connectAllNative(slots);
+    } else {
+      for (const slot of slots) {
+        const current = getDevice(slot);
+        if (current?.connection === "connected") continue;
+        await ble.connect(Number(slot), current?.browserDeviceId || "");
+      }
+    }
+    const connectedCount = getConnectedDevices(state()).length;
+    showToast(
+      connectedCount > 0
+        ? `${connectedCount} device${connectedCount === 1 ? "" : "s"} connected. Reconnect is active.`
+        : "Bluetooth scan started. Devices will appear as they connect.",
+      connectedCount > 0 ? "success" : "info"
+    );
+  } catch (error) {
+    mutate((draft) => {
+      draft.devices.forEach((device) => {
+        if (device.connection !== "connecting") return;
+        device.connection = "disconnected";
+        device.lastMessage = error.message;
+      });
+    });
+    showToast(error.message, "error");
+  }
+}
+
 async function disconnectDevice(slot) {
   await ble.disconnect(Number(slot));
   mutate((draft) => {
@@ -3763,6 +3802,8 @@ function renderMoreTab(snapshot, perms) {
 
 function renderControlPhone(snapshot) {
   const perms = currentPermissions(snapshot);
+  const connectedCount = getConnectedDevices(snapshot).length;
+  const connectingCount = snapshot.devices.filter((device) => device.connection === "connecting").length;
   const body =
     snapshot.ui.activeTab === "orders"
       ? snapshot.ui.orderMode === "current"
@@ -3788,6 +3829,16 @@ function renderControlPhone(snapshot) {
             <h2>${escapeHtml(snapshot.facilities[0]?.name || "Kitchen console")}</h2>
             <p>${escapeHtml(getCurrentUser(snapshot).displayName)} | ${escapeHtml(getCurrentUser(snapshot).role)}</p>
           </div>
+          <button
+            class="icon-button bluetooth-home-button ${connectedCount > 0 ? "connected" : ""}"
+            type="button"
+            data-action="connect-all-devices"
+            title="Connect all On2Cook devices"
+            aria-label="Connect all On2Cook devices"
+          >
+            <span class="bluetooth-glyph">B</span>
+            <span class="bluetooth-count">${connectingCount > 0 ? "..." : connectedCount}</span>
+          </button>
         </header>
         ${renderControlTabs(snapshot)}
         <div class="phone-body" data-scroll-key="body-control">${body}</div>
@@ -5855,6 +5906,10 @@ async function handleClick(event) {
   }
   if (action === "connect-device") {
     await connectDevice(button.dataset.slot);
+    return;
+  }
+  if (action === "connect-all-devices") {
+    await connectAllDevices();
     return;
   }
   if (action === "disconnect-device") {
