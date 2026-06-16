@@ -14,6 +14,7 @@
 - Changed completed recipe wait timing so "Since completion" freezes when the next recipe actually starts cooking on firmware.
 - Disabled automatic `ingredients=100`; ingredient completion now requires explicit confirmation on the device or via the web screen button.
 - Bumped web cache version to `20260616d` / service-worker cache `v35`.
+- Built finalized Android debug APK for current native Home + cloud Orders/WebView flow: `On2Cook App/On2Cook-Final-Cloud-Orders-2026-06-16.apk`.
 
 ## 2026-06-15
 
