@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260616b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260616b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260616c";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260616c";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260616b";
+} from "./ncb-services.js?v=20260616c";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,9 +21,10 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260616b";
+} from "./data-store.js?v=20260616c";
 
 const app = document.getElementById("app");
+const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const ble = new BleTransport();
 let seedRecipes = [];
 let globalRecipeCatalog = [];
@@ -61,6 +62,55 @@ function state() {
 
 function mutate(recipe) {
   store.setState((draft) => recipe(draft) || draft);
+}
+
+function captureScrollState() {
+  const positions = {};
+  document.querySelectorAll("[data-scroll-key]").forEach((element) => {
+    positions[element.dataset.scrollKey] = {
+      left: element.scrollLeft || 0,
+      top: element.scrollTop || 0
+    };
+  });
+  return {
+    windowX: window.scrollX || 0,
+    windowY: window.scrollY || 0,
+    positions
+  };
+}
+
+function restoreScrollState(scrollState) {
+  if (!scrollState) return;
+  window.requestAnimationFrame(() => {
+    window.scrollTo(scrollState.windowX || 0, scrollState.windowY || 0);
+    Object.entries(scrollState.positions || {}).forEach(([key, position]) => {
+      const element = Array.from(document.querySelectorAll("[data-scroll-key]")).find(
+        (candidate) => candidate.dataset.scrollKey === key
+      );
+      if (!element) return;
+      element.scrollLeft = position.left || 0;
+      element.scrollTop = position.top || 0;
+    });
+  });
+}
+
+function saveScrollStateForReload() {
+  try {
+    sessionStorage.setItem(SCROLL_STATE_KEY, JSON.stringify(captureScrollState()));
+  } catch (error) {
+    console.warn("[On2Cook] Could not save scroll state before refresh.", error);
+  }
+}
+
+function takeSavedScrollState() {
+  try {
+    const raw = sessionStorage.getItem(SCROLL_STATE_KEY);
+    sessionStorage.removeItem(SCROLL_STATE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn("[On2Cook] Could not restore saved scroll state.", error);
+    return null;
+  }
 }
 
 function nowIso() {
@@ -1260,6 +1310,7 @@ async function registerServiceWorker() {
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (refreshing) return;
       refreshing = true;
+      saveScrollStateForReload();
       window.location.reload();
     });
     const registration = await navigator.serviceWorker.register("./service-worker.js");
@@ -3718,7 +3769,7 @@ function renderControlPhone(snapshot) {
       : renderMoreTab(snapshot, perms);
 
   return `
-    <section class="phone-frame control-phone">
+    <section class="phone-frame control-phone" data-scroll-key="frame-control">
       <div class="phone-shell">
         <header class="phone-head hero-head">
           <img src="./assets/app_banner.png" alt="On2Cook">
@@ -3729,7 +3780,7 @@ function renderControlPhone(snapshot) {
           </div>
         </header>
         ${renderControlTabs(snapshot)}
-        <div class="phone-body">${body}</div>
+        <div class="phone-body" data-scroll-key="body-control">${body}</div>
       </div>
     </section>
   `;
@@ -4004,7 +4055,7 @@ function renderDevicePhone(snapshot, device) {
   const summaryMessage = getDeviceSummaryMessage(device);
   const uploadState = device.uploadState || emptyUploadState();
   return `
-    <section class="phone-frame device-phone ${device.connection}">
+    <section class="phone-frame device-phone ${device.connection}" data-scroll-key="frame-device-${device.slot}">
       <div class="phone-shell">
         <header class="phone-head device-head">
           <div>
@@ -4016,7 +4067,7 @@ function renderDevicePhone(snapshot, device) {
             ${escapeHtml(connectionLabel)}
           </span>
         </header>
-        <div class="phone-body">
+        <div class="phone-body" data-scroll-key="body-device-${device.slot}">
           <section class="stack-section">
             <div class="summary-card">
               <div class="row space">
@@ -5065,6 +5116,7 @@ function renderModal(snapshot) {
 
 function render() {
   const snapshot = state();
+  const scrollState = captureScrollState();
   app.innerHTML = `
     <div class="surface">
       <header class="page-hero">
@@ -5081,13 +5133,14 @@ function render() {
         </div>
       </header>
       ${snapshot.ui.toast ? `<div class="toast ${snapshot.ui.toastTone}">${escapeHtml(snapshot.ui.toast)}</div>` : ""}
-      <main class="screen-rail">
+      <main class="screen-rail" data-scroll-key="screen-rail">
         ${renderControlPhone(snapshot)}
         ${snapshot.devices.map((device) => renderDevicePhone(snapshot, device)).join("")}
       </main>
       ${renderModal(snapshot)}
     </div>
   `;
+  restoreScrollState(scrollState);
 }
 
 async function handleManualOrderSubmit(formData) {
@@ -6530,6 +6583,7 @@ function bindStore() {
     render();
   });
   render();
+  restoreScrollState(takeSavedScrollState());
 }
 
 async function init() {

@@ -9,6 +9,8 @@
 - Increased retained per-device local activity from 30 to 100 entries and added a saved device log section inside Device Details.
 - Changed the Logs button so disconnected devices open saved history instead of trying a BLE firmware log request.
 - Bumped web cache version to `20260616b` / service-worker cache `v33`.
+- Preserved page, horizontal device rail, and individual phone-panel scroll positions across app re-renders and service-worker refreshes.
+- Bumped web cache version to `20260616c` / service-worker cache `v34`.
 
 ## 2026-06-15
 
