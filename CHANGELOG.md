@@ -31,3 +31,5 @@
 - Changed post-cook Recipe Sheet Back/Return actions and Save to Library to return to Queue, and removed the disruptive automatic switch to the Recipes tab after saving.
 - Ensured viewing or saving a post-cook sheet nudges queue scheduling so photo/save work does not block the next queued recipe.
 - Bumped web cache version to `20260615k` / service-worker cache `v31`.
+- Restored the Android APK startup path to the native Home screen instead of auto-opening the cloud WebView.
+- Kept the existing Home choices visible and changed the Home `Orders` tile to open the On2Cook Cloud WebView only when tapped.

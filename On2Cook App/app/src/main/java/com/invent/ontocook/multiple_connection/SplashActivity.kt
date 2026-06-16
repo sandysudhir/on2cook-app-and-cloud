@@ -35,7 +35,7 @@ class SplashActivity : AppCompatActivity() {
 
         handler.postDelayed({
             Constants.IS_TABLET = tabletSize
-            startActivity(Intent(this@SplashActivity, CloudWebActivity::class.java))
+            startActivity(Intent(this@SplashActivity, HomeActivity::class.java))
             finish()
         }, 1500)
     }

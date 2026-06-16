@@ -58,6 +58,7 @@ import com.invent.ontocook.OnToCookApplication
 import com.invent.ontocook.R
 import com.invent.ontocook.databinding.FragmentHomeBinding
 import com.invent.ontocook.extension.setSafeOnClickListener
+import com.invent.ontocook.multiple_connection.CloudWebActivity
 import com.invent.ontocook.multiple_connection.HomeActivity
 import com.invent.ontocook.multiple_connection.HomeTvActivity
 import com.invent.ontocook.multiple_connection.model.database.Recipe
@@ -1228,11 +1229,15 @@ class HomeFragment : Fragment() {
         binding.orderModuleHost!!.visibility = View.GONE
         binding.homeBottomNavigation!!.visibility = View.GONE
 
-        binding.clShop.setOnClickListener { openOrderModule() }
+        binding.clShop.setOnClickListener { openCloudOrderModule() }
         binding.bottomTabOrders!!.setOnClickListener { selectOrderModuleTab(OrderModuleTab.ORDERS) }
         binding.bottomTabDevices!!.setOnClickListener { selectOrderModuleTab(OrderModuleTab.DEVICES) }
         binding.bottomTabRecipes!!.setOnClickListener { selectOrderModuleTab(OrderModuleTab.RECIPES) }
         binding.bottomTabMore!!.setOnClickListener { selectOrderModuleTab(OrderModuleTab.MORE) }
+    }
+
+    private fun openCloudOrderModule() {
+        startActivity(Intent(requireContext(), CloudWebActivity::class.java))
     }
 
     private fun openOrderModule() {
