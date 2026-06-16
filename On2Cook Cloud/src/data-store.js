@@ -109,9 +109,15 @@ function compactOrderForStorage(order, aggressive = false) {
 }
 
 function compactDeviceForStorage(device, aggressive = false) {
+  const logFetch = device.logFetch || {};
   return {
     ...device,
     serialPhotoDataUrl: aggressive ? "" : device.serialPhotoDataUrl || "",
+    logFiles: Array.isArray(device.logFiles) ? device.logFiles.slice(0, 100) : [],
+    logFetch: {
+      ...logFetch,
+      content: aggressive ? "" : String(logFetch.content || "").slice(-20000)
+    },
     activity: Array.isArray(device.activity) ? device.activity.slice(-MAX_PERSISTED_DEVICE_ACTIVITY) : []
   };
 }
@@ -562,6 +568,19 @@ function createDeviceSlot(slot, allowedRecipeIds = []) {
     recipeInventoryUpdatedAt: "",
     syncedRecipeNames: [],
     syncedRecipeSignatures: {},
+    logFiles: [],
+    logFetch: {
+      listing: false,
+      reading: false,
+      activeFile: "",
+      activeDisplayName: "",
+      content: "",
+      started: false,
+      complete: false,
+      error: "",
+      status: "",
+      updatedAt: ""
+    },
     telemetry: {
       workStatus: "offline",
       currentRecipe: "",
@@ -673,6 +692,10 @@ function hydrateDevices(devices, recipes) {
       ...createDeviceSlot(index + 1, defaultAllowedRecipeIds).uploadState,
       ...(existing.uploadState || {})
     };
+    hydrated.logFetch = {
+      ...createDeviceSlot(index + 1, defaultAllowedRecipeIds).logFetch,
+      ...(existing.logFetch || {})
+    };
     hydrated.telemetry = {
       ...createDeviceSlot(index + 1, defaultAllowedRecipeIds).telemetry,
       ...(existing.telemetry || {})
@@ -687,6 +710,9 @@ function hydrateDevices(devices, recipes) {
     }
     if (!Array.isArray(hydrated.syncedRecipeNames)) {
       hydrated.syncedRecipeNames = [];
+    }
+    if (!Array.isArray(hydrated.logFiles)) {
+      hydrated.logFiles = [];
     }
     if (!hydrated.syncedRecipeSignatures || typeof hydrated.syncedRecipeSignatures !== "object") {
       hydrated.syncedRecipeSignatures = {};

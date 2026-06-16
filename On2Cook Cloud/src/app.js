@@ -979,6 +979,132 @@ function appendFlowActivity(device, text, tone = "info", at = nowIso()) {
   });
 }
 
+const MAX_LIVE_DEVICE_LOG_CHARS = 120000;
+
+function emptyLogFetchState() {
+  return {
+    listing: false,
+    reading: false,
+    activeFile: "",
+    activeDisplayName: "",
+    content: "",
+    started: false,
+    complete: false,
+    error: "",
+    status: "",
+    updatedAt: ""
+  };
+}
+
+function formatLogFileDisplay(rawName) {
+  return String(rawName || "")
+    .replace(/^.*[\\/]/, "")
+    .replace(/\.txt$/i, "")
+    .trim() || "Device log";
+}
+
+function ensureDeviceLogState(device) {
+  if (!Array.isArray(device.logFiles)) {
+    device.logFiles = [];
+  }
+  device.logFetch = {
+    ...emptyLogFetchState(),
+    ...(device.logFetch || {})
+  };
+  return device.logFetch;
+}
+
+function beginDeviceLogListing(device, at = nowIso()) {
+  const logFetch = ensureDeviceLogState(device);
+  device.logFiles = [];
+  logFetch.listing = true;
+  logFetch.error = "";
+  logFetch.status = "Reading firmware log list...";
+  logFetch.updatedAt = at;
+  device.lastUpdatedAt = at;
+  device.lastMessage = "Reading firmware log list...";
+}
+
+function beginDeviceLogRead(device, rawName, at = nowIso()) {
+  const logFetch = ensureDeviceLogState(device);
+  logFetch.reading = true;
+  logFetch.started = false;
+  logFetch.complete = false;
+  logFetch.activeFile = rawName;
+  logFetch.activeDisplayName = formatLogFileDisplay(rawName);
+  logFetch.content = "";
+  logFetch.error = "";
+  logFetch.status = `Requesting ${logFetch.activeDisplayName}...`;
+  logFetch.updatedAt = at;
+  device.lastUpdatedAt = at;
+  device.lastMessage = logFetch.status;
+}
+
+function handleDeviceLogControlMessage(device, message, at = nowIso()) {
+  const logFetch = ensureDeviceLogState(device);
+  const text = String(message || "").trim();
+  if (text.startsWith("LOGFILE=")) {
+    const rawName = text.replace(/^LOGFILE=/, "").trim();
+    if (!rawName) return;
+    const exists = device.logFiles.some((item) => item.rawName === rawName);
+    if (!exists) {
+      device.logFiles.push({
+        id: safeRandomId("log"),
+        rawName,
+        displayName: formatLogFileDisplay(rawName)
+      });
+    }
+    logFetch.listing = true;
+    logFetch.status = `${device.logFiles.length} log file${device.logFiles.length === 1 ? "" : "s"} found`;
+  } else if (text === "LISTLOGS=COMPLETE") {
+    logFetch.listing = false;
+    logFetch.status = device.logFiles.length ? `${device.logFiles.length} logs ready` : "No firmware logs found on device";
+  } else if (text === "LISTLOGS=ERROR") {
+    logFetch.listing = false;
+    logFetch.error = "Device could not list firmware logs.";
+    logFetch.status = logFetch.error;
+  } else if (text.startsWith("READLOG=START")) {
+    logFetch.reading = true;
+    logFetch.started = true;
+    logFetch.complete = false;
+    logFetch.content = "";
+    logFetch.error = "";
+    logFetch.status = text;
+  } else if (text.startsWith("READLOG=END") || text.startsWith("READLOG=DONE")) {
+    logFetch.reading = false;
+    logFetch.complete = true;
+    logFetch.status = text;
+  } else if (text.startsWith("READLOG=CANCELLED") || text.startsWith("READLOG=ABORTED")) {
+    logFetch.reading = false;
+    logFetch.complete = true;
+    logFetch.error = text;
+    logFetch.status = text;
+  } else if (text.startsWith("READLOG=BUSY") || text.startsWith("READLOG=DEVICE_BUSY") || text.startsWith("READLOG=ERROR")) {
+    logFetch.reading = false;
+    logFetch.complete = false;
+    logFetch.error = text;
+    logFetch.status = text;
+  }
+  logFetch.updatedAt = at;
+  device.lastUpdatedAt = at;
+  device.lastMessage = logFetch.status || text;
+}
+
+function appendDeviceLogChunk(device, message, at = nowIso()) {
+  const logFetch = ensureDeviceLogState(device);
+  if (!logFetch.reading || !logFetch.started || logFetch.complete) return false;
+  const text = String(message || "");
+  if (!text || text.startsWith("READLOG=") || text.startsWith("LOGFILE=") || text.startsWith("LISTLOGS=")) return false;
+  logFetch.content = `${logFetch.content || ""}${text}`;
+  if (logFetch.content.length > MAX_LIVE_DEVICE_LOG_CHARS) {
+    logFetch.content = logFetch.content.slice(-MAX_LIVE_DEVICE_LOG_CHARS);
+  }
+  logFetch.status = `Receiving ${logFetch.activeDisplayName || "device log"}...`;
+  logFetch.updatedAt = at;
+  device.lastUpdatedAt = at;
+  return true;
+}
+
 function mergeRecipeNames(device, recipeNames, at = nowIso()) {
   const merged = new Map();
   [...(device.availableRecipeNames || []), ...(device.syncedRecipeNames || []), ...recipeNames].forEach((name) => {
@@ -1913,11 +2039,25 @@ function handleTransportEvents() {
       if (String(channel || "").toLowerCase() === "file") {
         return draft;
       }
+      const capturedLogChunk = appendDeviceLogChunk(device, message, at);
       device.lastUpdatedAt = at;
+      if (capturedLogChunk) {
+        return draft;
+      }
       if (!device.uploadState?.active && !device.uploadState?.inventoryChecking) {
         device.lastMessage = message;
       }
       appendTransportActivity(device, "rx", channel, message, at);
+    });
+  });
+
+  ble.addEventListener("log-message", (event) => {
+    const { slot, message, at } = event.detail;
+    mutate((draft) => {
+      const device = draft.devices.find((item) => item.slot === Number(slot));
+      if (!device) return draft;
+      handleDeviceLogControlMessage(device, message, at);
+      appendTransportActivity(device, "rx", "log", message, at);
     });
   });
 
@@ -2684,11 +2824,66 @@ function printOrder(orderId) {
 }
 
 async function abortCurrentRecipe(slot) {
-  showToast("This firmware flow keeps stop=100 device-driven. Use the device-side stop/completion flow instead.", "warning");
+  const device = getDevice(slot);
+  if (!device) return;
+  if (device.connection !== "connected") {
+    showToast(`Device ${slot} is not connected. Abort from screen is available only while connected.`, "warning");
+    return;
+  }
+  const hasActiveWork = Boolean(device.currentJobId || hasLiveRuntime(device) || device.activeRun?.recipeId || device.telemetry.currentRecipe);
+  if (!hasActiveWork) {
+    showToast(`Device ${slot} has no active recipe to abort.`, "info");
+    return;
+  }
+  await ble.abortRecipe(Number(slot));
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.telemetry.workStatus = "aborting";
+    draftDevice.telemetry.status = "Abort requested";
+    appendFlowActivity(draftDevice, "Abort requested from screen: stop=100 sent", "warning");
+  });
+  showToast(`Abort sent to Device ${slot}`, "warning");
 }
 
 async function restartRecipe(slot) {
   showToast("Restart is disabled in the web app until a device-side restart flow is defined without stop=100.", "warning");
+}
+
+async function listDeviceLogs(slot) {
+  const device = getDevice(slot);
+  if (!device) return;
+  openModal("device-sheet", { slot: Number(slot) });
+  if (device.connection !== "connected") {
+    showToast("Connect the device first to fetch firmware logs. Showing saved log state.", "info");
+    return;
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    beginDeviceLogListing(draftDevice);
+    appendFlowActivity(draftDevice, "Firmware log list requested", "info");
+  });
+  await ble.listLogs(Number(slot));
+}
+
+async function readDeviceLog(slot, rawName) {
+  const device = getDevice(slot);
+  if (!device) return;
+  const cleanName = String(rawName || "").trim();
+  if (!cleanName) return;
+  openModal("device-sheet", { slot: Number(slot) });
+  if (device.connection !== "connected") {
+    showToast("Connect the device before reading a firmware log.", "warning");
+    return;
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    beginDeviceLogRead(draftDevice, cleanName);
+    appendFlowActivity(draftDevice, `Firmware log requested: ${formatLogFileDisplay(cleanName)}`, "info");
+  });
+  await ble.readLog(Number(slot), cleanName);
 }
 
 function updateNestedSetting(path, value) {
@@ -2716,6 +2911,59 @@ function renderStatusPill(status) {
   };
   const tone = map[status] || "pending";
   return `<span class="status-pill ${tone}">${escapeHtml(status.replaceAll("_", " "))}</span>`;
+}
+
+function renderFirmwareLogPanel(device) {
+  const logFetch = {
+    ...emptyLogFetchState(),
+    ...(device.logFetch || {})
+  };
+  const logFiles = Array.isArray(device.logFiles) ? device.logFiles : [];
+  return `
+    <div class="settings-card">
+      <div class="row space">
+        <div class="mini-title">Firmware logs</div>
+        <span class="subtle">${escapeHtml(logFetch.updatedAt ? formatTimestamp(logFetch.updatedAt) : "Not fetched yet")}</span>
+      </div>
+      <div class="action-row">
+        <button class="secondary-button" type="button" data-action="list-logs" data-slot="${device.slot}">
+          ${logFetch.listing ? "Refreshing..." : "List device logs"}
+        </button>
+      </div>
+      ${
+        logFetch.status || logFetch.error
+          ? `<div class="log-status-line ${logFetch.error ? "error" : ""}">${escapeHtml(logFetch.error || logFetch.status)}</div>`
+          : `<div class="subtle">Fetch the list from the connected device, then select a log to read it.</div>`
+      }
+      ${
+        logFiles.length
+          ? `<div class="log-file-list">
+              ${logFiles
+                .map(
+                  (file) => `
+                    <button class="log-file-button ${file.rawName === logFetch.activeFile ? "selected" : ""}" type="button" data-action="read-device-log" data-slot="${device.slot}" data-file-name="${escapeHtml(file.rawName)}">
+                      <span>${escapeHtml(file.displayName || formatLogFileDisplay(file.rawName))}</span>
+                      <small>${file.rawName === logFetch.activeFile && logFetch.reading ? "reading" : "open"}</small>
+                    </button>
+                  `
+                )
+                .join("")}
+            </div>`
+          : `<div class="empty-card">No firmware log files are listed yet.</div>`
+      }
+      ${
+        logFetch.activeFile
+          ? `<div class="firmware-log-viewer">
+              <div class="row space">
+                <strong>${escapeHtml(logFetch.activeDisplayName || formatLogFileDisplay(logFetch.activeFile))}</strong>
+                <span class="subtle">${escapeHtml(logFetch.reading ? "Receiving..." : logFetch.complete ? "Complete" : "Ready")}</span>
+              </div>
+              <pre class="log-content">${escapeHtml(logFetch.content || (logFetch.reading ? "Waiting for log data..." : "No log content received yet."))}</pre>
+            </div>`
+          : ""
+      }
+    </div>
+  `;
 }
 
 const PRO_POWER_STEPS = Array.from({ length: 21 }, (_, index) => index * 5);
@@ -4177,6 +4425,11 @@ function renderDevicePhone(snapshot, device) {
                       <span>Induction ${escapeHtml(`${clampPercent(device.telemetry.indPower)}%`)}</span>
                       <span>Microwave ${escapeHtml(`${clampPercent(device.telemetry.magPower)}%`)}</span>
                     </div>
+                    ${
+                      device.connection === "connected" && (currentOrder || hasLiveRuntime(device) || device.currentJobId)
+                        ? `<div class="action-row top-gap"><button class="danger-button small" data-action="abort-device" data-slot="${device.slot}">Abort recipe</button></div>`
+                        : ""
+                    }
                   </article>
                 `
                 : `<div class="empty-card">No recipe has run on this device yet.</div>`
@@ -4860,10 +5113,11 @@ function renderModal(snapshot) {
                     : ""
               }
               ${
-                telemetryMode.includes("ingredient") || telemetryMode.includes("cooking")
+                telemetryMode.includes("ingredient") || telemetryMode.includes("cooking") || currentOrder || hasLiveRuntime(device)
                   ? `<div class="action-row top-gap">
                       ${telemetryMode.includes("ingredient") ? `<button class="primary-button" type="button" data-action="complete-ingredients" data-slot="${device.slot}">Complete Ingredients (100)</button>` : ""}
                       ${telemetryMode.includes("cooking") ? `<button class="secondary-button" type="button" data-action="acknowledge-instruction" data-slot="${device.slot}">Acknowledge Step ${escapeHtml(device.telemetry.stepNo || 1)}</button>` : ""}
+                      <button class="danger-button" type="button" data-action="abort-device" data-slot="${device.slot}">Abort recipe</button>
                     </div>`
                   : ""
               }
@@ -4947,6 +5201,7 @@ function renderModal(snapshot) {
                 <button class="danger-button" type="button" data-action="clear-device-binding" data-slot="${device.slot}">Clear pairing</button>
               </div>
             </div>
+            ${renderFirmwareLogPanel(device)}
             <div class="settings-card">
               <div class="row space">
                 <div class="mini-title">Saved device log</div>
@@ -5929,14 +6184,11 @@ async function handleClick(event) {
     return;
   }
   if (action === "list-logs") {
-    const slot = Number(button.dataset.slot);
-    const device = getDevice(slot);
-    if (!device || device.connection !== "connected") {
-      openModal("device-sheet", { slot });
-      showToast("Showing saved device log. Connect the device to fetch firmware logs.", "info");
-      return;
-    }
-    await ble.listLogs(slot).catch((error) => showToast(error.message, "error"));
+    await listDeviceLogs(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "read-device-log") {
+    await readDeviceLog(Number(button.dataset.slot), button.dataset.fileName || "").catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "auto-assign-order") {

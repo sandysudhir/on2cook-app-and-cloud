@@ -2,6 +2,11 @@
 
 ## 2026-06-16
 
+- Added an on-screen Abort recipe action for active device work; it sends the firmware command `stop=100` and waits for the normal device abort/completion notification to clear the run.
+- Added a firmware log browser in Device Details: `LISTLOGS` lists device logs, `LOGFILE=...` entries are shown as selectable files, and `READLOG=<file>` streams the selected log into the screen.
+- Guarded active `READLOG` transfers so raw log chunks are not interpreted as telemetry/status commands.
+- Bumped web cache version to `20260616g` / service-worker cache `v38`.
+- Built APK: `On2Cook-Abort-And-Firmware-Logs-2026-06-16.apk`.
 - Added a native Android BLE bridge for the cloud WebView APK, so Connect, commands, and recipe file packets use the existing `BleService` instead of Web Bluetooth inside Android WebView.
 - Updated the cloud BLE transport to prefer `window.On2CookNativeBle` in the APK while keeping normal Web Bluetooth for Chrome/Edge.
 - Bumped web cache version to `20260616e` / service-worker cache `v36`.

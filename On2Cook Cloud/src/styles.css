@@ -1717,6 +1717,77 @@ textarea.field-input {
   border-color: rgba(180, 59, 45, 0.22);
 }
 
+.log-status-line {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(45, 108, 223, 0.16);
+  background: rgba(45, 108, 223, 0.08);
+  color: var(--blue);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.log-status-line.error {
+  border-color: rgba(180, 59, 45, 0.22);
+  background: rgba(180, 59, 45, 0.08);
+  color: var(--danger);
+}
+
+.log-file-list {
+  display: grid;
+  gap: 8px;
+}
+
+.log-file-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+}
+
+.log-file-button.selected {
+  border-color: rgba(45, 108, 223, 0.32);
+  background: rgba(45, 108, 223, 0.08);
+}
+
+.log-file-button small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.firmware-log-viewer {
+  display: grid;
+  gap: 8px;
+}
+
+.log-content {
+  max-height: 280px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(21, 21, 21, 0.04);
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .customer-run-card {
   display: grid;
   gap: 10px;

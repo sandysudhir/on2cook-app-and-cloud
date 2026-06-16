@@ -192,6 +192,7 @@ export class BleTransport extends EventTarget {
       transfer: null,
       run: null,
       recipeListRequest: null,
+      logReadActive: false,
       pendingCommand: null,
       lastDeviceMessage: null,
       lastActivityAt: new Date().toISOString(),
@@ -478,6 +479,15 @@ export class BleTransport extends EventTarget {
 
     if (!message) return;
 
+    const isLogControlMessage =
+      message.startsWith("LOGFILE=") ||
+      message.startsWith("READLOG=") ||
+      message === "LISTLOGS=COMPLETE" ||
+      message === "LISTLOGS=ERROR";
+    if (session.logReadActive && !isLogControlMessage) {
+      return;
+    }
+
     if (normalized === "ack_command" && session.pendingCommand) {
       const pendingCommand = session.pendingCommand;
       session.pendingCommand = null;
@@ -600,12 +610,20 @@ export class BleTransport extends EventTarget {
       });
     }
 
-    if (
-      message.startsWith("LOGFILE=") ||
-      message.startsWith("READLOG=") ||
-      message === "LISTLOGS=COMPLETE" ||
-      message === "LISTLOGS=ERROR"
-    ) {
+    if (isLogControlMessage) {
+      if (message.startsWith("READLOG=START")) {
+        session.logReadActive = true;
+      } else if (
+        message.startsWith("READLOG=END") ||
+        message.startsWith("READLOG=DONE") ||
+        message.startsWith("READLOG=CANCELLED") ||
+        message.startsWith("READLOG=ABORTED") ||
+        message.startsWith("READLOG=BUSY") ||
+        message.startsWith("READLOG=DEVICE_BUSY") ||
+        message.startsWith("READLOG=ERROR")
+      ) {
+        session.logReadActive = false;
+      }
       this.dispatch("log-message", {
         slot,
         message,
@@ -903,7 +921,7 @@ export class BleTransport extends EventTarget {
   }
 
   async abortRecipe(slot) {
-    throw new Error("This firmware flow expects stop notifications from the device. The web app will not send stop=100.");
+    await this.sendCommand(slot, "stop=100");
   }
 
   async sendIngredientsValue(slot, value = 100) {
