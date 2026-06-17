@@ -16,6 +16,11 @@
 - Added WebView event queuing, renderer recovery, and safer native BLE bridge error handling to reduce abrupt APK crashes.
 - Bumped web cache version to `20260617b` / service-worker cache `v40`.
 - Built APK: `On2Cook-Cloud-ApkMode-BleSnapshot-2026-06-17.apk`.
+- Fixed Android APK device-screen navigation by adding APK-only Home/D1-D5 screen buttons and explicit touch/pointer swipe handling for the cloud rail.
+- Changed APK mode layout so the rail owns horizontal movement while each phone body keeps smooth vertical scrolling.
+- Added a native WebView touch guard so Android parent views do not steal gestures from the cloud screen.
+- Bumped web cache version to `20260617d` / service-worker cache `v42` and deployed to `https://www.on2cook.net`.
+- Built APK: `On2Cook-Cloud-Android-Swipe-Fix-2026-06-17.apk`.
 
 ## 2026-06-16
 
