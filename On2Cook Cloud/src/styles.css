@@ -1275,21 +1275,68 @@ button {
 }
 
 .apk-surface {
+  width: 100vw;
+  height: 100dvh;
   min-height: 100dvh;
   padding: 0;
-  overflow-x: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .apk-surface .toast {
   margin-top: 8px;
 }
 
+.apk-screen-switcher {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 2px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(244, 239, 232, 0.96);
+  scrollbar-width: none;
+}
+
+.apk-screen-switcher::-webkit-scrollbar {
+  display: none;
+}
+
+.apk-screen-button {
+  min-width: 50px;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 252, 247, 0.92);
+  color: var(--ink);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.apk-screen-button.active {
+  border-color: rgba(244, 123, 32, 0.54);
+  background: linear-gradient(180deg, #ff8932, #d9680d);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(213, 104, 13, 0.22);
+}
+
 .apk-rail {
-  min-height: 100dvh;
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding: 10px 12px 16px;
   gap: 14px;
   scroll-snap-type: x mandatory;
   scroll-padding-inline: 12px;
+  touch-action: pan-x pan-y;
+  scrollbar-width: none;
+}
+
+.apk-rail::-webkit-scrollbar {
+  display: none;
 }
 
 .apk-rail .phone-frame {
@@ -1297,12 +1344,25 @@ button {
   width: calc(100vw - 24px);
   min-width: calc(100vw - 24px);
   max-width: calc(100vw - 24px);
+  height: 100%;
   scroll-snap-align: center;
 }
 
 .apk-rail .phone-shell {
-  min-height: calc(100dvh - 26px);
+  height: 100%;
+  min-height: 0;
   border-radius: 28px;
+  overflow: hidden;
+}
+
+.apk-rail .phone-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 
 .phone-frame {
@@ -2465,7 +2525,7 @@ textarea.field-input {
 
   .apk-rail {
     gap: 14px;
-    min-height: 100dvh;
+    min-height: 0;
     padding: 10px 12px 16px;
     scroll-padding-inline: 12px;
   }
@@ -2483,10 +2543,13 @@ textarea.field-input {
     width: calc(100vw - 24px);
     min-width: calc(100vw - 24px);
     max-width: calc(100vw - 24px);
+    height: 100%;
   }
 
   .apk-rail .phone-shell {
-    min-height: calc(100dvh - 26px);
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .phone-shell {

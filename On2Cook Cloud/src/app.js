@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617c";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617c";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617d";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617d";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260617c";
+} from "./ncb-services.js?v=20260617d";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260617c";
+} from "./data-store.js?v=20260617d";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -5603,6 +5603,65 @@ function renderOrderNotice(snapshot) {
   `;
 }
 
+function getApkRailFrames() {
+  const rail = document.querySelector(".apk-rail");
+  return {
+    rail,
+    frames: rail ? Array.from(rail.querySelectorAll(".phone-frame")) : []
+  };
+}
+
+function getCurrentApkRailIndex(rail, frames) {
+  if (!rail || !frames.length) return 0;
+  const railCenter = rail.scrollLeft + rail.clientWidth / 2;
+  return frames.reduce(
+    (best, frame, index) => {
+      const center = frame.offsetLeft + frame.offsetWidth / 2;
+      const distance = Math.abs(center - railCenter);
+      return distance < best.distance ? { index, distance } : best;
+    },
+    { index: 0, distance: Number.POSITIVE_INFINITY }
+  ).index;
+}
+
+function setApkScreenSwitcherActive(index) {
+  document.querySelectorAll(".apk-screen-switcher [data-apk-screen-index]").forEach((button) => {
+    button.classList.toggle("active", Number(button.dataset.apkScreenIndex) === index);
+  });
+}
+
+function scrollApkRailToIndex(index, behavior = "smooth") {
+  const { rail, frames } = getApkRailFrames();
+  if (!rail || !frames.length) return;
+  const safeIndex = Math.max(0, Math.min(frames.length - 1, Number(index) || 0));
+  const frame = frames[safeIndex];
+  const left = frame.offsetLeft - Math.max(0, (rail.clientWidth - frame.offsetWidth) / 2);
+  rail.scrollTo({ left, behavior });
+  setApkScreenSwitcherActive(safeIndex);
+}
+
+function renderApkScreenSwitcher(snapshot) {
+  if (!IS_APK_MODE) return "";
+  const items = [
+    ["Home", 0],
+    ...snapshot.devices.map((device, index) => [`D${device.slot}`, index + 1])
+  ];
+  return `
+    <nav class="apk-screen-switcher" aria-label="Device screens">
+      ${items
+        .map(([label, index]) => `
+          <button
+            class="apk-screen-button ${index === 0 ? "active" : ""}"
+            type="button"
+            data-action="jump-apk-screen"
+            data-apk-screen-index="${index}"
+          >${escapeHtml(label)}</button>
+        `)
+        .join("")}
+    </nav>
+  `;
+}
+
 function render() {
   const snapshot = state();
   const scrollState = captureScrollState();
@@ -5633,6 +5692,7 @@ function render() {
       }
       ${snapshot.ui.toast ? `<div class="toast ${snapshot.ui.toastTone}">${escapeHtml(snapshot.ui.toast)}</div>` : ""}
       ${renderOrderNotice(snapshot)}
+      ${renderApkScreenSwitcher(snapshot)}
       <main class="screen-rail ${IS_APK_MODE ? "apk-rail" : ""}" data-scroll-key="screen-rail">
         ${renderControlPhone(snapshot)}
         ${snapshot.devices.map((device) => renderDevicePhone(snapshot, device)).join("")}
@@ -6321,6 +6381,10 @@ async function handleClick(event) {
     mutate((draft) => {
       draft.ui.orderNotice = null;
     });
+    return;
+  }
+  if (action === "jump-apk-screen") {
+    scrollApkRailToIndex(Number(button.dataset.apkScreenIndex) || 0);
     return;
   }
   if (action === "toggle-global-recipe-pick") {
@@ -7186,6 +7250,96 @@ function bindStore() {
   restoreScrollState(takeSavedScrollState());
 }
 
+function bindApkRailGestures() {
+  if (!IS_APK_MODE) return;
+  const swipe = {
+    active: false,
+    startX: 0,
+    startY: 0,
+    startIndex: 0
+  };
+  const isInteractiveTarget = (target) =>
+    Boolean(target?.closest?.("button,a,input,select,textarea,label,.modal-card,.pro-editor-modal,.pro-live-modal"));
+  const beginSwipe = (target, x, y) => {
+    const rail = target?.closest?.(".apk-rail");
+    if (!rail || isInteractiveTarget(target)) {
+      swipe.active = false;
+      return;
+    }
+    const { frames } = getApkRailFrames();
+    swipe.active = true;
+    swipe.startX = x;
+    swipe.startY = y;
+    swipe.startIndex = getCurrentApkRailIndex(rail, frames);
+  };
+  const finishSwipe = (x, y, event) => {
+    if (!swipe.active) return;
+    swipe.active = false;
+    const deltaX = x - swipe.startX;
+    const deltaY = y - swipe.startY;
+    if (Math.abs(deltaX) < 52 || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) return;
+    event.preventDefault();
+    scrollApkRailToIndex(swipe.startIndex + (deltaX < 0 ? 1 : -1));
+  };
+
+  app.addEventListener(
+    "touchstart",
+    (event) => {
+      if (event.touches.length !== 1) {
+        swipe.active = false;
+        return;
+      }
+      beginSwipe(event.target, event.touches[0].clientX, event.touches[0].clientY);
+    },
+    { passive: true }
+  );
+
+  app.addEventListener(
+    "touchend",
+    (event) => {
+      if (!event.changedTouches.length) return;
+      finishSwipe(event.changedTouches[0].clientX, event.changedTouches[0].clientY, event);
+    },
+    { passive: false }
+  );
+
+  app.addEventListener(
+    "pointerdown",
+    (event) => {
+      if (!event.isPrimary) return;
+      beginSwipe(event.target, event.clientX, event.clientY);
+    },
+    { passive: true }
+  );
+
+  app.addEventListener(
+    "pointerup",
+    (event) => {
+      if (!event.isPrimary) return;
+      finishSwipe(event.clientX, event.clientY, event);
+    },
+    { passive: false }
+  );
+
+  app.addEventListener(
+    "pointercancel",
+    () => {
+      swipe.active = false;
+    },
+    { passive: true }
+  );
+
+  app.addEventListener(
+    "scroll",
+    (event) => {
+      if (!event.target.classList?.contains("apk-rail")) return;
+      const { rail, frames } = getApkRailFrames();
+      setApkScreenSwitcherActive(getCurrentApkRailIndex(rail, frames));
+    },
+    true
+  );
+}
+
 async function init() {
   seedRecipes = await loadSeedRecipeCatalog();
   globalRecipeCatalog = await loadGlobalRecipeCatalog();
@@ -7204,6 +7358,7 @@ async function init() {
   app.addEventListener("click", handleClick);
   app.addEventListener("submit", handleSubmit);
   app.addEventListener("change", handleChange);
+  bindApkRailGestures();
   queueIdleWork();
 }
 

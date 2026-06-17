@@ -169,6 +169,10 @@ class CloudWebActivity : AppCompatActivity() {
         webView.overScrollMode = View.OVER_SCROLL_NEVER
         webView.isHorizontalScrollBarEnabled = false
         webView.isVerticalScrollBarEnabled = false
+        webView.setOnTouchListener { view, _ ->
+            view.parent?.requestDisallowInterceptTouchEvent(true)
+            false
+        }
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
