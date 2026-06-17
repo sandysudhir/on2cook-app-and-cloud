@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617c";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617c";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260617b";
+} from "./ncb-services.js?v=20260617c";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260617b";
+} from "./data-store.js?v=20260617c";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -4177,7 +4177,7 @@ function renderControlPhone(snapshot) {
     <section class="phone-frame control-phone" data-scroll-key="frame-control">
       <div class="phone-shell">
         <header class="phone-head hero-head">
-          <img src="./assets/app_banner.png" alt="On2Cook">
+          <img class="brand-logo" src="./assets/on2cook-logo.png" alt="On2Cook">
           <div class="grow">
             <div class="eyebrow">On2Cook Cloud</div>
             <h2>${escapeHtml(snapshot.facilities[0]?.name || "Kitchen console")}</h2>
@@ -5549,7 +5549,7 @@ function renderLoginGate(snapshot) {
       ${snapshot.ui.toast ? `<div class="toast ${snapshot.ui.toastTone}">${escapeHtml(snapshot.ui.toast)}</div>` : ""}
       <section class="login-shell">
         <div class="login-brand-card">
-          <img src="./assets/app_banner.png" alt="On2Cook">
+          <img class="brand-logo" src="./assets/on2cook-logo.png" alt="On2Cook">
           <div>
             <div class="eyebrow">On2Cook Cloud</div>
             <h1>Kitchen Login</h1>

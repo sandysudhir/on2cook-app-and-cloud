@@ -1,4 +1,4 @@
-const CACHE_NAME = "on2cook-cloud-v40";
+const CACHE_NAME = "on2cook-cloud-v41";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -15,13 +15,14 @@ const CORE_ASSETS = [
   "./data/order_recipes/DAL%20MAKHANI.zip?v=20260612q",
   "./data/order_recipes/KUNG%20PAO%20CHICKEN.zip?v=20260612q",
   "./data/order_recipes/MASOOR%20DAL%20.zip?v=20260612q",
-  "./src/styles.css?v=20260617b",
-  "./src/app.js?v=20260617b",
-  "./src/ble-transport.js?v=20260617b",
-  "./src/data-store.js?v=20260617b",
-  "./src/zip-reader.js?v=20260617b",
-  "./src/ncb-services.js?v=20260617b",
-  "./assets/app_banner.png"
+  "./src/styles.css?v=20260617c",
+  "./src/app.js?v=20260617c",
+  "./src/ble-transport.js?v=20260617c",
+  "./src/data-store.js?v=20260617c",
+  "./src/zip-reader.js?v=20260617c",
+  "./src/ncb-services.js?v=20260617c",
+  "./assets/app_banner.png",
+  "./assets/on2cook-logo.png"
 ];
 
 self.addEventListener("install", (event) => {

@@ -1025,18 +1025,21 @@ button {
 
 .login-brand-card {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 14px;
   align-items: center;
   padding: 24px;
   border-radius: 24px;
 }
 
 .login-brand-card img {
-  width: 92px;
-  height: 92px;
-  border-radius: 20px;
-  object-fit: cover;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  object-fit: contain;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid rgba(244, 123, 32, 0.18);
 }
 
 .login-brand-card h1 {
@@ -1361,13 +1364,16 @@ button {
   background: linear-gradient(180deg, rgba(244, 123, 32, 0.13), rgba(244, 123, 32, 0.02));
 }
 
-.hero-head img {
-  width: 58px;
-  height: 58px;
-  border-radius: 16px;
-  object-fit: cover;
+.hero-head img,
+.hero-head .brand-logo {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  object-fit: contain;
+  padding: 4px;
   border: 1px solid rgba(244, 123, 32, 0.18);
   background: #fff;
+  flex: 0 0 auto;
 }
 
 .bluetooth-home-button {
@@ -2518,10 +2524,12 @@ textarea.field-input {
     padding: 18px;
   }
 
-  .hero-head img {
-    width: 54px;
-    height: 54px;
-    border-radius: 14px;
+  .hero-head img,
+  .hero-head .brand-logo {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    padding: 4px;
   }
 
   .phone-head h2 {

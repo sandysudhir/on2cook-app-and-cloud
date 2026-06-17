@@ -7,7 +7,7 @@
   "theme_color": "#f47b20",
   "icons": [
     {
-      "src": "/assets/app_banner.png",
+      "src": "/assets/on2cook-logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
