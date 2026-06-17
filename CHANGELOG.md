@@ -10,6 +10,12 @@
 - Documented the login, permission, and NoCodeBackend profile contract in `On2Cook Cloud/docs/LOGIN_AND_PERMISSION_MODEL.md`.
 - Updated the iPage FTP deploy script to skip the local `data/` recipe ZIP archive during routine app uploads.
 - Bumped web cache version to `20260617a` / service-worker cache `v39`.
+- Added APK mode for the cloud WebView so `?apk=1` opens directly on the On2Cook Demo Kitchen phone panel without the desktop orchestration hero.
+- Added persistent new-order notices that stay at the top until tapped or dismissed; tapping returns to the Orders screen without automatic navigation.
+- Added native BLE connected-device snapshot dispatch in the APK bridge so already-connected devices appear connected inside the cloud WebView.
+- Added WebView event queuing, renderer recovery, and safer native BLE bridge error handling to reduce abrupt APK crashes.
+- Bumped web cache version to `20260617b` / service-worker cache `v40`.
+- Built APK: `On2Cook-Cloud-ApkMode-BleSnapshot-2026-06-17.apk`.
 
 ## 2026-06-16
 

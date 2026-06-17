@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617a";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617a";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617b";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617b";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260617a";
+} from "./ncb-services.js?v=20260617b";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,10 +21,13 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260617a";
+} from "./data-store.js?v=20260617b";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
+const IS_APK_MODE =
+  new URLSearchParams(window.location.search).get("apk") === "1" ||
+  navigator.userAgent.includes("On2CookCloudApk");
 const ble = new BleTransport();
 let seedRecipes = [];
 let globalRecipeCatalog = [];
@@ -1214,6 +1217,18 @@ function showToast(message, tone = "info") {
   }, 3200);
 }
 
+function showOrderNotice(order) {
+  if (!order) return;
+  mutate((draft) => {
+    draft.ui.orderNotice = {
+      id: order.id,
+      orderId: order.orderId || "",
+      itemName: order.itemName || "New order",
+      createdAt: nowIso()
+    };
+  });
+}
+
 function openModal(type, payload = {}) {
   mutate((draft) => {
     draft.ui.activeModal = { type, payload };
@@ -1565,6 +1580,7 @@ function ensureIncomingOrderFeed() {
       draft.orders.current.unshift(releasedOrder);
     });
     if (!releasedOrder) return;
+    showOrderNotice(releasedOrder);
     if (state().settings.pendingAssignmentMode === "auto_route") {
       queueIdleWork();
     } else {
@@ -5572,6 +5588,21 @@ function renderLoginGate(snapshot) {
   `;
 }
 
+function renderOrderNotice(snapshot) {
+  const notice = snapshot.ui.orderNotice;
+  if (!notice?.id) return "";
+  return `
+    <div class="order-notice" role="status" aria-live="polite">
+      <button class="order-notice-main" data-action="open-order-notice" data-order-id="${escapeHtml(notice.id)}">
+        <span class="order-notice-kicker">New order</span>
+        <strong>${escapeHtml(notice.orderId || "Order")} - ${escapeHtml(notice.itemName || "Recipe")}</strong>
+        <span>${escapeHtml(formatAgo(notice.createdAt))}</span>
+      </button>
+      <button class="order-notice-close" data-action="dismiss-order-notice" aria-label="Dismiss new order notice">x</button>
+    </div>
+  `;
+}
+
 function render() {
   const snapshot = state();
   const scrollState = captureScrollState();
@@ -5582,22 +5613,27 @@ function render() {
     return;
   }
   app.innerHTML = `
-    <div class="surface">
-      <header class="page-hero">
-        <div class="hero-copy">
-          <div class="eyebrow">Chrome / Edge / Chrome Android</div>
-          <h1>On2Cook Cloud orchestration</h1>
-          <p>Order-first mobile layout, direct Web Bluetooth transport, five-device session support, and a recipe pipeline seeded from your local On2Cook recipe archive.</p>
-        </div>
-        <div class="hero-stats">
-          <div class="summary-chip">Orders ${snapshot.orders.current.length}</div>
-          <div class="summary-chip">Connected ${getConnectedDevices(snapshot).length}</div>
-          <div class="summary-chip">Selected recipes ${getSelectedRecipes(snapshot).length}</div>
-          <button class="secondary-button small" data-action="switch-tab" data-tab="settings">Settings</button>
-        </div>
-      </header>
+    <div class="surface ${IS_APK_MODE ? "apk-surface" : ""}">
+      ${
+        IS_APK_MODE
+          ? ""
+          : `<header class="page-hero">
+              <div class="hero-copy">
+                <div class="eyebrow">Chrome / Edge / Chrome Android</div>
+                <h1>On2Cook Cloud orchestration</h1>
+                <p>Order-first mobile layout, direct Web Bluetooth transport, five-device session support, and a recipe pipeline seeded from your local On2Cook recipe archive.</p>
+              </div>
+              <div class="hero-stats">
+                <div class="summary-chip">Orders ${snapshot.orders.current.length}</div>
+                <div class="summary-chip">Connected ${getConnectedDevices(snapshot).length}</div>
+                <div class="summary-chip">Selected recipes ${getSelectedRecipes(snapshot).length}</div>
+                <button class="secondary-button small" data-action="switch-tab" data-tab="settings">Settings</button>
+              </div>
+            </header>`
+      }
       ${snapshot.ui.toast ? `<div class="toast ${snapshot.ui.toastTone}">${escapeHtml(snapshot.ui.toast)}</div>` : ""}
-      <main class="screen-rail" data-scroll-key="screen-rail">
+      ${renderOrderNotice(snapshot)}
+      <main class="screen-rail ${IS_APK_MODE ? "apk-rail" : ""}" data-scroll-key="screen-rail">
         ${renderControlPhone(snapshot)}
         ${snapshot.devices.map((device) => renderDevicePhone(snapshot, device)).join("")}
       </main>
@@ -6270,6 +6306,20 @@ async function handleClick(event) {
     }
     mutate((draft) => {
       draft.ui.activeTab = button.dataset.tab;
+    });
+    return;
+  }
+  if (action === "open-order-notice") {
+    mutate((draft) => {
+      draft.ui.activeTab = "orders";
+      draft.ui.orderMode = "current";
+      draft.ui.orderNotice = null;
+    });
+    return;
+  }
+  if (action === "dismiss-order-notice") {
+    mutate((draft) => {
+      draft.ui.orderNotice = null;
     });
     return;
   }

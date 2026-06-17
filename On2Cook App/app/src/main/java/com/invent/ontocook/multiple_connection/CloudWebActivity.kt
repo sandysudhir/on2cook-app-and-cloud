@@ -17,14 +17,17 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
 import android.webkit.ConsoleMessage
 import android.webkit.GeolocationPermissions
 import android.webkit.PermissionRequest
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -51,7 +54,9 @@ class CloudWebActivity : AppCompatActivity() {
     private val macToSlot = linkedMapOf<String, Int>()
     private val foundDuringScan = linkedSetOf<String>()
     private val reconnectHandler = Handler(Looper.getMainLooper())
+    private val pendingWebEvents = mutableListOf<String>()
     private var autoReconnectEnabled = false
+    private var isWebPageReady = false
 
     private val filePickerLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -66,6 +71,7 @@ class CloudWebActivity : AppCompatActivity() {
             bleService = (binder as? BleService.LocalBinder)?.getService()
             isBleBound = bleService != null
             dispatchNativeBleEvent("bridge-ready")
+            dispatchConnectedSnapshot()
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
@@ -165,6 +171,13 @@ class CloudWebActivity : AppCompatActivity() {
         webView.isVerticalScrollBarEnabled = false
 
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                isWebPageReady = true
+                flushPendingWebEvents()
+                dispatchConnectedSnapshot()
+            }
+
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url.toString()
                 return if (url.startsWith("https://www.on2cook.net") || url.startsWith("https://on2cook.net")) {
@@ -173,6 +186,28 @@ class CloudWebActivity : AppCompatActivity() {
                     startActivity(Intent(Intent.ACTION_VIEW, request.url))
                     true
                 }
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
+                super.onReceivedError(view, request, error)
+                if (request?.isForMainFrame == true) {
+                    Log.e(TAG, "Cloud page load error: ${error?.description}")
+                }
+            }
+
+            override fun onRenderProcessGone(view: WebView?, detail: RenderProcessGoneDetail?): Boolean {
+                Log.e(TAG, "Cloud WebView renderer gone. Reloading. didCrash=${detail?.didCrash()}")
+                isWebPageReady = false
+                webView.postDelayed({
+                    if (!isFinishing && !isDestroyed) {
+                        webView.loadUrl(CLOUD_URL)
+                    }
+                }, 500)
+                return true
             }
         }
 
@@ -324,6 +359,52 @@ class CloudWebActivity : AppCompatActivity() {
         return (1..5).firstOrNull { it !in used } ?: 1
     }
 
+    private fun dispatchConnectedSnapshot() {
+        val service = bleService ?: return
+        val paired = SharedPreferencesManager.getMacAddressList(applicationContext)
+        val knownAddresses = linkedSetOf<String>()
+        knownAddresses.addAll(service.getConnectedDeviceAddresses())
+        paired.forEach { device ->
+            if (service.isDeviceConnected(device.macAddress)) {
+                knownAddresses.add(device.macAddress)
+            }
+        }
+        knownAddresses.take(5).forEach { mac ->
+            val pairedDevice = paired.firstOrNull { it.macAddress == mac }
+            val slot = macToSlot[mac]
+                ?: pairedDevice?.id
+                ?: slotToMac.entries.firstOrNull { it.value == mac }?.key
+                ?: nextAvailableSlot()
+            slotToMac[slot] = mac
+            macToSlot[mac] = slot
+            dispatchNativeBleEvent(
+                "connected",
+                slot,
+                mac,
+                bluetoothName = pairedDevice?.name?.ifBlank { service.getConnectedDeviceName(mac) }
+                    ?: service.getConnectedDeviceName(mac)
+            )
+        }
+    }
+
+    private fun enqueueOrRunWebScript(script: String) {
+        if (!isWebPageReady) {
+            pendingWebEvents.add(script)
+            return
+        }
+        webView.post {
+            runCatching { webView.evaluateJavascript(script, null) }
+                .onFailure { Log.e(TAG, "Unable to dispatch native BLE event to WebView", it) }
+        }
+    }
+
+    private fun flushPendingWebEvents() {
+        if (!isWebPageReady || pendingWebEvents.isEmpty()) return
+        val scripts = pendingWebEvents.toList()
+        pendingWebEvents.clear()
+        scripts.forEach { enqueueOrRunWebScript(it) }
+    }
+
     private fun dispatchNativeBleEvent(
         type: String,
         slot: Int = 0,
@@ -344,9 +425,7 @@ class CloudWebActivity : AppCompatActivity() {
             .put("at", System.currentTimeMillis())
         val script =
             "window.dispatchEvent(new CustomEvent('on2cook-native-ble',{detail:$detail}));"
-        webView.post {
-            webView.evaluateJavascript(script, null)
-        }
+        enqueueOrRunWebScript(script)
     }
 
     inner class NativeBleBridge {
@@ -354,11 +433,11 @@ class CloudWebActivity : AppCompatActivity() {
         fun isAvailable(): Boolean = true
 
         @JavascriptInterface
-        fun connect(slot: Int): String {
+        fun connect(slot: Int): String = runCatching {
             val safeSlot = slot.coerceIn(1, 5)
             val service = bleService
             if (!isBleBound || service == null) {
-                return JSONObject().put("ok", false).put("error", "Native BLE service is not ready.").toString()
+                return@runCatching JSONObject().put("ok", false).put("error", "Native BLE service is not ready.").toString()
             }
             autoReconnectEnabled = true
 
@@ -373,7 +452,7 @@ class CloudWebActivity : AppCompatActivity() {
                     target.macAddress,
                     bluetoothName = target.name.ifBlank { service.getConnectedDeviceName(target.macAddress) }
                 )
-                return JSONObject().put("ok", true).put("mode", "already-connected").toString()
+                return@runCatching JSONObject().put("ok", true).put("mode", "already-connected").toString()
             }
 
             pendingConnectSlots[safeSlot] = target?.macAddress
@@ -381,14 +460,14 @@ class CloudWebActivity : AppCompatActivity() {
             service.stopScan()
             service.startScan()
             dispatchNativeBleEvent("scan-started", safeSlot, target?.macAddress.orEmpty())
-            return JSONObject().put("ok", true).put("mode", "scan").toString()
-        }
+            JSONObject().put("ok", true).put("mode", "scan").toString()
+        }.getOrElse { errorJson(it) }
 
         @JavascriptInterface
-        fun connectAll(): String {
+        fun connectAll(): String = runCatching {
             val service = bleService
             if (!isBleBound || service == null) {
-                return JSONObject().put("ok", false).put("error", "Native BLE service is not ready.").toString()
+                return@runCatching JSONObject().put("ok", false).put("error", "Native BLE service is not ready.").toString()
             }
             autoReconnectEnabled = true
             val paired = SharedPreferencesManager.getMacAddressList(applicationContext)
@@ -412,11 +491,11 @@ class CloudWebActivity : AppCompatActivity() {
             service.stopScan()
             service.startScan()
             dispatchNativeBleEvent("scan-started", 0, message = "Connect all scan started")
-            return JSONObject().put("ok", true).put("mode", "scan-all").toString()
-        }
+            JSONObject().put("ok", true).put("mode", "scan-all").toString()
+        }.getOrElse { errorJson(it) }
 
         @JavascriptInterface
-        fun disconnect(slot: Int): String {
+        fun disconnect(slot: Int): String = runCatching {
             val safeSlot = slot.coerceIn(1, 5)
             val mac = slotToMac[safeSlot].orEmpty()
             if (mac.isNotBlank()) {
@@ -426,28 +505,36 @@ class CloudWebActivity : AppCompatActivity() {
                 slotToMac.remove(safeSlot)
             }
             dispatchNativeBleEvent("disconnected", safeSlot, mac)
-            return JSONObject().put("ok", true).toString()
-        }
+            JSONObject().put("ok", true).toString()
+        }.getOrElse { errorJson(it) }
 
         @JavascriptInterface
-        fun sendCommand(slot: Int, message: String): String {
+        fun sendCommand(slot: Int, message: String): String = runCatching {
             val mac = slotToMac[slot].orEmpty()
             if (mac.isBlank()) {
-                return JSONObject().put("ok", false).put("error", "No native BLE device is mapped to this slot.").toString()
+                return@runCatching JSONObject().put("ok", false).put("error", "No native BLE device is mapped to this slot.").toString()
             }
             bleService?.writeData(mac, message.toByteArray(Charsets.UTF_8))
-            return JSONObject().put("ok", true).toString()
-        }
+            JSONObject().put("ok", true).toString()
+        }.getOrElse { errorJson(it) }
 
         @JavascriptInterface
-        fun sendFile(slot: Int, message: String): String {
+        fun sendFile(slot: Int, message: String): String = runCatching {
             val mac = slotToMac[slot].orEmpty()
             if (mac.isBlank()) {
-                return JSONObject().put("ok", false).put("error", "No native BLE device is mapped to this slot.").toString()
+                return@runCatching JSONObject().put("ok", false).put("error", "No native BLE device is mapped to this slot.").toString()
             }
             bleService?.writeFileData(mac, message.toByteArray(Charsets.UTF_8))
-            return JSONObject().put("ok", true).toString()
-        }
+            JSONObject().put("ok", true).toString()
+        }.getOrElse { errorJson(it) }
+    }
+
+    private fun errorJson(error: Throwable): String {
+        Log.e(TAG, "Native BLE bridge error", error)
+        return JSONObject()
+            .put("ok", false)
+            .put("error", error.message ?: "Native BLE bridge error.")
+            .toString()
     }
 
     private fun requestCloudPermissions() {
@@ -498,6 +585,7 @@ class CloudWebActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val TAG = "CloudWebActivity"
         private const val CLOUD_URL = "https://www.on2cook.net/?apk=1"
     }
 }

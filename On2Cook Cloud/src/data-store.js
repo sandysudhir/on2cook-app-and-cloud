@@ -661,6 +661,7 @@ function createUiState() {
     },
     demoAuthBypass: false,
     activeModal: null,
+    orderNotice: null,
     toast: "",
     toastTone: "info"
   };
