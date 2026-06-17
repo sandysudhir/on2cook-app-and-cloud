@@ -1,4 +1,4 @@
-const CACHE_NAME = "on2cook-cloud-v42";
+const CACHE_NAME = "on2cook-cloud-v44";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -15,12 +15,12 @@ const CORE_ASSETS = [
   "./data/order_recipes/DAL%20MAKHANI.zip?v=20260612q",
   "./data/order_recipes/KUNG%20PAO%20CHICKEN.zip?v=20260612q",
   "./data/order_recipes/MASOOR%20DAL%20.zip?v=20260612q",
-  "./src/styles.css?v=20260617d",
-  "./src/app.js?v=20260617d",
-  "./src/ble-transport.js?v=20260617d",
-  "./src/data-store.js?v=20260617d",
-  "./src/zip-reader.js?v=20260617d",
-  "./src/ncb-services.js?v=20260617d",
+  "./src/styles.css?v=20260617e",
+  "./src/app.js?v=20260617e",
+  "./src/ble-transport.js?v=20260617e",
+  "./src/data-store.js?v=20260617e",
+  "./src/zip-reader.js?v=20260617e",
+  "./src/ncb-services.js?v=20260617e",
   "./assets/app_banner.png",
   "./assets/on2cook-logo.png"
 ];
@@ -58,16 +58,18 @@ self.addEventListener("message", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   if (event.request.mode === "navigate") {
+    const requestUrl = new URL(event.request.url);
+    const isProStudio = requestUrl.pathname.includes("/pro-studio/");
     event.respondWith(
       fetch(event.request)
         .then((response) => {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put("./index.html", clone).catch(() => {});
+            cache.put(isProStudio ? event.request : "./index.html", clone).catch(() => {});
           });
           return response;
         })
-        .catch(() => caches.match("./index.html"))
+        .catch(() => (isProStudio ? caches.match(event.request) : caches.match("./index.html")))
     );
     return;
   }

@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617d";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617d";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617e";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617e";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260617d";
+} from "./ncb-services.js?v=20260617e";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260617d";
+} from "./data-store.js?v=20260617e";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -3276,6 +3276,74 @@ function recipeToProDraft(recipe) {
   };
 }
 
+function normalizeProStudioUnit(unit) {
+  const value = String(unit || "g").toLowerCase();
+  if (["g", "ml", "piece", "tsp", "tbsp"].includes(value)) return value;
+  if (value === "gm" || value.startsWith("gram")) return "g";
+  if (value === "pcs" || value === "number") return "piece";
+  return "g";
+}
+
+function proDraftToStudioPayload(recipe, draft) {
+  const ingredients = (draft.ingredients || []).map((ingredient, index) => ({
+    id: String(ingredient.id || `ing-${index}`),
+    name: String(ingredient.name || `Ingredient ${index + 1}`),
+    quantity: Number(ingredient.quantity || 0),
+    unit: normalizeProStudioUnit(ingredient.unit),
+    group: ingredient.group || ingredient.source?.group || ""
+  }));
+  const minutes = (draft.minutes || []).map((minute, index) => ({
+    id: String(minute.id || `min-${index}`),
+    minuteIndex: Number(minute.minuteIndex ?? index),
+    lidOpen: Boolean(minute.lidOpen),
+    lidOpenDuration: Number(minute.lidOpenDuration || 0),
+    subBlocks: (minute.subBlocks || [makeProSubBlock(), makeProSubBlock(), makeProSubBlock(), makeProSubBlock()]).slice(0, 4).map((block) => ({
+      inductionPower: Number(block.inductionPower || 0),
+      microwaveActive: Boolean(block.microwaveActive),
+      microwavePower: Number(block.microwavePower || 800),
+      stirrerActive: block.stirrerActive !== false,
+      stirrerSpeed: block.stirrerSpeed || "medium",
+      stirrerMode: block.stirrerMode || (block.stirrerActive === false ? "off" : "continuous")
+    })),
+    waterBlocks: (minute.waterBlocks || [0, 0, 0, 0]).slice(0, 4).map((value) => Boolean(Number(value))) ,
+    ingredients: (minute.ingredients || []).map((ingredient, ingredientIndex) => ({
+      id: String(ingredient.id || `min-${index}-ing-${ingredientIndex}`),
+      name: String(ingredient.name || minute.title || `Ingredient ${ingredientIndex + 1}`),
+      quantity: Number(ingredient.quantity || 0),
+      unit: normalizeProStudioUnit(ingredient.unit),
+      group: ingredient.group || ""
+    }))
+  }));
+  while (minutes.length && minutes[minutes.length - 1].subBlocks.length < 4) {
+    minutes[minutes.length - 1].subBlocks.push(makeProSubBlock());
+  }
+  const payload = {
+    presetId: recipe?.id || draft.recipeId || safeRandomId("recipe"),
+    name: draft.displayName || recipe?.displayName || "On2Cook Recipe",
+    dishType: draft.dietType || "veg",
+    recipeType: draft.recipeType || "gravy",
+    quantity: Number(draft.quantity || 500),
+    quantityUnit: normalizeProStudioUnit(draft.quantityUnit),
+    consistency: draft.consistency || "medium",
+    healthRichRatio: 35,
+    ingredients,
+    proRecipe: {
+      id: recipe?.id || draft.recipeId || safeRandomId("pro"),
+      name: draft.displayName || recipe?.displayName || "On2Cook Recipe",
+      dishType: draft.dietType || "veg",
+      recipeType: draft.recipeType || "gravy",
+      quantity: Number(draft.quantity || 500),
+      quantityUnit: normalizeProStudioUnit(draft.quantityUnit),
+      consistency: draft.consistency || "medium",
+      healthRichRatio: 35,
+      tentativeMinutes: minutes.length,
+      minutes,
+      notes: "Opened from On2Cook Cloud"
+    }
+  };
+  return payload;
+}
+
 function proDraftToFirmwareRecipe(sourceRecipe, draft) {
   const recipeJson = cloneRecipeForEditing(sourceRecipe);
   recipeJson.consistency = draft.consistency || "medium";
@@ -3317,7 +3385,18 @@ function openProfessionalEditor(recipeId) {
     showToast("Recipe not found", "error");
     return;
   }
-  openModal("professional-editor", { recipeId, draft: recipeToProDraft(recipe) });
+  const draft = recipeToProDraft(recipe);
+  try {
+    localStorage.setItem("on2cook-pro-studio-recipe", JSON.stringify(proDraftToStudioPayload(recipe, draft)));
+  } catch (error) {
+    console.warn("Unable to seed Figma Pro Studio recipe payload", error);
+    showToast("Opening Pro Studio without local recipe seed; browser storage is full.", "warning");
+  }
+  openModal("figma-pro-studio", {
+    recipeId,
+    title: recipe.displayName,
+    src: "./pro-studio/index.html#/preset-setup"
+  });
 }
 
 function updateProDraft(mutator) {
@@ -5040,6 +5119,21 @@ function renderProfessionalEditorModal(snapshot, modal) {
 function renderModal(snapshot) {
   const modal = snapshot.ui.activeModal;
   if (!modal) return "";
+  if (modal.type === "figma-pro-studio") {
+    const src = safeOptionalUrl(modal.payload?.src, "Figma Pro Studio") || "./pro-studio/index.html#/preset-setup";
+    return `
+      <div class="modal-backdrop figma-pro-backdrop">
+        <div class="figma-pro-modal">
+          <div class="figma-pro-toolbar">
+            <strong>${escapeHtml(modal.payload?.title || "On2Cook Pro Studio")}</strong>
+            <span class="subtle">Figma recipe flow</span>
+            <button class="secondary-button small" data-action="close-modal">Close</button>
+          </div>
+          <iframe class="figma-pro-frame" src="${escapeHtml(src)}" title="On2Cook Pro Studio"></iframe>
+        </div>
+      </div>
+    `;
+  }
   if (modal.type === "professional-editor") {
     return renderProfessionalEditorModal(snapshot, modal);
   }

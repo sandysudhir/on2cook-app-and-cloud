@@ -1,0 +1,27 @@
+@import './fonts.css';
+@import './theme.css';
+
+/* Override page background for the phone-frame simulation */
+html, body {
+  background-color: #050c18;
+  overflow-x: hidden;
+}
+
+/* Smooth scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+}
+
+/* Spin keyframe for loading indicators */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

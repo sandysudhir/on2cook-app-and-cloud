@@ -21,6 +21,10 @@
 - Added a native WebView touch guard so Android parent views do not steal gestures from the cloud screen.
 - Bumped web cache version to `20260617d` / service-worker cache `v42` and deployed to `https://www.on2cook.net`.
 - Built APK: `On2Cook-Cloud-Android-Swipe-Fix-2026-06-17.apk`.
+- Integrated the supplied Figma recipe app as `pro-studio`, preserving its Select Recipe, Configure Recipe, Pro Timeline Editor, Live Cook, completion, and recipe sheet screens.
+- Changed On2Cook Cloud recipe editing to open the Figma Pro Studio flow seeded with the selected cloud recipe instead of the simplified recreated editor.
+- Fixed service-worker navigation handling so `/pro-studio/` is cached and served separately from the On2Cook Cloud shell.
+- Bumped web cache version to `20260617e` / service-worker cache `v44` and deployed the Pro Studio assets to `https://www.on2cook.net/pro-studio/`.
 
 ## 2026-06-16
 
