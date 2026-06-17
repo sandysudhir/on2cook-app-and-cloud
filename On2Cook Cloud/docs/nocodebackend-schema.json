@@ -493,6 +493,21 @@
           "nullable": true,
           "default": 0
         },
+        "can_add_recipes": {
+          "type": "integer",
+          "nullable": true,
+          "default": 0
+        },
+        "can_edit_recipes": {
+          "type": "integer",
+          "nullable": true,
+          "default": 0
+        },
+        "can_manage_recipe_access": {
+          "type": "integer",
+          "nullable": true,
+          "default": 0
+        },
         "created_at": {
           "type": "datetime",
           "nullable": true,

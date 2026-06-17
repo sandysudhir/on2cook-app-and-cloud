@@ -138,6 +138,9 @@ export const profileService = {
       franchise_name: "",
       reports_to_user_id: "",
       manager_mode: Boolean(localUser?.managerMode),
+      can_add_recipes: Boolean(extra.can_add_recipes ?? localUser?.canAddRecipes),
+      can_edit_recipes: Boolean(extra.can_edit_recipes ?? localUser?.canEditRecipes),
+      can_manage_recipe_access: Boolean(extra.can_manage_recipe_access ?? localUser?.canManageRecipeAccess),
       created_at: existing?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -147,6 +150,31 @@ export const profileService = {
         body: JSON.stringify(payload)
       });
     }
+    return requestJson("/api/data/create/profiles", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+  },
+  async createManagedProfile(localUser, managerProfile = null) {
+    const payload = {
+      email: localUser.email || "",
+      full_name: localUser.displayName || "",
+      mobile_phone: localUser.mobilePhone || "",
+      whatsapp_phone: localUser.whatsappPhone || "",
+      role: localUser.role || "operator",
+      status: localUser.status || "invited",
+      facility_id: localUser.facilityId || managerProfile?.facility_id || "",
+      facility_name: managerProfile?.facility_name || "On2Cook Demo Kitchen",
+      franchise_id: managerProfile?.franchise_id || "",
+      franchise_name: managerProfile?.franchise_name || "",
+      reports_to_user_id: managerProfile?.user_id || "",
+      manager_mode: Boolean(localUser.managerMode),
+      can_add_recipes: Boolean(localUser.canAddRecipes),
+      can_edit_recipes: Boolean(localUser.canEditRecipes),
+      can_manage_recipe_access: Boolean(localUser.canManageRecipeAccess),
+      created_at: localUser.createdAt || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
     return requestJson("/api/data/create/profiles", {
       method: "POST",
       body: JSON.stringify(payload)

@@ -488,25 +488,43 @@ function createDefaultUsers() {
         id: mainAdminId,
         facilityId,
         email: "admin@on2cook.local",
+        mobilePhone: "",
+        whatsappPhone: "",
         displayName: "Main Admin",
         role: "main_admin",
-        managerMode: true
+        status: "active",
+        managerMode: true,
+        canAddRecipes: true,
+        canEditRecipes: true,
+        canManageRecipeAccess: true
       },
       {
         id: managerId,
         facilityId,
         email: "manager@on2cook.local",
+        mobilePhone: "",
+        whatsappPhone: "",
         displayName: "Kitchen Manager",
         role: "kitchen_manager",
-        managerMode: true
+        status: "active",
+        managerMode: true,
+        canAddRecipes: false,
+        canEditRecipes: true,
+        canManageRecipeAccess: true
       },
       {
         id: operatorId,
         facilityId,
         email: "operator@on2cook.local",
+        mobilePhone: "",
+        whatsappPhone: "",
         displayName: "Operator",
         role: "operator",
-        managerMode: false
+        status: "active",
+        managerMode: false,
+        canAddRecipes: false,
+        canEditRecipes: false,
+        canManageRecipeAccess: false
       }
     ],
     currentUserId: mainAdminId,
@@ -641,6 +659,7 @@ function createUiState() {
       slot: 1,
       pumpUnits: 10
     },
+    demoAuthBypass: false,
     activeModal: null,
     toast: "",
     toastTone: "info"
@@ -729,6 +748,26 @@ function hydrateOrders(orders, recipes) {
     current: current.map((order, index) => decorateOrderRecord(order, matchingRecipeForOrder(order, recipes), index)),
     incoming: incoming.map((order, index) => decorateOrderRecord(order, matchingRecipeForOrder(order, recipes), index + 50)),
     previous: previous.map((order, index) => decorateOrderRecord(order, matchingRecipeForOrder(order, recipes), index + 100))
+  };
+}
+
+function normalizeUserRecord(user, fallbackFacilityId = "") {
+  const role = user.role || "operator";
+  const adminLike = role === "main_admin" || role === "admin";
+  const managerLike = adminLike || role === "kitchen_manager" || role === "owner";
+  return {
+    ...user,
+    facilityId: user.facilityId || user.facility_id || fallbackFacilityId,
+    email: user.email || "",
+    mobilePhone: user.mobilePhone || user.mobile_phone || "",
+    whatsappPhone: user.whatsappPhone || user.whatsapp_phone || "",
+    displayName: user.displayName || user.full_name || user.email || "User",
+    role,
+    status: user.status || "active",
+    managerMode: Boolean(user.managerMode),
+    canAddRecipes: user.canAddRecipes ?? user.can_add_recipes ?? adminLike,
+    canEditRecipes: user.canEditRecipes ?? user.can_edit_recipes ?? managerLike,
+    canManageRecipeAccess: user.canManageRecipeAccess ?? user.can_manage_recipe_access ?? managerLike
   };
 }
 
@@ -945,16 +984,22 @@ export function getCurrentUser(state) {
 
 export function currentPermissions(state) {
   const user = getCurrentUser(state);
-  const managerLike = user.role === "main_admin" || user.role === "admin" || user.role === "kitchen_manager";
+  const role = user.role === "owner" || user.role === "cook" ? (user.role === "owner" ? "kitchen_manager" : "operator") : user.role;
+  const managerLike = role === "main_admin" || role === "admin" || role === "kitchen_manager";
   const operatorManager = user.role === "operator" && (user.managerMode || state.settings.operatorActsAsManager);
+  const canAddRecipes = role === "main_admin" || role === "admin" || Boolean(user.canAddRecipes);
+  const canEditRecipes = role === "main_admin" || role === "admin" || (managerLike && user.canEditRecipes !== false) || operatorManager;
+  const canManageRecipeAccess =
+    role === "main_admin" || role === "admin" || (managerLike && user.canManageRecipeAccess !== false) || operatorManager;
   return {
     user,
-    canManageUsers: user.role === "main_admin" || user.role === "admin",
+    canManageUsers: role === "main_admin" || role === "admin",
     canAssignQueues: managerLike || operatorManager,
     canRunRecipes: true,
-    canCreateBaseRecipes: user.role === "main_admin" || user.role === "admin",
-    canCreateFinalRecipes: managerLike || operatorManager,
-    canEditDevicePermissions: managerLike || operatorManager,
+    canCreateBaseRecipes: canAddRecipes,
+    canSelectGlobalRecipes: canAddRecipes,
+    canCreateFinalRecipes: canEditRecipes,
+    canEditDevicePermissions: canManageRecipeAccess,
     canAbortOrRestart: true
   };
 }
@@ -1055,6 +1100,9 @@ export function importState(rawText, seedRecipes) {
       ...(merged.settings?.recipeFinder || {})
     }
   };
+  merged.users = Array.isArray(merged.users)
+    ? merged.users.map((user) => normalizeUserRecord(user, merged.currentFacilityId || merged.facilities?.[0]?.id || ""))
+    : [];
   merged.importedRecipeCatalog = Array.isArray(merged.importedRecipeCatalog) ? merged.importedRecipeCatalog : [];
   merged.orders = shouldReseedOrders(merged.orders, merged.recipes || [])
     ? {

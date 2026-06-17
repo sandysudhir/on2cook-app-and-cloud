@@ -1,5 +1,16 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-06-17
+
+- Added a login gate for On2Cook Cloud with sign in, first admin setup, and a hardware-test demo bypass.
+- Added role-aware permissions for `main_admin`, `kitchen_manager`, `owner`, `operator`, and `cook`.
+- Added master-admin people management fields for email, mobile, WhatsApp, role, status, and recipe permissions.
+- Restricted Global Recipes, recipe import, recipe selection, and editor access based on the logged-in user's permissions.
+- Added NoCodeBackend profile permission fields: `can_add_recipes`, `can_edit_recipes`, and `can_manage_recipe_access`.
+- Documented the login, permission, and NoCodeBackend profile contract in `On2Cook Cloud/docs/LOGIN_AND_PERMISSION_MODEL.md`.
+- Updated the iPage FTP deploy script to skip the local `data/` recipe ZIP archive during routine app uploads.
+- Bumped web cache version to `20260617a` / service-worker cache `v39`.
+
 ## 2026-06-16
 
 - Added an on-screen Abort recipe action for active device work; it sends the firmware command `stop=100` and waits for the normal device abort/completion notification to clear the run.

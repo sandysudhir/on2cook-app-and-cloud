@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260616f";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260616f";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260616f";
+} from "./ncb-services.js?v=20260617a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260616f";
+} from "./data-store.js?v=20260617a";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -1256,6 +1256,64 @@ async function refreshCloudRuntime() {
       ready: false,
       lastError: error.message || "Cloud status unavailable."
     });
+  }
+}
+
+function userRecordFromCloudProfile(profile, sessionUser, fallbackFacilityId = "") {
+  const role = profile?.role || "operator";
+  const adminLike = role === "main_admin" || role === "admin";
+  const managerLike = adminLike || role === "kitchen_manager" || role === "owner";
+  return {
+    id: `cloud-user-${sessionUser.id}`,
+    cloudUserId: sessionUser.id,
+    cloudProfileId: profile?.id || "",
+    facilityId: profile?.facility_id || fallbackFacilityId,
+    email: profile?.email || sessionUser.email || "",
+    mobilePhone: profile?.mobile_phone || "",
+    whatsappPhone: profile?.whatsapp_phone || "",
+    displayName: profile?.full_name || sessionUser.name || sessionUser.email || "Cloud User",
+    role,
+    status: profile?.status || "active",
+    managerMode: Boolean(profile?.manager_mode),
+    canAddRecipes: Boolean(profile?.can_add_recipes ?? adminLike),
+    canEditRecipes: Boolean(profile?.can_edit_recipes ?? managerLike),
+    canManageRecipeAccess: Boolean(profile?.can_manage_recipe_access ?? managerLike)
+  };
+}
+
+async function syncCloudSessionToLocalUser() {
+  const sessionUser = cloudRuntime.session;
+  if (!sessionUser?.id) return;
+  try {
+    const profile = await profileService.getMine(sessionUser);
+    if (!profile) return;
+    setCloudRuntime({ profile });
+    mutate((draft) => {
+      const localUser = userRecordFromCloudProfile(profile, sessionUser, draft.currentFacilityId || draft.facilities?.[0]?.id || "");
+      const existingIndex = draft.users.findIndex(
+        (user) =>
+          user.cloudUserId === sessionUser.id ||
+          String(user.email || "").toLowerCase() === String(localUser.email || "").toLowerCase()
+      );
+      if (existingIndex >= 0) {
+        draft.users[existingIndex] = {
+          ...draft.users[existingIndex],
+          ...localUser,
+          id: draft.users[existingIndex].id
+        };
+        draft.currentUserId = draft.users[existingIndex].id;
+      } else {
+        draft.users.push(localUser);
+        draft.currentUserId = localUser.id;
+      }
+      const canUseGlobal = localUser.canAddRecipes || localUser.role === "main_admin" || localUser.role === "admin";
+      if (!canUseGlobal && draft.ui.activeTab === "global") {
+        draft.ui.activeTab = "recipes";
+      }
+      draft.ui.demoAuthBypass = false;
+    });
+  } catch (error) {
+    setCloudRuntime({ lastError: error.message || "Unable to load cloud profile." });
   }
 }
 
@@ -3370,13 +3428,14 @@ function stopProLiveTimer() {
 }
 
 function renderControlTabs(snapshot) {
+  const perms = currentPermissions(snapshot);
   const tabs = [
     ["orders", "Orders"],
     ["recipes", "Recipes"],
     ["queue", "Queue"],
     ["manual", "Manual Mode"],
-    ["global", "Global Recipes"]
-  ];
+    perms.canSelectGlobalRecipes ? ["global", "Global Recipes"] : null
+  ].filter(Boolean);
   return `
     <nav class="tab-strip">
       ${tabs
@@ -3392,7 +3451,15 @@ function renderControlTabs(snapshot) {
   `;
 }
 
-function renderGlobalRecipesTab(snapshot) {
+function renderGlobalRecipesTab(snapshot, perms = currentPermissions(snapshot)) {
+  if (!perms.canSelectGlobalRecipes) {
+    return `
+      <section class="stack-section">
+        <div class="mini-title">Global recipe library</div>
+        <div class="empty-card">Your login can run selected recipes only. Ask the master admin or kitchen manager for access to more recipes.</div>
+      </section>
+    `;
+  }
   const recipeCatalog = getRecipeCatalog(snapshot);
   const search = String(snapshot.ui.globalRecipeSearch || "").trim().toLowerCase();
   const picked = new Set(snapshot.ui.globalRecipePickedIds || []);
@@ -3458,11 +3525,15 @@ function renderGlobalRecipesTab(snapshot) {
                       </div>
                     </div>
                     <div class="action-row top-gap">
-                      ${
-                        existingRecipe
-                          ? `<button class="primary-button small" data-action="open-professional-editor" data-recipe-id="${existingRecipe.id}">Edit Recipe</button>`
-                          : `<button class="secondary-button small" data-action="global-recipe-import-one" data-recipe-catalog-id="${escapeHtml(entry.id)}">Add to Recipe list</button>`
-                      }
+                      ${(() => {
+                        if (existingRecipe && perms.canCreateFinalRecipes) {
+                          return `<button class="primary-button small" data-action="open-professional-editor" data-recipe-id="${existingRecipe.id}">Edit Recipe</button>`;
+                        }
+                        if (existingRecipe) {
+                          return `<span class="subtle">Already available in this kitchen</span>`;
+                        }
+                        return `<button class="secondary-button small" data-action="global-recipe-import-one" data-recipe-catalog-id="${escapeHtml(entry.id)}">Add to Recipe list</button>`;
+                      })()}
                     </div>
                   </article>
                 `;
@@ -3837,9 +3908,13 @@ function renderRecipeCard(snapshot, recipe, perms) {
         <div class="subtle">${escapeHtml(recipe.firmwareName)} | ${escapeHtml(recipe.source)}</div>
         <div class="subtle">Aliases: ${escapeHtml(recipe.aliases.join(", "))}</div>
         <div class="action-row">
-          <button class="secondary-button small" data-action="toggle-recipe-selected" data-recipe-id="${recipe.id}">
-            ${recipe.selected ? "Disable" : "Enable"}
-          </button>
+          ${
+            perms.canCreateBaseRecipes
+              ? `<button class="secondary-button small" data-action="toggle-recipe-selected" data-recipe-id="${recipe.id}">
+                  ${recipe.selected ? "Disable" : "Enable"}
+                </button>`
+              : ""
+          }
           ${
             perms.canCreateFinalRecipes
               ? `<button class="primary-button small" data-action="open-professional-editor" data-recipe-id="${recipe.id}">
@@ -3870,7 +3945,7 @@ function renderRecipesTab(snapshot, perms) {
         <div class="segment-row">
           <button class="segment ${mode === "selected" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="selected">Selected</button>
           <button class="segment ${mode === "final" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="final">Final Modified</button>
-          <button class="segment ${mode === "import" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="import">Import</button>
+          ${perms.canCreateBaseRecipes ? `<button class="segment ${mode === "import" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="import">Import</button>` : ""}
         </div>
       </div>
       ${
@@ -3884,7 +3959,7 @@ function renderRecipesTab(snapshot, perms) {
           : ""
       }
       ${
-        mode === "import"
+        mode === "import" && perms.canCreateBaseRecipes
           ? `
             <div class="settings-card">
               <div class="mini-title">Recipe finder import</div>
@@ -3900,6 +3975,8 @@ function renderRecipesTab(snapshot, perms) {
               <p class="subtle">Imported ZIPs are added to the local recipe library, selected for cooking, and made available for device assignment. ZIP importer expects one JSON recipe file and can also pick up one image for the card thumbnail.</p>
             </div>
           `
+          : mode === "import"
+            ? `<div class="empty-card">Your login can run selected recipes only. Recipe import is controlled by the master admin.</div>`
           : ""
       }
     </section>
@@ -3927,12 +4004,22 @@ function renderMoreTab(snapshot, perms) {
           </select>
         </label>
         <div class="subtle">Current role: ${escapeHtml(currentUser.role)}</div>
+        <div class="permission-grid top-gap">
+          <span class="${perms.canManageUsers ? "yes" : "no"}">Manage people</span>
+          <span class="${perms.canSelectGlobalRecipes ? "yes" : "no"}">Add/select recipes</span>
+          <span class="${perms.canCreateFinalRecipes ? "yes" : "no"}">Edit recipes</span>
+          <span class="${perms.canRunRecipes ? "yes" : "no"}">Run recipes</span>
+        </div>
         <div class="toggle-row">
           <label><input type="checkbox" data-setting-path="orderScreenEnabled" ${snapshot.settings.orderScreenEnabled ? "checked" : ""}> Order screen enabled</label>
           <label><input type="checkbox" data-setting-path="operatorActsAsManager" ${snapshot.settings.operatorActsAsManager ? "checked" : ""}> Operator may act as kitchen manager</label>
         </div>
         <div class="action-row top-gap">
-          <button class="secondary-button small" data-action="switch-tab" data-tab="global">Open Global Recipes</button>
+          ${
+            perms.canSelectGlobalRecipes
+              ? `<button class="secondary-button small" data-action="switch-tab" data-tab="global">Open Global Recipes</button>`
+              : `<span class="subtle">Global recipe selection is controlled by the master admin.</span>`
+          }
         </div>
       </div>
     </section>
@@ -3944,8 +4031,11 @@ function renderMoreTab(snapshot, perms) {
           .map(
             (user) => `
               <div class="user-row">
-                <span>${escapeHtml(user.displayName)}</span>
-                <span class="subtle">${escapeHtml(user.email)} | ${escapeHtml(user.role)}</span>
+                <span>
+                  <strong>${escapeHtml(user.displayName)}</strong>
+                  <span class="subtle">${escapeHtml(user.mobilePhone || user.email || "No contact")}</span>
+                </span>
+                <span class="subtle">${escapeHtml(user.role)} | ${user.canAddRecipes ? "can add recipes" : "selected only"} | ${user.canEditRecipes ? "can edit" : "run only"}</span>
               </div>
             `
           )
@@ -4064,7 +4154,7 @@ function renderControlPhone(snapshot) {
       : snapshot.ui.activeTab === "manual"
         ? renderManualModeTab(snapshot)
       : snapshot.ui.activeTab === "global"
-        ? renderGlobalRecipesTab(snapshot)
+        ? renderGlobalRecipesTab(snapshot, perms)
       : renderMoreTab(snapshot, perms);
 
   return `
@@ -5247,10 +5337,17 @@ function renderModal(snapshot) {
             <button class="icon-button" data-action="close-modal">x</button>
           </div>
           <form data-form="add-user" class="modal-form">
-            <label class="field-label">Display name<input class="field-input" type="text" name="displayName" required></label>
-            <label class="field-label">Email<input class="field-input" type="email" name="email" required></label>
-            <label class="field-label">Role<select class="field-input" name="role"><option value="admin">Admin</option><option value="kitchen_manager">Kitchen manager</option><option value="operator">Operator</option></select></label>
-            <label class="toggle-row"><input type="checkbox" name="managerMode"> Operator acts as manager</label>
+            <label class="field-label">Full name<input class="field-input" type="text" name="displayName" required></label>
+            <label class="field-label">Email ID<input class="field-input" type="email" name="email" placeholder="name@example.com"></label>
+            <label class="field-label">Mobile number<input class="field-input" type="tel" name="mobilePhone" placeholder="+91..."></label>
+            <label class="field-label">WhatsApp number<input class="field-input" type="tel" name="whatsappPhone" placeholder="+91..."></label>
+            <label class="field-label">Role<select class="field-input" name="role"><option value="admin">Franchise admin</option><option value="kitchen_manager">Kitchen manager</option><option value="operator">Cook / Operator</option></select></label>
+            <label class="field-label">Status<select class="field-input" name="status"><option value="invited">Invited</option><option value="active">Active</option><option value="suspended">Suspended</option></select></label>
+            <label class="toggle-row"><input type="checkbox" name="canAddRecipes"> Can add/select recipes from Global Recipes</label>
+            <label class="toggle-row"><input type="checkbox" name="canEditRecipes" checked> Can optimize/edit selected recipes</label>
+            <label class="toggle-row"><input type="checkbox" name="canManageRecipeAccess" checked> Can assign recipes to devices/operators</label>
+            <label class="toggle-row"><input type="checkbox" name="managerMode"> Operator acts as kitchen manager in small kitchen</label>
+            <p class="subtle">Operators normally run only the recipes selected by the master admin or kitchen manager. Leave edit/add unchecked for a run-only cook/operator.</p>
             <div class="action-row">
               <button class="secondary-button" type="button" data-action="close-modal">Cancel</button>
               <button class="primary-button" type="submit">Add user</button>
@@ -5430,9 +5527,60 @@ function renderModal(snapshot) {
   return "";
 }
 
+function renderLoginGate(snapshot) {
+  return `
+    <div class="surface login-surface">
+      ${snapshot.ui.toast ? `<div class="toast ${snapshot.ui.toastTone}">${escapeHtml(snapshot.ui.toast)}</div>` : ""}
+      <section class="login-shell">
+        <div class="login-brand-card">
+          <img src="./assets/app_banner.png" alt="On2Cook">
+          <div>
+            <div class="eyebrow">On2Cook Cloud</div>
+            <h1>Kitchen Login</h1>
+            <p>Sign in to load your kitchen role, allowed recipes, devices, and cloud recipe library.</p>
+          </div>
+        </div>
+        <div class="login-card-grid">
+          <article class="login-card">
+            <div class="mini-title">Existing user</div>
+            <p class="subtle">Use the email account created by the master admin or kitchen owner.</p>
+            <button class="primary-button" data-action="open-cloud-login">Sign in with email</button>
+          </article>
+          <article class="login-card">
+            <div class="mini-title">First setup</div>
+            <p class="subtle">Create the first master admin profile for this kitchen/franchise.</p>
+            <button class="secondary-button" data-action="open-cloud-signup">Create master account</button>
+          </article>
+          <article class="login-card">
+            <div class="mini-title">Hardware test mode</div>
+            <p class="subtle">Continue locally as Main Admin when backend login is not available during device testing.</p>
+            <button class="secondary-button" data-action="demo-auth-bypass">Continue demo</button>
+          </article>
+        </div>
+        <div class="settings-card">
+          <div class="mini-title">Role behavior</div>
+          <div class="permission-grid">
+            <span class="yes">Master admin: people + global recipes + editing</span>
+            <span class="yes">Kitchen manager: assigned recipes + optimization</span>
+            <span class="no">Operator: run selected recipes only</span>
+          </div>
+          <p class="subtle">${escapeHtml(cloudRuntime.lastError || cloudRuntime.lastSummary || "NoCodeBackend profile controls these permissions once signed in.")}</p>
+        </div>
+      </section>
+      ${renderModal(snapshot)}
+    </div>
+  `;
+}
+
 function render() {
   const snapshot = state();
   const scrollState = captureScrollState();
+  const signedIn = Boolean(cloudRuntime.session?.id || snapshot.ui.demoAuthBypass);
+  if (!signedIn) {
+    app.innerHTML = renderLoginGate(snapshot);
+    restoreScrollState(scrollState);
+    return;
+  }
   app.innerHTML = `
     <div class="surface">
       <header class="page-hero">
@@ -5977,18 +6125,41 @@ async function handleSubmit(event) {
     return;
   }
   if (formName === "add-user") {
+    const role = String(formData.get("role") || "operator");
+    const adminLike = role === "admin" || role === "main_admin";
+    const managerLike = adminLike || role === "kitchen_manager";
+    const localUser = {
+      id: safeRandomId("id"),
+      facilityId: state().currentFacilityId,
+      email: String(formData.get("email") || "").trim(),
+      mobilePhone: String(formData.get("mobilePhone") || "").trim(),
+      whatsappPhone: String(formData.get("whatsappPhone") || "").trim(),
+      displayName: String(formData.get("displayName") || "").trim(),
+      role,
+      status: String(formData.get("status") || "invited"),
+      managerMode: Boolean(formData.get("managerMode")),
+      canAddRecipes: adminLike || Boolean(formData.get("canAddRecipes")),
+      canEditRecipes: managerLike || Boolean(formData.get("canEditRecipes")),
+      canManageRecipeAccess: managerLike || Boolean(formData.get("canManageRecipeAccess")),
+      createdAt: nowIso()
+    };
+    if (!localUser.email && !localUser.mobilePhone) {
+      showToast("Add either an email ID or mobile number for this user.", "warning");
+      return;
+    }
     mutate((draft) => {
-      draft.users.push({
-        id: safeRandomId("id"),
-        facilityId: draft.currentFacilityId,
-        email: String(formData.get("email")),
-        displayName: String(formData.get("displayName")),
-        role: String(formData.get("role")),
-        managerMode: Boolean(formData.get("managerMode"))
-      });
+      draft.users.push(localUser);
     });
+    if (cloudRuntime.session?.id) {
+      try {
+        await profileService.createManagedProfile(localUser, cloudRuntime.profile || null);
+        setCloudRuntime({ lastSummary: `${localUser.displayName} profile saved to NoCodeBackend.`, lastError: "" });
+      } catch (error) {
+        setCloudRuntime({ lastError: `Local user saved, but NoCodeBackend profile insert failed: ${error.message}` });
+      }
+    }
     closeModal();
-    showToast("User added", "success");
+    showToast("User added with permissions", "success");
     return;
   }
   if (formName === "cloud-auth") {
@@ -6008,17 +6179,28 @@ async function handleSubmit(event) {
       }
       await refreshCloudRuntime();
       if (cloudRuntime.session?.id) {
-        await profileService.upsertCurrentProfile(
-          cloudRuntime.session,
-          getCurrentUser(state()),
-          {
-            full_name: String(formData.get("fullName") || "").trim(),
-            mobile_phone: String(formData.get("mobilePhone") || "").trim(),
-            whatsapp_phone: String(formData.get("whatsappPhone") || "").trim(),
-            role: String(formData.get("role") || getCurrentUser(state()).role || "operator"),
-            status: "active"
-          }
-        );
+        const existingProfile = await profileService.getMine(cloudRuntime.session).catch(() => null);
+        if (mode === "signup" || !existingProfile) {
+          const selectedRole = String(formData.get("role") || (mode === "signup" ? "main_admin" : "operator"));
+          await profileService.upsertCurrentProfile(
+            cloudRuntime.session,
+            getCurrentUser(state()),
+            {
+              full_name: String(formData.get("fullName") || "").trim(),
+              mobile_phone: String(formData.get("mobilePhone") || "").trim(),
+              whatsapp_phone: String(formData.get("whatsappPhone") || "").trim(),
+              role: selectedRole,
+              can_add_recipes: selectedRole === "main_admin" || selectedRole === "admin",
+              can_edit_recipes: selectedRole !== "operator" && selectedRole !== "cook",
+              can_manage_recipe_access: selectedRole !== "operator" && selectedRole !== "cook",
+              status: "active"
+            }
+          );
+          await refreshCloudRuntime();
+        } else {
+          setCloudRuntime({ profile: existingProfile });
+        }
+        await syncCloudSessionToLocalUser();
       }
       setCloudRuntime({
         lastSummary: mode === "signup" ? "Cloud account created and profile synced." : "Cloud sign-in successful.",
@@ -6081,6 +6263,11 @@ async function handleClick(event) {
   }
 
   if (action === "switch-tab") {
+    const perms = currentPermissions(state());
+    if (button.dataset.tab === "global" && !perms.canSelectGlobalRecipes) {
+      showToast("Your login can run selected recipes only. Global Recipes is controlled by the master admin.", "warning");
+      return;
+    }
     mutate((draft) => {
       draft.ui.activeTab = button.dataset.tab;
     });
@@ -6106,10 +6293,18 @@ async function handleClick(event) {
     return;
   }
   if (action === "global-recipes-add-to-list") {
+    if (!currentPermissions(state()).canSelectGlobalRecipes) {
+      showToast("Only permitted admins can add recipes from the global library.", "warning");
+      return;
+    }
     await addPickedGlobalRecipesToRecipeList();
     return;
   }
   if (action === "global-recipe-import-one") {
+    if (!currentPermissions(state()).canSelectGlobalRecipes) {
+      showToast("Only permitted admins can add recipes from the global library.", "warning");
+      return;
+    }
     const entry = getRecipeCatalog(state()).find((item) => item.id === button.dataset.recipeCatalogId);
     if (!entry) {
       showToast("Recipe not found in the global library", "error");
@@ -6120,10 +6315,18 @@ async function handleClick(event) {
     return;
   }
   if (action === "global-recipes-add-to-orders") {
+    if (!currentPermissions(state()).canSelectGlobalRecipes) {
+      showToast("Only permitted admins can create orders directly from the global library.", "warning");
+      return;
+    }
     await addPickedGlobalRecipesToOrders();
     return;
   }
   if (action === "global-recipes-remove-from-list") {
+    if (!currentPermissions(state()).canSelectGlobalRecipes) {
+      showToast("Only permitted admins can remove recipes from the kitchen list.", "warning");
+      return;
+    }
     removePickedGlobalRecipesFromRecipeList();
     return;
   }
@@ -6228,6 +6431,10 @@ async function handleClick(event) {
     return;
   }
   if (action === "toggle-recipe-selected") {
+    if (!currentPermissions(state()).canCreateBaseRecipes) {
+      showToast("Only permitted admins can enable or disable kitchen recipes.", "warning");
+      return;
+    }
     mutate((draft) => {
       const recipe = draft.recipes.find((item) => item.id === button.dataset.recipeId);
       if (!recipe) return draft;
@@ -6239,10 +6446,18 @@ async function handleClick(event) {
     return;
   }
   if (action === "toggle-recipe-device") {
+    if (!currentPermissions(state()).canEditDevicePermissions) {
+      showToast("Only kitchen managers or admins can assign recipes to devices.", "warning");
+      return;
+    }
     toggleRecipePermission(button.dataset.slot, button.dataset.recipeId);
     return;
   }
   if (action === "create-final-recipe" || action === "edit-final-recipe" || action === "open-professional-editor") {
+    if (!currentPermissions(state()).canCreateFinalRecipes) {
+      showToast("Your login can run recipes only. Recipe editing is disabled.", "warning");
+      return;
+    }
     openProfessionalEditor(button.dataset.recipeId);
     return;
   }
@@ -6623,8 +6838,18 @@ async function handleClick(event) {
     openModal("cloud-auth", { mode: "signup" });
     return;
   }
+  if (action === "demo-auth-bypass") {
+    mutate((draft) => {
+      draft.ui.demoAuthBypass = true;
+      const admin = draft.users.find((user) => user.role === "main_admin") || draft.users[0];
+      if (admin) draft.currentUserId = admin.id;
+    });
+    showToast("Demo mode enabled as Main Admin", "success");
+    return;
+  }
   if (action === "cloud-refresh-status") {
     await refreshCloudRuntime();
+    await syncCloudSessionToLocalUser();
     showToast("Cloud status refreshed", "success");
     return;
   }
@@ -6632,6 +6857,9 @@ async function handleClick(event) {
     try {
       await authService.signOut();
       await refreshCloudRuntime();
+      mutate((draft) => {
+        draft.ui.demoAuthBypass = false;
+      });
       setCloudRuntime({
         lastSummary: "Signed out from cloud.",
         lastError: ""
@@ -6744,6 +6972,11 @@ async function handleChange(event) {
     if (path === "__user__") {
       mutate((draft) => {
         draft.currentUserId = input.value;
+        const user = draft.users.find((item) => item.id === input.value);
+        const canUseGlobal = user?.canAddRecipes || user?.role === "main_admin" || user?.role === "admin";
+        if (!canUseGlobal && draft.ui.activeTab === "global") {
+          draft.ui.activeTab = "recipes";
+        }
       });
       return;
     }
@@ -6917,6 +7150,7 @@ async function init() {
   ensureIncomingOrderFeed();
   await registerServiceWorker();
   await refreshCloudRuntime();
+  await syncCloudSessionToLocalUser();
   app.addEventListener("click", handleClick);
   app.addEventListener("submit", handleSubmit);
   app.addEventListener("change", handleChange);

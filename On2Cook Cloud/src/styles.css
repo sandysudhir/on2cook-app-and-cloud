@@ -1003,6 +1003,100 @@ button {
   padding: 24px 24px 40px;
 }
 
+.login-surface {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.login-shell {
+  width: min(980px, 100%);
+  display: grid;
+  gap: 18px;
+}
+
+.login-brand-card,
+.login-card,
+.permission-grid {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.login-brand-card {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding: 24px;
+  border-radius: 24px;
+}
+
+.login-brand-card img {
+  width: 92px;
+  height: 92px;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.login-brand-card h1 {
+  margin: 4px 0 8px;
+  font-size: clamp(2rem, 6vw, 4rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.login-brand-card p {
+  max-width: 660px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.login-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.login-card {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  padding: 18px;
+  border-radius: 18px;
+}
+
+.permission-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.permission-grid span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.permission-grid .yes {
+  background: rgba(33, 122, 90, 0.12);
+  color: var(--success);
+}
+
+.permission-grid .no {
+  background: rgba(180, 59, 45, 0.1);
+  color: var(--danger);
+}
+
 .page-hero {
   display: flex;
   justify-content: space-between;
@@ -2298,6 +2392,20 @@ textarea.field-input {
 
   .hero-head {
     gap: 12px;
+  }
+
+  .login-surface {
+    place-items: start;
+    padding: 16px;
+  }
+
+  .login-brand-card,
+  .login-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-brand-card {
+    padding: 18px;
   }
 
   .hero-head img {

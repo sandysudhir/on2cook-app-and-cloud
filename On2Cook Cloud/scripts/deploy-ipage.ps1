@@ -52,6 +52,7 @@ $sourceRootFull = [System.IO.Path]::GetFullPath($SourceRoot)
 
 $excludePrefixes = @(
   "artifacts/",
+  "data/",
   "docs/",
   "scripts/",
   "api/_lib/",
