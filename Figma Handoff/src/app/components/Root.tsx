@@ -1,9 +1,15 @@
 import { Outlet, useLocation } from 'react-router';
 import { BottomNav } from './BottomNav';
 import { PhoneFrame } from './PhoneFrame';
+import { useEffect } from 'react';
+import { announceProStudioRoute } from '../proStudioBridge';
 
 export function Root() {
   const location = useLocation();
+  useEffect(() => {
+    announceProStudioRoute(location);
+  }, [location]);
+
   const hideNav =
     location.pathname === '/cooking' ||
     location.pathname === '/export' ||

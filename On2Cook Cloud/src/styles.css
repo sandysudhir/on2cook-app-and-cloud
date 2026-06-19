@@ -42,16 +42,26 @@
   flex-direction: column;
   overflow: hidden;
   background: #dce8f7;
+  position: relative;
 }
 
 .figma-pro-toolbar {
-  min-height: 42px;
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  right: max(8px, env(safe-area-inset-right));
+  z-index: 10;
+  width: auto;
+  min-height: 38px;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 6px 12px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
-  background: rgba(248, 250, 255, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 16px;
+  background: rgba(248, 250, 255, 0.9);
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(16px);
   color: #0f172a;
 }
 
@@ -63,9 +73,63 @@
 .figma-pro-frame {
   flex: 1;
   width: 100%;
+  height: 100%;
   min-height: 0;
   border: 0;
   background: #dce8f7;
+}
+
+.figma-pro-modal.landscape .figma-pro-toolbar {
+  right: auto;
+  max-width: min(420px, calc(100vw - 16px));
+}
+
+.figma-pro-modal.landscape .figma-pro-toolbar .subtle {
+  display: none;
+}
+
+.order-device-access {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: linear-gradient(180deg, rgba(255, 252, 247, 0.97), rgba(255, 252, 247, 0.88));
+  backdrop-filter: blur(12px);
+}
+
+.order-device-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(62px, 1fr));
+  gap: 8px;
+  overflow-x: auto;
+  padding-top: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.order-device-button {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.order-device-button span {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+}
+
+.order-device-button.connected {
+  border-color: rgba(33, 122, 90, 0.26);
+  background: rgba(230, 247, 240, 0.9);
+  color: var(--success);
 }
 
 .pro-editor-topbar {
@@ -2700,5 +2764,90 @@ textarea.field-input {
 
   .order-card-side {
     justify-items: start;
+  }
+}
+
+@media (max-width: 700px) {
+  .surface:not(.apk-surface) {
+    width: 100vw;
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .surface:not(.apk-surface) .page-hero {
+    display: none;
+  }
+
+  .surface:not(.apk-surface) .screen-rail {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    gap: 14px;
+    padding: 10px 12px 16px;
+    scroll-padding-inline: 12px;
+    scroll-snap-type: x mandatory;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+
+  .surface:not(.apk-surface) .screen-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .surface:not(.apk-surface) .phone-frame {
+    flex: 0 0 calc(100vw - 24px);
+    width: calc(100vw - 24px);
+    min-width: calc(100vw - 24px);
+    max-width: calc(100vw - 24px);
+    height: 100%;
+    scroll-snap-align: center;
+  }
+
+  .surface:not(.apk-surface) .phone-shell {
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+    overflow: hidden;
+    border-radius: 28px;
+  }
+
+  .surface:not(.apk-surface) .phone-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+
+  .figma-pro-toolbar {
+    gap: 6px;
+    padding: 5px 6px;
+    border-radius: 14px;
+  }
+
+  .figma-pro-toolbar strong,
+  .figma-pro-toolbar .subtle {
+    display: none;
+  }
+
+  .order-device-access {
+    margin-inline: -2px;
+  }
+
+  .order-device-strip {
+    grid-template-columns: repeat(5, minmax(58px, 1fr));
+    gap: 6px;
+  }
+
+  .order-device-button {
+    min-height: 44px;
+    border-radius: 12px;
   }
 }

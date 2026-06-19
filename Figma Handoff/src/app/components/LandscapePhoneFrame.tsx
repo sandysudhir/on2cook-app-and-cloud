@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface LandscapePhoneFrameProps {
   children: React.ReactNode;
@@ -10,6 +10,24 @@ interface LandscapePhoneFrameProps {
  * position:fixed descendants are captured within the screen div via CSS transform.
  */
 export function LandscapePhoneFrame({ children }: LandscapePhoneFrameProps) {
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const updateScale = () => {
+      const width = Math.max(320, window.innerWidth || 868);
+      const height = Math.max(240, window.innerHeight || 414);
+      const nextScale = Math.min(1, (width - 12) / 868, (height - 12) / 414);
+      setScale(Math.max(0.34, Number.isFinite(nextScale) ? nextScale : 1));
+    };
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    window.addEventListener('orientationchange', updateScale);
+    return () => {
+      window.removeEventListener('resize', updateScale);
+      window.removeEventListener('orientationchange', updateScale);
+    };
+  }, []);
+
   return (
     <div
       style={{
@@ -18,12 +36,14 @@ export function LandscapePhoneFrame({ children }: LandscapePhoneFrameProps) {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'radial-gradient(ellipse 90% 80% at 50% 30%, #c8d9f0 0%, #dde8f8 40%, #edf2fc 70%, #f3f6ff 100%)',
-        padding: '20px',
+        padding: '6px',
         fontFamily: "'Space Grotesk', sans-serif",
+        overflow: 'hidden',
       }}
     >
       {/* Phone body (landscape: wide × short) */}
-      <div style={{ position: 'relative', flexShrink: 0 }}>
+      <div style={{ width: 868 * scale, height: 414 * scale, position: 'relative', flexShrink: 0 }}>
+      <div style={{ position: 'relative', width: 868, height: 414, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
         {/* Volume / top buttons — on top edge when landscape */}
         <div style={{ position: 'absolute', top: -4, left: 100, width: 28, height: 4, borderRadius: '3px 3px 0 0', background: 'linear-gradient(90deg,#b0b0b2,#9a9a9c)', boxShadow: '0 -2px 4px rgba(0,0,0,0.2)' }} />
         <div style={{ position: 'absolute', top: -4, left: 148, width: 58, height: 4, borderRadius: '3px 3px 0 0', background: 'linear-gradient(90deg,#b0b0b2,#9a9a9c)', boxShadow: '0 -2px 4px rgba(0,0,0,0.2)' }} />
@@ -129,6 +149,7 @@ export function LandscapePhoneFrame({ children }: LandscapePhoneFrameProps) {
             pointerEvents: 'none',
           }}
         />
+      </div>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -129,6 +130,7 @@ class CloudWebActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         requestCloudPermissions()
         window.decorView.systemUiVisibility =
             View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -531,6 +533,19 @@ class CloudWebActivity : AppCompatActivity() {
             bleService?.writeFileData(mac, message.toByteArray(Charsets.UTF_8))
             JSONObject().put("ok", true).toString()
         }.getOrElse { errorJson(it) }
+
+        @JavascriptInterface
+        fun setOrientation(mode: String): String = runCatching {
+            val requested = if (mode.equals("landscape", ignoreCase = true)) {
+                ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            }
+            runOnUiThread {
+                requestedOrientation = requested
+            }
+            JSONObject().put("ok", true).put("orientation", mode).toString()
+        }.getOrElse { errorJson(it) }
     }
 
     private fun errorJson(error: Throwable): String {
@@ -566,6 +581,7 @@ class CloudWebActivity : AppCompatActivity() {
         if (this::webView.isInitialized && webView.canGoBack()) {
             webView.goBack()
         } else {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             super.onBackPressed()
         }
     }

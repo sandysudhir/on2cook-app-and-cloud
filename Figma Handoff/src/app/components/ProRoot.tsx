@@ -1,12 +1,19 @@
 import React from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 import { LandscapePhoneFrame } from './LandscapePhoneFrame';
+import { useEffect } from 'react';
+import { announceProStudioRoute } from '../proStudioBridge';
 
 /**
  * Full-screen landscape layout for professional editor screens.
  * Uses a landscape iPhone frame — no bottom nav.
  */
 export function ProRoot() {
+  const location = useLocation();
+  useEffect(() => {
+    announceProStudioRoute(location);
+  }, [location]);
+
   return (
     <LandscapePhoneFrame>
       <div

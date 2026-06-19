@@ -90,7 +90,7 @@
             android:name=".multiple_connection.CloudWebActivity"
             android:configChanges="keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize"
             android:exported="false"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="unspecified" />
 
         <activity
             android:name=".create_recipe.CreateNewRecipe"

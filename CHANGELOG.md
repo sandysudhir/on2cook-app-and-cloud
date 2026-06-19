@@ -1,5 +1,16 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-06-19
+
+- Added host-level Back navigation for the Figma Pro Studio / Pro Timer modal so operators can step out of the landscape timer flow.
+- Added Pro Studio route messaging so the cloud host and Android APK can switch the editor to portrait setup screens and landscape timer screens.
+- Preserved the Figma Pro Timer layout proportions while scaling the landscape frame to the actual available device viewport.
+- Fixed stale saved modals so an old Pro Studio iframe cannot cover the Orders or Recipes screen after a refresh or APK relaunch.
+- Improved small-screen responsive layout so the large desktop orchestration hero is hidden and the phone rail uses one actual screen width.
+- Added an Orders screen Device Access strip with D1-D5 buttons near the top so device selection is accessible without hunting below the order list.
+- Bumped web cache version to `20260619b` / service-worker cache `v46`.
+- Built APK locally with JDK 11 and Kotlin in-process compilation: `On2Cook-UI-Orientation-Fix-2026-06-19.apk`.
+
 ## 2026-06-17
 
 - Added a login gate for On2Cook Cloud with sign in, first admin setup, and a hardware-test demo bypass.

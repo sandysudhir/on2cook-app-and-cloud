@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260617e";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260617e";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260619b";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260619b";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260617e";
+} from "./ncb-services.js?v=20260619b";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260617e";
+} from "./data-store.js?v=20260619b";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -36,6 +36,8 @@ let toastTimer = 0;
 let statusTimer = 0;
 let orderFeedTimer = 0;
 let proLiveTimer = 0;
+let proStudioShellOrientation = "portrait";
+let proStudioRoutePath = "";
 const recipeMissingRetryCounts = new Map();
 const RECIPE_ARCHIVE_VERSION = "20260612q";
 const cloudRuntime = {
@@ -840,6 +842,35 @@ function renderContextOrderAction(order, perms) {
   return "";
 }
 
+function renderOrderDeviceAccess(snapshot) {
+  const devices = snapshot.devices.slice(0, 5);
+  return `
+    <section class="stack-section order-device-access">
+      <div class="row space">
+        <div class="mini-title">Device access</div>
+        <span class="subtle">Tap D1-D5 to view or select a device</span>
+      </div>
+      <div class="order-device-strip">
+        ${devices
+          .map(
+            (device) => `
+              <button
+                class="order-device-button ${device.connection === "connected" ? "connected" : "offline"}"
+                type="button"
+                data-action="order-jump-device"
+                data-slot="${device.slot}"
+              >
+                <strong>D${device.slot}</strong>
+                <span>${escapeHtml(device.connection === "connected" ? "Connected" : "Offline")}</span>
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+    </section>
+  `;
+}
+
 function buildOrderPrintHtml(order) {
   const customer = getOrderCustomer(order);
   const meta = getOrderMeta(order);
@@ -1237,9 +1268,69 @@ function openModal(type, payload = {}) {
 
 function closeModal() {
   stopProLiveTimer();
+  setNativeOrientation("portrait");
+  proStudioShellOrientation = "portrait";
+  proStudioRoutePath = "";
   mutate((draft) => {
     draft.ui.activeModal = null;
   });
+}
+
+function setNativeOrientation(mode) {
+  const safeMode = mode === "landscape" ? "landscape" : "portrait";
+  try {
+    window.On2CookNativeBle?.setOrientation?.(safeMode);
+  } catch (error) {
+    console.warn("[On2Cook] Native orientation bridge unavailable.", error);
+  }
+}
+
+function updateProStudioShellOrientation(mode, routePath = "") {
+  proStudioShellOrientation = mode === "landscape" ? "landscape" : "portrait";
+  if (routePath) proStudioRoutePath = routePath;
+  document.querySelectorAll(".figma-pro-modal").forEach((element) => {
+    element.classList.toggle("landscape", proStudioShellOrientation === "landscape");
+    element.classList.toggle("portrait", proStudioShellOrientation !== "landscape");
+  });
+  setNativeOrientation(proStudioShellOrientation);
+}
+
+function handleProStudioBack() {
+  const frame = document.querySelector(".figma-pro-frame");
+  const frameWindow = frame?.contentWindow;
+  if (!frameWindow) {
+    closeModal();
+    return;
+  }
+  const navigateFrame = (targetHash, targetOrientation = "portrait") => {
+    proStudioRoutePath = targetHash;
+    try {
+      frameWindow.location.hash = targetHash;
+    } catch (error) {
+      const src = frame.getAttribute("src") || "./pro-studio/index.html";
+      frame.setAttribute("src", `${src.split("#")[0]}${targetHash}`);
+    }
+    updateProStudioShellOrientation(targetOrientation, targetHash);
+  };
+  try {
+    const hash = String(frameWindow.location.hash || proStudioRoutePath || "");
+    if (hash.includes("/pro-editor/live") || hash.includes("/pro-editor/completed")) {
+      navigateFrame("#/pro-editor", "landscape");
+      return;
+    }
+    if (hash.includes("/pro-editor")) {
+      navigateFrame("#/preset-setup", "portrait");
+      return;
+    }
+    if (hash.includes("/preset-setup")) {
+      navigateFrame("#/preset-library", "portrait");
+      return;
+    }
+    closeModal();
+  } catch (error) {
+    console.warn("[On2Cook] Unable to navigate Pro Studio iframe.", error);
+    closeModal();
+  }
 }
 
 function returnToQueueContext() {
@@ -1457,7 +1548,7 @@ function syncSelectedRecipesToAllDevices(draft) {
 }
 
 function clearStartupRecipeUploadState(draft) {
-  if (draft.ui?.activeModal?.type === "professional-editor") {
+  if (draft.ui?.activeModal) {
     draft.ui.activeModal = null;
   }
   draft.devices.forEach((device) => {
@@ -3392,6 +3483,8 @@ function openProfessionalEditor(recipeId) {
     console.warn("Unable to seed Figma Pro Studio recipe payload", error);
     showToast("Opening Pro Studio without local recipe seed; browser storage is full.", "warning");
   }
+  proStudioShellOrientation = "portrait";
+  proStudioRoutePath = "#/preset-setup";
   openModal("figma-pro-studio", {
     recipeId,
     title: recipe.displayName,
@@ -3656,6 +3749,7 @@ function renderCurrentOrders(snapshot, perms) {
       </div>
       <button class="primary-button" data-action="open-manual-order">Manual Order</button>
     </div>
+    ${renderOrderDeviceAccess(snapshot)}
     <section class="stack-section">
       <div class="queue-summary">
         <div class="summary-chip">Pending ${pendingCount}</div>
@@ -5121,10 +5215,12 @@ function renderModal(snapshot) {
   if (!modal) return "";
   if (modal.type === "figma-pro-studio") {
     const src = safeOptionalUrl(modal.payload?.src, "Figma Pro Studio") || "./pro-studio/index.html#/preset-setup";
+    const orientationClass = proStudioShellOrientation === "landscape" ? "landscape" : "portrait";
     return `
       <div class="modal-backdrop figma-pro-backdrop">
-        <div class="figma-pro-modal">
+        <div class="figma-pro-modal ${orientationClass}">
           <div class="figma-pro-toolbar">
+            <button class="secondary-button small" data-action="pro-studio-back">Back</button>
             <strong>${escapeHtml(modal.payload?.title || "On2Cook Pro Studio")}</strong>
             <span class="subtle">Figma recipe flow</span>
             <button class="secondary-button small" data-action="close-modal">Close</button>
@@ -6481,6 +6577,15 @@ async function handleClick(event) {
     scrollApkRailToIndex(Number(button.dataset.apkScreenIndex) || 0);
     return;
   }
+  if (action === "order-jump-device") {
+    const slot = Number(button.dataset.slot) || 1;
+    if (IS_APK_MODE) {
+      scrollApkRailToIndex(slot);
+    } else {
+      openModal("device-sheet", { slot });
+    }
+    return;
+  }
   if (action === "toggle-global-recipe-pick") {
     const recipeCatalogId = button.dataset.recipeCatalogId;
     mutate((draft) => {
@@ -6564,6 +6669,10 @@ async function handleClick(event) {
   }
   if (action === "close-modal") {
     closeModal();
+    return;
+  }
+  if (action === "pro-studio-back") {
+    handleProStudioBack();
     return;
   }
   if (action === "close-live-result-to-queue" || action === "close-live-sheet-to-queue") {
@@ -7433,6 +7542,12 @@ function bindApkRailGestures() {
     true
   );
 }
+
+window.addEventListener("message", (event) => {
+  if (event.origin !== window.location.origin) return;
+  if (event.data?.type !== "on2cook-pro-studio-route") return;
+  updateProStudioShellOrientation(event.data.orientation, event.data.path || event.data.hash || "");
+});
 
 async function init() {
   seedRecipes = await loadSeedRecipeCatalog();
