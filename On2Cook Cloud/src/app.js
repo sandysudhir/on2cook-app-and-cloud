@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260619b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260619b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260622a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260622a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260619b";
+} from "./ncb-services.js?v=20260622a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260619b";
+} from "./data-store.js?v=20260622a";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -138,6 +138,12 @@ function safeOptionalUrl(value, label = "optional URL") {
     return "";
   }
   return url;
+}
+
+function userFacingCloudError(error, fallback = "Cloud sign-in is unavailable right now. Please try again later.") {
+  const message = String(typeof error === "string" ? error : error?.message || "").trim();
+  if (!message || /unexpected token|doctype|not valid json|html|json/i.test(message)) return fallback;
+  return message;
 }
 
 function emptyActiveRun() {
@@ -1360,7 +1366,7 @@ async function refreshCloudRuntime() {
   } catch (error) {
     setCloudRuntime({
       ready: false,
-      lastError: error.message || "Cloud status unavailable."
+      lastError: userFacingCloudError(error, "Cloud status is unavailable right now.")
     });
   }
 }
@@ -1419,7 +1425,7 @@ async function syncCloudSessionToLocalUser() {
       draft.ui.demoAuthBypass = false;
     });
   } catch (error) {
-    setCloudRuntime({ lastError: error.message || "Unable to load cloud profile." });
+    setCloudRuntime({ lastError: userFacingCloudError(error, "Unable to load the cloud profile right now.") });
   }
 }
 
@@ -4258,13 +4264,11 @@ function renderMoreTab(snapshot, perms) {
       </div>
     </section>
     <section class="stack-section">
-      <div class="mini-title">NoCodeBackend cloud</div>
+      <div class="mini-title">Cloud sync</div>
       <div class="settings-card">
         <div class="meta-grid">
-          <span>Instance ${escapeHtml(cloudRuntime.instance || "Not connected")}</span>
-          <span>Ready ${cloudRuntime.ready ? "Yes" : "No"}</span>
-          <span>Email auth ${cloudRuntime.providers?.email ? "Enabled" : "Disabled"}</span>
-          <span>OTP auth ${cloudRuntime.providers?.emailOTP ? "Enabled" : "Disabled"}</span>
+          <span>Status ${cloudRuntime.ready ? "Ready" : "Unavailable"}</span>
+          <span>${cloudRuntime.session?.email ? `Signed in` : "Not signed in"}</span>
         </div>
         <div class="top-gap subtle">
           ${
@@ -4280,12 +4284,11 @@ function renderMoreTab(snapshot, perms) {
         }
         ${
           cloudRuntime.lastError
-            ? `<div class="top-gap subtle">${escapeHtml(cloudRuntime.lastError)}</div>`
+            ? `<div class="top-gap subtle">${escapeHtml(userFacingCloudError(cloudRuntime.lastError, "Cloud sync is unavailable right now."))}</div>`
             : ""
         }
         <div class="action-row top-gap">
           <button class="primary-button small" data-action="open-cloud-login">Sign in</button>
-          <button class="secondary-button small" data-action="open-cloud-signup">Sign up</button>
           <button class="secondary-button small" data-action="cloud-refresh-status">Refresh</button>
           <button class="secondary-button small" data-action="cloud-sync">Sync now</button>
           <button class="secondary-button small" data-action="cloud-restore">Restore recipes</button>
@@ -5222,7 +5225,6 @@ function renderModal(snapshot) {
           <div class="figma-pro-toolbar">
             <button class="secondary-button small" data-action="pro-studio-back">Back</button>
             <strong>${escapeHtml(modal.payload?.title || "On2Cook Pro Studio")}</strong>
-            <span class="subtle">Figma recipe flow</span>
             <button class="secondary-button small" data-action="close-modal">Close</button>
           </div>
           <iframe class="figma-pro-frame" src="${escapeHtml(src)}" title="On2Cook Pro Studio"></iframe>
@@ -5571,12 +5573,16 @@ function renderModal(snapshot) {
       <div class="modal-backdrop">
         <div class="modal-card">
           <div class="row space">
-            <h3>${mode === "signup" ? "Create cloud account" : "Sign in to cloud"}</h3>
+            <h3>${mode === "signup" ? "Create cloud account" : "Sign in with Email"}</h3>
             <button class="icon-button" data-action="close-modal">x</button>
           </div>
           <form data-form="cloud-auth" class="modal-form">
             <input type="hidden" name="mode" value="${mode}">
-            <label class="field-label">Full name<input class="field-input" type="text" name="fullName" value="${escapeHtml(localUser.displayName || "")}" ${mode === "login" ? "" : "required"}></label>
+            ${
+              mode === "signup"
+                ? `<label class="field-label">Full name<input class="field-input" type="text" name="fullName" value="${escapeHtml(localUser.displayName || "")}" required></label>`
+                : ""
+            }
             <label class="field-label">Email<input class="field-input" type="email" name="email" value="${escapeHtml(localUser.email || "")}" required></label>
             <label class="field-label">Password<input class="field-input" type="password" name="password" required></label>
             ${
@@ -5584,7 +5590,6 @@ function renderModal(snapshot) {
                 ? `
                   <label class="field-label">Mobile phone<input class="field-input" type="tel" name="mobilePhone" placeholder="+91..."></label>
                   <label class="field-label">WhatsApp phone<input class="field-input" type="tel" name="whatsappPhone" placeholder="+91..."></label>
-                  <label class="field-label">Role<select class="field-input" name="role"><option value="main_admin">Main admin</option><option value="owner">Owner</option><option value="kitchen_manager">Kitchen manager</option><option value="operator">Operator</option><option value="cook">Cook</option></select></label>
                 `
                 : ""
             }
@@ -5748,29 +5753,15 @@ function renderLoginGate(snapshot) {
         </div>
         <div class="login-card-grid">
           <article class="login-card">
-            <div class="mini-title">Existing user</div>
-            <p class="subtle">Use the email account created by the master admin or kitchen owner.</p>
-            <button class="primary-button" data-action="open-cloud-login">Sign in with email</button>
+            <div class="mini-title">Sign in with Email</div>
+            <p class="subtle">Use the account provided for this kitchen.</p>
+            <button class="primary-button" data-action="open-cloud-login">Sign in with Email</button>
           </article>
           <article class="login-card">
-            <div class="mini-title">First setup</div>
-            <p class="subtle">Create the first master admin profile for this kitchen/franchise.</p>
-            <button class="secondary-button" data-action="open-cloud-signup">Create master account</button>
+            <div class="mini-title">Continue as Guest User</div>
+            <p class="subtle">Continue locally for device pairing and demo testing.</p>
+            <button class="secondary-button" data-action="demo-auth-bypass">Continue as Guest User</button>
           </article>
-          <article class="login-card">
-            <div class="mini-title">Hardware test mode</div>
-            <p class="subtle">Continue locally as Main Admin when backend login is not available during device testing.</p>
-            <button class="secondary-button" data-action="demo-auth-bypass">Continue demo</button>
-          </article>
-        </div>
-        <div class="settings-card">
-          <div class="mini-title">Role behavior</div>
-          <div class="permission-grid">
-            <span class="yes">Master admin: people + global recipes + editing</span>
-            <span class="yes">Kitchen manager: assigned recipes + optimization</span>
-            <span class="no">Operator: run selected recipes only</span>
-          </div>
-          <p class="subtle">${escapeHtml(cloudRuntime.lastError || cloudRuntime.lastSummary || "NoCodeBackend profile controls these permissions once signed in.")}</p>
         </div>
       </section>
       ${renderModal(snapshot)}
@@ -5868,7 +5859,6 @@ function render() {
           ? ""
           : `<header class="page-hero">
               <div class="hero-copy">
-                <div class="eyebrow">Chrome / Edge / Chrome Android</div>
                 <h1>On2Cook Cloud orchestration</h1>
                 <p>Order-first mobile layout, direct Web Bluetooth transport, five-device session support, and a recipe pipeline seeded from your local On2Cook recipe archive.</p>
               </div>
@@ -6439,9 +6429,9 @@ async function handleSubmit(event) {
     if (cloudRuntime.session?.id) {
       try {
         await profileService.createManagedProfile(localUser, cloudRuntime.profile || null);
-        setCloudRuntime({ lastSummary: `${localUser.displayName} profile saved to NoCodeBackend.`, lastError: "" });
+        setCloudRuntime({ lastSummary: `${localUser.displayName} profile saved to cloud.`, lastError: "" });
       } catch (error) {
-        setCloudRuntime({ lastError: `Local user saved, but NoCodeBackend profile insert failed: ${error.message}` });
+        setCloudRuntime({ lastError: userFacingCloudError(error, "Local user saved, but cloud profile sync is unavailable right now.") });
       }
     }
     closeModal();
@@ -6466,8 +6456,10 @@ async function handleSubmit(event) {
       await refreshCloudRuntime();
       if (cloudRuntime.session?.id) {
         const existingProfile = await profileService.getMine(cloudRuntime.session).catch(() => null);
-        if (mode === "signup" || !existingProfile) {
-          const selectedRole = String(formData.get("role") || (mode === "signup" ? "main_admin" : "operator"));
+        if (existingProfile) {
+          setCloudRuntime({ profile: existingProfile });
+        } else {
+          const selectedRole = "operator";
           await profileService.upsertCurrentProfile(
             cloudRuntime.session,
             getCurrentUser(state()),
@@ -6483,8 +6475,6 @@ async function handleSubmit(event) {
             }
           );
           await refreshCloudRuntime();
-        } else {
-          setCloudRuntime({ profile: existingProfile });
         }
         await syncCloudSessionToLocalUser();
       }
@@ -6495,8 +6485,9 @@ async function handleSubmit(event) {
       closeModal();
       showToast(mode === "signup" ? "Cloud account created" : "Signed in to cloud", "success");
     } catch (error) {
-      setCloudRuntime({ lastError: error.message || "Cloud authentication failed." });
-      showToast(error.message, "error");
+      const message = userFacingCloudError(error, "Cloud sign-in failed. Please check the account details and try again.");
+      setCloudRuntime({ lastError: message });
+      showToast(message, "error");
     }
     return;
   }
@@ -6532,7 +6523,7 @@ async function handleSubmit(event) {
         showToast(`Imported ${recipe.displayName}`, "success");
       }
     } catch (error) {
-      showToast(error.message, "error");
+      showToast(error.message || "Recipe import failed.", "error");
     }
   }
 }
@@ -7069,7 +7060,7 @@ async function handleClick(event) {
         "success"
       );
     } catch (error) {
-      showToast(error.message, "error");
+      showToast(error.message || "Unable to read device recipes.", "error");
     }
     return;
   }
@@ -7183,7 +7174,7 @@ async function handleClick(event) {
       });
       showToast("Signed out from cloud", "success");
     } catch (error) {
-      showToast(error.message, "error");
+      showToast(userFacingCloudError(error, "Cloud sign-out is unavailable right now."), "error");
     }
     return;
   }
@@ -7208,11 +7199,12 @@ async function handleClick(event) {
       });
       showToast("Cloud sync complete", "success");
     } catch (error) {
+      const message = userFacingCloudError(error, "Cloud sync failed. Please try again later.");
       setCloudRuntime({
         loading: false,
-        lastError: error.message || "Cloud sync failed."
+        lastError: message
       });
-      showToast(error.message, "error");
+      showToast(message, "error");
     }
     return;
   }
@@ -7229,11 +7221,12 @@ async function handleClick(event) {
       });
       showToast(`Restored ${merged} cloud recipe${merged === 1 ? "" : "s"}`, "success");
     } catch (error) {
+      const message = userFacingCloudError(error, "Cloud restore failed. Please try again later.");
       setCloudRuntime({
         loading: false,
-        lastError: error.message || "Cloud restore failed."
+        lastError: message
       });
-      showToast(error.message, "error");
+      showToast(message, "error");
     }
     return;
   }

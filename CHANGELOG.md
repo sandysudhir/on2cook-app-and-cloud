@@ -1,5 +1,14 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-06-22
+
+- Simplified the Kitchen Login gate to two choices only: Sign in with Email and Continue as Guest User.
+- Removed the visible Role Behaviour/debug section and first-setup/hardware-test cards from the user login screen.
+- Changed cloud login role handling so existing cloud profiles decide privileges, while new non-master profiles default to normal operator access.
+- Sanitized NoCodeBackend/API JSON parser failures so users see clean cloud-unavailable messages instead of internal `Unexpected token` or `doctype` errors.
+- Removed visible development labels from the cloud UI and renamed the settings integration panel to Cloud sync.
+- Bumped web cache version to `20260622a` / service-worker cache `v47`.
+
 ## 2026-06-19
 
 - Added host-level Back navigation for the Figma Pro Studio / Pro Timer modal so operators can step out of the landscape timer flow.

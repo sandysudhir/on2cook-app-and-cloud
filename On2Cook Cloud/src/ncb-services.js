@@ -21,7 +21,20 @@ async function requestJson(url, options = {}) {
     ...options
   });
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch (error) {
+      console.warn("[On2Cook] Cloud endpoint returned non-JSON content.", {
+        url: cleanUrl,
+        status: response.status,
+        preview: text.slice(0, 160),
+        error
+      });
+      throw new Error("Cloud service is unavailable. Please try again later.");
+    }
+  }
   if (!response.ok) {
     throw new Error(data?.error || data?.message || `Request failed: ${response.status}`);
   }
