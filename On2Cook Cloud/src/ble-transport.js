@@ -119,6 +119,7 @@ export class BleTransport extends EventTarget {
   constructor() {
     super();
     this.sessions = new Map();
+    this.connectLocks = new Map();
     this.nativeBridge = globalThis.On2CookNativeBle || null;
     this.usesNativeBridge = Boolean(this.nativeBridge?.isAvailable?.());
     this.supported = Boolean(this.usesNativeBridge || navigator.bluetooth);
@@ -154,36 +155,112 @@ export class BleTransport extends EventTarget {
     }
   }
 
-  async connect(slot, rememberedBrowserDeviceId = "") {
-    if (!this.supported) {
-      throw new Error("Web Bluetooth is not available in this browser.");
+  getWebSessionConnected(session) {
+    return Boolean(session?.server?.connected || session?.device?.gatt?.connected);
+  }
+
+  isChooserCancel(error) {
+    return error?.name === "NotFoundError";
+  }
+
+  formatWebBluetoothError(error, context = "") {
+    if (this.isChooserCancel(error)) {
+      return new Error("Bluetooth pairing was cancelled before a device was selected.");
     }
-    if (this.usesNativeBridge) {
-      return this.connectNative(slot);
+    const rawMessage = String(error?.message || error || "Bluetooth connection failed.");
+    const name = error?.name ? `${error.name}: ` : "";
+    const prefix = context ? `${context}: ` : "";
+    if (/gatt|network|disconnected|not found|no services|not supported/i.test(rawMessage)) {
+      return new Error(`${prefix}${name}${rawMessage} Turn the On2Cook device on, keep it near this computer, then try Connect again. If it still fails, use Clear pairing for that slot and select the cooker again.`);
     }
-    let device = null;
-    if (rememberedBrowserDeviceId && navigator.bluetooth.getDevices) {
-      const known = await navigator.bluetooth.getDevices();
-      device = known.find((item) => item.id === rememberedBrowserDeviceId) || null;
+    return new Error(`${prefix}${name}${rawMessage}`);
+  }
+
+  async requestOn2CookDevice() {
+    return await navigator.bluetooth.requestDevice({
+      filters: [{ services: [SERVICE_UUID] }],
+      optionalServices: [SERVICE_UUID]
+    });
+  }
+
+  async findRememberedDevice(rememberedBrowserDeviceId = "") {
+    const rememberedId = String(rememberedBrowserDeviceId || "").trim();
+    if (!rememberedId || !navigator.bluetooth?.getDevices) return null;
+    const known = await this.getKnownDevices();
+    return known.find((item) => item.id === rememberedId) || null;
+  }
+
+  async connectGattWithRetry(device) {
+    let lastError = null;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        if (attempt > 0) {
+          await delay(450);
+        }
+        if (device.gatt?.connected) {
+          device.gatt.disconnect();
+          await delay(250);
+        }
+        const server = await device.gatt.connect();
+        if (server?.connected) return server;
+        lastError = new Error("GATT server did not report a connected state.");
+      } catch (error) {
+        lastError = error;
+      }
     }
-    if (!device) {
-      device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [SERVICE_UUID] }],
-        optionalServices: [SERVICE_UUID]
+    throw lastError || new Error("Unable to connect to GATT server.");
+  }
+
+  prepareSlotForDevice(slot, device) {
+    const requestedSlot = Number(slot);
+    for (const session of Array.from(this.sessions.values())) {
+      if (session.device?.id !== device.id) continue;
+      if (Number(session.slot) === requestedSlot) {
+        if (this.getWebSessionConnected(session)) {
+          return session;
+        }
+        this.cleanupSession(session);
+        continue;
+      }
+      if (this.getWebSessionConnected(session)) {
+        throw new Error(`This On2Cook device is already connected as Device ${session.slot}. Disconnect that slot before assigning it somewhere else.`);
+      }
+      this.cleanupSession(session);
+      this.dispatch("device-disconnected", {
+        slot: session.slot,
+        browserDeviceId: session.device?.id || "",
+        bluetoothName: session.device?.name || ""
       });
     }
-    const server = await device.gatt.connect();
+
+    const previous = this.sessions.get(requestedSlot);
+    if (previous) {
+      const previousDevice = previous.device;
+      this.cleanupSession(previous);
+      if (previousDevice?.gatt?.connected) {
+        previousDevice.gatt.disconnect();
+      }
+    }
+    return null;
+  }
+
+  async openWebDevice(slot, device) {
+    const reusableSession = this.prepareSlotForDevice(slot, device);
+    if (reusableSession) {
+      return {
+        slot: Number(slot),
+        browserDeviceId: reusableSession.device.id,
+        bluetoothName: reusableSession.device.name || ""
+      };
+    }
+
+    const server = await this.connectGattWithRetry(device);
     const service = await server.getPrimaryService(SERVICE_UUID);
     const commandCharacteristic = await service.getCharacteristic(COMMAND_UUID);
     const fileCharacteristic = await service.getCharacteristic(FILE_UUID);
 
-    const previous = this.sessions.get(slot);
-    if (previous?.device && previous.device !== device) {
-      this.cleanupSession(previous);
-    }
-
     const session = {
-      slot,
+      slot: Number(slot),
       device,
       server,
       service,
@@ -202,30 +279,102 @@ export class BleTransport extends EventTarget {
     const handleDisconnect = () => {
       this.cleanupSession(session);
       this.dispatch("device-disconnected", {
-        slot,
+        slot: session.slot,
         browserDeviceId: device.id,
         bluetoothName: device.name || ""
       });
     };
 
-    session.onDisconnected = handleDisconnect;
-    device.addEventListener("gattserverdisconnected", handleDisconnect);
-    await this.startNotifications(session, commandCharacteristic, "command");
-    await this.startNotifications(session, fileCharacteristic, "file");
-    this.sessions.set(slot, session);
+    try {
+      session.onDisconnected = handleDisconnect;
+      device.addEventListener("gattserverdisconnected", handleDisconnect);
+      await this.startNotifications(session, commandCharacteristic, "command");
+      await this.startNotifications(session, fileCharacteristic, "file");
+    } catch (error) {
+      device.removeEventListener("gattserverdisconnected", handleDisconnect);
+      if (device.gatt?.connected) {
+        device.gatt.disconnect();
+      }
+      throw error;
+    }
+
+    this.sessions.set(Number(slot), session);
 
     this.dispatch("device-connected", {
-      slot,
+      slot: Number(slot),
       browserDeviceId: device.id,
       bluetoothName: device.name || "",
       serviceUuid: SERVICE_UUID
     });
 
     return {
-      slot,
+      slot: Number(slot),
       browserDeviceId: device.id,
       bluetoothName: device.name || ""
     };
+  }
+
+  async connect(slot, rememberedBrowserDeviceId = "") {
+    const numericSlot = Number(slot);
+    if (!this.supported) {
+      throw new Error("Web Bluetooth is not available in this browser.");
+    }
+    if (this.usesNativeBridge) {
+      return this.connectNative(numericSlot);
+    }
+    const existing = this.sessions.get(numericSlot);
+    if (this.getWebSessionConnected(existing)) {
+      return {
+        slot: numericSlot,
+        browserDeviceId: existing.device?.id || "",
+        bluetoothName: existing.device?.name || ""
+      };
+    }
+    if (this.connectLocks.has(numericSlot)) {
+      return await this.connectLocks.get(numericSlot);
+    }
+
+    const connectTask = (async () => {
+      let rememberedFailed = false;
+      const rememberedDevice = await this.findRememberedDevice(rememberedBrowserDeviceId);
+      if (rememberedDevice) {
+        try {
+          return await this.openWebDevice(numericSlot, rememberedDevice);
+        } catch (error) {
+          rememberedFailed = true;
+          console.warn("Saved Bluetooth device could not be reused.", error);
+          if (this.isChooserCancel(error)) {
+            throw this.formatWebBluetoothError(error);
+          }
+        }
+      }
+
+      let selectedDevice = null;
+      try {
+        selectedDevice = await this.requestOn2CookDevice();
+      } catch (error) {
+        if (rememberedFailed) {
+          throw this.formatWebBluetoothError(
+            error,
+            "Saved Bluetooth pairing failed and a fresh device was not selected"
+          );
+        }
+        throw this.formatWebBluetoothError(error);
+      }
+
+      try {
+        return await this.openWebDevice(numericSlot, selectedDevice);
+      } catch (error) {
+        throw this.formatWebBluetoothError(error, `Could not connect Device ${numericSlot}`);
+      }
+    })();
+
+    this.connectLocks.set(numericSlot, connectTask);
+    try {
+      return await connectTask;
+    } finally {
+      this.connectLocks.delete(numericSlot);
+    }
   }
 
   async disconnect(slot) {

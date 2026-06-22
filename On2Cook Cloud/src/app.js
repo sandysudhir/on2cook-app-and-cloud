@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260622c";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260622c";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260622d";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260622d";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260622c";
+} from "./ncb-services.js?v=20260622d";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260622c";
+} from "./data-store.js?v=20260622d";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -2615,14 +2615,15 @@ function handleTransportEvents() {
 }
 
 async function connectDevice(slot) {
+  const rememberedId = getDevice(slot)?.browserDeviceId || "";
   mutate((draft) => {
     const device = draft.devices.find((item) => item.slot === Number(slot));
     if (!device) return draft;
     device.connection = "connecting";
-    device.lastMessage = "Opening Bluetooth chooser";
+    device.lastMessage = rememberedId ? "Reconnecting saved Bluetooth device" : "Opening Bluetooth chooser";
+    appendActivity(device, device.lastMessage, "info");
   });
   try {
-    const rememberedId = getDevice(slot)?.browserDeviceId || "";
     await ble.connect(Number(slot), rememberedId);
     showToast(`Device ${slot} connected`, "success");
   } catch (error) {
@@ -2631,6 +2632,7 @@ async function connectDevice(slot) {
       if (!device) return draft;
       device.connection = "disconnected";
       device.lastMessage = error.message;
+      appendActivity(device, error.message, "warning");
     });
     showToast(error.message, "error");
   }
@@ -2638,6 +2640,7 @@ async function connectDevice(slot) {
 
 async function connectAllDevices() {
   const slots = [1, 2, 3, 4, 5];
+  const failedSlots = [];
   mutate((draft) => {
     draft.devices.forEach((device) => {
       if (device.connection === "connected") return;
@@ -2647,21 +2650,57 @@ async function connectAllDevices() {
     });
   });
   try {
-    if (typeof ble.connectAllNative === "function") {
+    if (ble.usesNativeBridge && typeof ble.connectAllNative === "function") {
       await ble.connectAllNative(slots);
     } else {
       for (const slot of slots) {
         const current = getDevice(slot);
         if (current?.connection === "connected") continue;
-        await ble.connect(Number(slot), current?.browserDeviceId || "");
+        mutate((draft) => {
+          const device = draft.devices.find((item) => item.slot === Number(slot));
+          if (!device) return draft;
+          device.connection = "connecting";
+          device.lastMessage = current?.browserDeviceId
+            ? "Reconnecting saved Bluetooth device"
+            : `Select the On2Cook device for Device ${slot}`;
+        });
+        try {
+          await ble.connect(Number(slot), current?.browserDeviceId || "");
+        } catch (error) {
+          failedSlots.push({ slot, error });
+          mutate((draft) => {
+            const device = draft.devices.find((item) => item.slot === Number(slot));
+            if (!device) return draft;
+            device.connection = "disconnected";
+            device.lastMessage = error.message;
+            appendActivity(device, error.message, "warning");
+          });
+          if (/cancelled/i.test(error.message) && !current?.browserDeviceId) {
+            break;
+          }
+        }
+      }
+      if (failedSlots.length) {
+        console.warn("Some On2Cook devices could not be connected.", failedSlots);
       }
     }
+    mutate((draft) => {
+      draft.devices.forEach((device) => {
+        if (device.connection !== "connecting") return;
+        const failure = failedSlots.find((item) => Number(item.slot) === Number(device.slot));
+        device.connection = "disconnected";
+        device.lastMessage = failure?.error?.message || "Connection not started";
+      });
+    });
     const connectedCount = getConnectedDevices(state()).length;
+    const failedCount = failedSlots.length;
     showToast(
       connectedCount > 0
-        ? `${connectedCount} device${connectedCount === 1 ? "" : "s"} connected. Reconnect is active.`
-        : "Bluetooth scan started. Devices will appear as they connect.",
-      connectedCount > 0 ? "success" : "info"
+        ? `${connectedCount} device${connectedCount === 1 ? "" : "s"} connected${failedCount ? `, ${failedCount} slot${failedCount === 1 ? "" : "s"} not connected` : ""}.`
+        : failedCount
+          ? "No device connected. Check power/range, then use Connect again or Clear pairing for the affected slot."
+          : "Bluetooth scan started. Devices will appear as they connect.",
+      connectedCount > 0 ? (failedCount ? "warning" : "success") : failedCount ? "warning" : "info"
     );
   } catch (error) {
     mutate((draft) => {

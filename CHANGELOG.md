@@ -17,6 +17,9 @@
 - Integrated bridge polling in the web app so active bridge orders replace local demo current/incoming orders.
 - Updated FTP deployment to avoid overwriting the server-side bridge runtime order store.
 - Bumped web cache version to `20260622c` / service-worker cache `v49`.
+- Hardened Windows Web Bluetooth connection handling with per-slot connection locks, stale saved-pairing fallback, one GATT retry, and duplicate physical-device protection.
+- Updated the home Bluetooth connect-all flow so each device slot connects independently and partial failures do not reset other slots.
+- Bumped web cache version to `20260622d` / service-worker cache `v50`.
 
 ## 2026-06-19
 
