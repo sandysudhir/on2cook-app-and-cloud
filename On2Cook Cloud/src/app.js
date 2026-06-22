@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260622b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260622b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260622c";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260622c";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260622b";
+} from "./ncb-services.js?v=20260622c";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260622b";
+} from "./data-store.js?v=20260622c";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -35,11 +35,14 @@ let store = null;
 let toastTimer = 0;
 let statusTimer = 0;
 let orderFeedTimer = 0;
+let kotBridgeTimer = 0;
 let proLiveTimer = 0;
 let proStudioShellOrientation = "portrait";
 let proStudioRoutePath = "";
 const recipeMissingRetryCounts = new Map();
 const RECIPE_ARCHIVE_VERSION = "20260612q";
+const KOT_BRIDGE_URL = "./api/orders/bridge";
+const KOT_BRIDGE_POLL_MS = 10000;
 const cloudRuntime = {
   ready: false,
   instance: "",
@@ -50,6 +53,13 @@ const cloudRuntime = {
   lastError: "",
   lastSyncAt: "",
   lastRestoreAt: ""
+};
+const kotBridgeRuntime = {
+  active: false,
+  runId: "",
+  revision: 0,
+  orderIds: new Set(),
+  lastError: ""
 };
 
 function escapeHtml(value) {
@@ -412,6 +422,76 @@ function getCurrentOrderById(orderId) {
 
 function getAnyOrderById(snapshot, orderId) {
   return snapshot.orders.current.find((order) => order.id === orderId) || snapshot.orders.previous.find((order) => order.id === orderId) || null;
+}
+
+function normalizeKotRecipeName(value) {
+  return String(value || "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractKotQuantityText(value, fallback = "1 item") {
+  const match = String(value || "").match(/\(([^)]+)\)/);
+  return match?.[1]?.trim() || fallback;
+}
+
+function parseKotCreatedAt(value, fallback = nowIso()) {
+  const text = String(value || "").trim();
+  if (!text) return fallback;
+  const normalized = text.includes("T") ? text : text.replace(" ", "T");
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? fallback : date.toISOString();
+}
+
+function makeKotBridgeOrderId(entry, payload, index) {
+  const order = payload?.properties?.Order || {};
+  const raw = entry?.id || order.orderID || order.customer_invoice_id || `kot-${index + 1}`;
+  return `kot-${String(raw).replace(/^kot-/, "").replace(/[^A-Za-z0-9_-]/g, "-")}`;
+}
+
+function createOrderFromKotBridgeEntry(snapshot, entry, index, bridgeRunId = "") {
+  const payload = entry?.payload || entry;
+  const properties = payload?.properties || {};
+  const orderMeta = properties.Order || {};
+  const customer = properties.Customer || {};
+  const items = Array.isArray(properties.OrderItem) ? properties.OrderItem : [];
+  const firstItem = items[0] || {};
+  const itemName = normalizeKotRecipeName(firstItem.name || orderMeta.comment || `KOT Order ${index + 1}`);
+  const recipe = findEffectiveRecipeForOrder(snapshot, itemName);
+  const displayOrderId = String(orderMeta.orderID || orderMeta.customer_invoice_id || index + 1);
+  return decorateOrderRecord(
+    {
+      id: makeKotBridgeOrderId(entry, payload, index),
+      serverBridgeId: entry?.id || "",
+      serverBridgeRunId: bridgeRunId || entry?.run_id || "",
+      orderId: displayOrderId.startsWith("#") ? displayOrderId : `#${displayOrderId}`,
+      itemName,
+      recipeLookup: itemName,
+      quantity: extractKotQuantityText(firstItem.name, `${Number(firstItem.quantity) || 1} item`),
+      source: orderMeta.order_from || "POS",
+      specialInstructions: firstItem.specialnotes || orderMeta.comment || "",
+      accentColor: "#f47b20",
+      createdAt: parseKotCreatedAt(orderMeta.created_on, entry?.received_at || nowIso()),
+      status: "pending",
+      assignedSlot: null,
+      assignedMode: "auto",
+      activeRecipeId: recipe?.id || "",
+      currentRunRecipeName: recipe?.displayName || itemName,
+      currentRunFirmwareName: recipe?.firmwareName || "",
+      targetSlot: null,
+      manual: String(orderMeta.order_from || "").toLowerCase() === "manual",
+      historyNote: "",
+      customerName: customer.name || "Walk-in",
+      customerPhone: customer.phone || "",
+      customerAddress: customer.address || "",
+      itemCount: items.length || 1,
+      totalAmount: toMoney(orderMeta.total || firstItem.total || 0),
+      kot: payload
+    },
+    recipe,
+    index
+  );
 }
 
 function getCurrentJob(snapshot, device) {
@@ -1717,6 +1797,7 @@ function ensureStatusPolling() {
 function ensureIncomingOrderFeed() {
   if (orderFeedTimer) clearInterval(orderFeedTimer);
   orderFeedTimer = window.setInterval(() => {
+    if (kotBridgeRuntime.active) return;
     const snapshot = state();
     if (!Array.isArray(snapshot.orders?.incoming) || snapshot.orders.incoming.length === 0) return;
     let releasedOrder = null;
@@ -1750,6 +1831,91 @@ function ensureIncomingOrderFeed() {
       showToast(`${releasedOrder.itemName} added to the pending queue`, "info");
     }
   }, 60000);
+}
+
+function mergeKotBridgeOrderState(freshOrder, existingOrder) {
+  if (!existingOrder) return freshOrder;
+  return {
+    ...freshOrder,
+    status: existingOrder.status || freshOrder.status,
+    assignedSlot: existingOrder.assignedSlot ?? freshOrder.assignedSlot,
+    assignedMode: existingOrder.assignedMode || freshOrder.assignedMode,
+    activeRecipeId: existingOrder.activeRecipeId || freshOrder.activeRecipeId,
+    currentRunRecipeName: existingOrder.currentRunRecipeName || freshOrder.currentRunRecipeName,
+    currentRunFirmwareName: existingOrder.currentRunFirmwareName || freshOrder.currentRunFirmwareName,
+    targetSlot: existingOrder.targetSlot ?? freshOrder.targetSlot,
+    historyNote: existingOrder.historyNote || freshOrder.historyNote
+  };
+}
+
+function applyKotBridgeSnapshot(payload) {
+  if (!payload?.active) {
+    kotBridgeRuntime.active = false;
+    return;
+  }
+  const entries = Array.isArray(payload.orders) ? payload.orders : [];
+  const runId = String(payload.run_id || "");
+  const priorIds = new Set(state().orders.current.map((order) => order.id));
+  const newOrders = [];
+
+  kotBridgeRuntime.active = true;
+  kotBridgeRuntime.runId = runId;
+  kotBridgeRuntime.revision = Number(payload.revision || 0);
+  kotBridgeRuntime.lastError = "";
+
+  mutate((draft) => {
+    const previousSameRunIds = new Set(
+      draft.orders.previous
+        .filter((order) => !runId || order.serverBridgeRunId === runId)
+        .map((order) => order.id)
+    );
+    const existingById = new Map(draft.orders.current.map((order) => [order.id, order]));
+    const nextOrders = [];
+    entries.forEach((entry, index) => {
+      const freshOrder = createOrderFromKotBridgeEntry(draft, entry, index, runId);
+      if (previousSameRunIds.has(freshOrder.id)) return;
+      const existingOrder = existingById.get(freshOrder.id);
+      const mergedOrder = mergeKotBridgeOrderState(freshOrder, existingOrder);
+      nextOrders.push(mergedOrder);
+      if (!priorIds.has(mergedOrder.id)) {
+        newOrders.push(mergedOrder);
+      }
+    });
+    draft.orders.current = nextOrders;
+    draft.orders.incoming = [];
+    if (draft.ui.orderMode !== "previous") {
+      draft.ui.activeTab = "orders";
+      draft.ui.orderMode = "current";
+    }
+  });
+
+  kotBridgeRuntime.orderIds = new Set(entries.map((entry, index) => makeKotBridgeOrderId(entry, entry?.payload || entry, index)));
+  if (newOrders.length > 0) {
+    showOrderNotice(newOrders[newOrders.length - 1]);
+    if (state().settings.pendingAssignmentMode === "auto_route") {
+      queueIdleWork();
+    }
+  }
+}
+
+async function fetchKotBridgeOrders() {
+  try {
+    const response = await fetch(`${KOT_BRIDGE_URL}?t=${Date.now()}`, {
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    if (!response.ok) return;
+    const payload = await response.json();
+    applyKotBridgeSnapshot(payload);
+  } catch (error) {
+    kotBridgeRuntime.lastError = error.message || "KOT bridge unavailable";
+  }
+}
+
+function ensureKotBridgePolling() {
+  if (kotBridgeTimer) clearInterval(kotBridgeTimer);
+  fetchKotBridgeOrders();
+  kotBridgeTimer = window.setInterval(fetchKotBridgeOrders, KOT_BRIDGE_POLL_MS);
 }
 
 function applyTelemetry(device, parsed, message, at) {
@@ -3810,6 +3976,7 @@ function renderCurrentOrders(snapshot, perms) {
   const pendingCount = snapshot.orders.current.filter((order) => order.status === "pending").length;
   const queuedCount = snapshot.orders.current.filter((order) => order.status === "queued").length;
   const incomingCount = Array.isArray(snapshot.orders.incoming) ? snapshot.orders.incoming.length : 0;
+  const bridgeActive = kotBridgeRuntime.active;
   const sections = [
     ["Pending", snapshot.orders.current.filter((order) => order.status === "pending")],
     ["Queued", snapshot.orders.current.filter((order) => order.status === "queued")],
@@ -3828,9 +3995,15 @@ function renderCurrentOrders(snapshot, perms) {
       <div class="queue-summary">
         <div class="summary-chip">Pending ${pendingCount}</div>
         <div class="summary-chip">Queued ${queuedCount}</div>
-        <div class="summary-chip">Next feed ${incomingCount}</div>
+        <div class="summary-chip">${bridgeActive ? `Server feed ${snapshot.orders.current.length}` : `Next feed ${incomingCount}`}</div>
       </div>
-      <p class="subtle">This demo starts with 5 pending orders. One additional order is released every minute until the remaining demo orders are exhausted.</p>
+      <p class="subtle">
+        ${
+          bridgeActive
+            ? `KOT bridge is active. Current orders are coming from the server endpoint ${escapeHtml(KOT_BRIDGE_URL)}.`
+            : "This demo starts with 5 pending orders. One additional order is released every minute until the remaining demo orders are exhausted."
+        }
+      </p>
     </section>
     ${sections
       .map(
@@ -7682,6 +7855,7 @@ async function init() {
   handleTransportEvents();
   ensureStatusPolling();
   ensureIncomingOrderFeed();
+  ensureKotBridgePolling();
   await registerServiceWorker();
   await refreshCloudRuntime();
   await syncCloudSessionToLocalUser();

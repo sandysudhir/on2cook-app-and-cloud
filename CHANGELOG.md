@@ -12,6 +12,11 @@
 - Added Manual Mode recipe/device selection with visible Idle, Running, Queue, Syncing, and Offline device states.
 - Manual recipe starts now run immediately on idle connected devices and queue behind active work on busy connected devices.
 - Bumped web cache version to `20260622b` / service-worker cache `v48`.
+- Added unauthenticated guest KOT order bridge endpoint at `/api/orders/bridge` for temporary POS/API testing.
+- Added `scripts/kot_order_bridge_sender.py`, which resets bridge orders, sends three full KOT payloads immediately, then sends four more at one-minute intervals.
+- Integrated bridge polling in the web app so active bridge orders replace local demo current/incoming orders.
+- Updated FTP deployment to avoid overwriting the server-side bridge runtime order store.
+- Bumped web cache version to `20260622c` / service-worker cache `v49`.
 
 ## 2026-06-19
 

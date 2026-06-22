@@ -130,6 +130,146 @@ function decoded_json_or_null($text) {
     return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
 }
 
+function bridge_store_path() {
+    return __DIR__ . "/_runtime/kot_orders.json";
+}
+
+function default_bridge_store() {
+    return [
+        "active" => false,
+        "run_id" => "",
+        "revision" => 0,
+        "updated_at" => "",
+        "orders" => []
+    ];
+}
+
+function ensure_bridge_runtime_dir() {
+    $dir = dirname(bridge_store_path());
+    if (!is_dir($dir)) {
+        mkdir($dir, 0775, true);
+    }
+}
+
+function read_bridge_store() {
+    $path = bridge_store_path();
+    if (!is_file($path)) {
+        return default_bridge_store();
+    }
+    $raw = file_get_contents($path);
+    $decoded = decoded_json_or_null($raw === false ? "" : $raw);
+    if (!is_array($decoded)) {
+        return default_bridge_store();
+    }
+    return array_merge(default_bridge_store(), $decoded);
+}
+
+function write_bridge_store($store) {
+    ensure_bridge_runtime_dir();
+    $path = bridge_store_path();
+    $store["updated_at"] = gmdate("c");
+    file_put_contents($path, json_encode($store, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
+    return $store;
+}
+
+function kot_payload_from_entry($entry) {
+    if (!is_array($entry)) {
+        return null;
+    }
+    if (isset($entry["payload"]) && is_array($entry["payload"])) {
+        return $entry["payload"];
+    }
+    return $entry;
+}
+
+function is_valid_kot_payload($payload) {
+    return is_array($payload) &&
+        isset($payload["properties"]) &&
+        is_array($payload["properties"]) &&
+        isset($payload["properties"]["Order"]) &&
+        is_array($payload["properties"]["Order"]) &&
+        isset($payload["properties"]["OrderItem"]) &&
+        is_array($payload["properties"]["OrderItem"]);
+}
+
+function append_bridge_orders($body) {
+    $decoded = decoded_json_or_null($body);
+    if (!is_array($decoded)) {
+        send_json(400, ["error" => "Body must be JSON."]);
+    }
+    $incoming = [];
+    if (isset($decoded["orders"]) && is_array($decoded["orders"])) {
+        $incoming = $decoded["orders"];
+    } elseif (isset($decoded["payload"]) && is_array($decoded["payload"])) {
+        $incoming = [$decoded["payload"]];
+    } else {
+        $incoming = [$decoded];
+    }
+
+    $store = read_bridge_store();
+    if (empty($store["run_id"])) {
+        $store["run_id"] = "kot_" . gmdate("Ymd_His");
+    }
+    $accepted = [];
+    foreach ($incoming as $entry) {
+        $payload = kot_payload_from_entry($entry);
+        if (!is_valid_kot_payload($payload)) {
+            continue;
+        }
+        $order = $payload["properties"]["Order"];
+        $orderId = (string) ($order["orderID"] ?? $order["customer_invoice_id"] ?? uniqid("kot_", true));
+        $accepted[] = [
+            "id" => "kot-" . preg_replace("/[^A-Za-z0-9_-]/", "-", $orderId),
+            "run_id" => $store["run_id"],
+            "received_at" => gmdate("c"),
+            "payload" => $payload
+        ];
+    }
+    if (count($accepted) === 0) {
+        send_json(400, ["error" => "No valid KOT order payloads were found."]);
+    }
+
+    $existing = [];
+    foreach (($store["orders"] ?? []) as $entry) {
+        if (isset($entry["id"])) {
+            $existing[$entry["id"]] = $entry;
+        }
+    }
+    foreach ($accepted as $entry) {
+        $existing[$entry["id"]] = $entry;
+    }
+    $store["active"] = true;
+    $store["orders"] = array_values($existing);
+    usort($store["orders"], function ($left, $right) {
+        return strcmp((string) ($left["received_at"] ?? ""), (string) ($right["received_at"] ?? ""));
+    });
+    $store["revision"] = (int) ($store["revision"] ?? 0) + 1;
+    $store = write_bridge_store($store);
+    send_json(200, [
+        "ok" => true,
+        "accepted" => count($accepted),
+        "active" => $store["active"],
+        "run_id" => $store["run_id"],
+        "revision" => $store["revision"],
+        "orders" => $store["orders"]
+    ]);
+}
+
+function reset_bridge_orders() {
+    $store = default_bridge_store();
+    $store["active"] = true;
+    $store["run_id"] = "kot_" . gmdate("Ymd_His");
+    $store["revision"] = 1;
+    $store = write_bridge_store($store);
+    send_json(200, [
+        "ok" => true,
+        "active" => true,
+        "run_id" => $store["run_id"],
+        "revision" => $store["revision"],
+        "orders" => []
+    ]);
+}
+
 function append_query($baseUrl, $queryString) {
     if ($queryString === "") {
         return $baseUrl;
@@ -174,6 +314,26 @@ try {
     $requestPath = parse_url($_SERVER["REQUEST_URI"] ?? "/", PHP_URL_PATH);
     $queryString = $_SERVER["QUERY_STRING"] ?? "";
     $method = $_SERVER["REQUEST_METHOD"] ?? "GET";
+
+    if ($requestPath === "/api/orders/bridge/reset") {
+        if (!in_array($method, ["POST", "DELETE"], true)) {
+            send_json(405, ["error" => "Use POST or DELETE to reset the KOT order bridge."]);
+        }
+        reset_bridge_orders();
+    }
+
+    if ($requestPath === "/api/orders/bridge") {
+        if ($method === "GET") {
+            send_json(200, read_bridge_store());
+        }
+        if ($method === "POST") {
+            append_bridge_orders(raw_request_body());
+        }
+        if ($method === "DELETE") {
+            reset_bridge_orders();
+        }
+        send_json(405, ["error" => "KOT order bridge supports GET, POST, and DELETE."]);
+    }
 
     if ($requestPath === "/api/cloud-status") {
         $session = get_session_user($config);

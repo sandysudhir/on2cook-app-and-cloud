@@ -55,6 +55,7 @@ $excludePrefixes = @(
   "data/",
   "docs/",
   "scripts/",
+  "api/_runtime/",
   "api/_lib/",
   "api/auth/",
   "api/data/",
