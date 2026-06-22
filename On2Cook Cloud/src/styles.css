@@ -1833,6 +1833,27 @@ button {
   color: var(--accent-strong);
 }
 
+.chip-button.idle {
+  background: rgba(34, 151, 109, 0.12);
+  color: #187a59;
+}
+
+.chip-button.busy,
+.chip-button.queued,
+.chip-button.syncing {
+  background: rgba(244, 123, 32, 0.14);
+  color: var(--warning);
+}
+
+.chip-button.offline {
+  background: rgba(160, 48, 44, 0.1);
+  color: var(--danger);
+}
+
+.chip-button.selected {
+  box-shadow: inset 0 0 0 2px rgba(244, 123, 32, 0.42);
+}
+
 .static-chip {
   pointer-events: none;
 }

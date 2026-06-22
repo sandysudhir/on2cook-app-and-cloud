@@ -657,6 +657,7 @@ function createUiState() {
     globalRecipePickedIds: [],
     manualMode: {
       slot: 1,
+      recipeId: "",
       pumpUnits: 10
     },
     demoAuthBypass: false,

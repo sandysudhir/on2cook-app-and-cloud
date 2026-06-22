@@ -8,6 +8,10 @@
 - Sanitized NoCodeBackend/API JSON parser failures so users see clean cloud-unavailable messages instead of internal `Unexpected token` or `doctype` errors.
 - Removed visible development labels from the cloud UI and renamed the settings integration panel to Cloud sync.
 - Bumped web cache version to `20260622a` / service-worker cache `v47`.
+- Moved manual recipe running out of individual device cards and into the Manual Mode tab.
+- Added Manual Mode recipe/device selection with visible Idle, Running, Queue, Syncing, and Offline device states.
+- Manual recipe starts now run immediately on idle connected devices and queue behind active work on busy connected devices.
+- Bumped web cache version to `20260622b` / service-worker cache `v48`.
 
 ## 2026-06-19
 

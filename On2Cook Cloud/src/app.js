@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260622a";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260622a";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260622b";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260622b";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260622a";
+} from "./ncb-services.js?v=20260622b";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260622a";
+} from "./data-store.js?v=20260622b";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -497,6 +497,72 @@ function hasLiveRuntime(device) {
     isQuickStartActive(device.telemetry.magnetronStatus) ||
     Boolean(device.telemetry.pumpOn);
   return (Boolean(getLiveRecipeName(device)) && !["idle", "offline", "complete_wait"].includes(workStatus)) || manualBusy;
+}
+
+function getManualDeviceRunState(snapshot, device) {
+  const liveSession = ble.getSession(device.slot);
+  const queuedCount = getQueueOrders(snapshot, device).length;
+  const currentOrder = getCurrentJob(snapshot, device);
+  const connected = device.enabled && device.connection === "connected";
+  const statusText = String(device.telemetry.workStatus || "").toLowerCase();
+  if (!connected) {
+    return {
+      status: "offline",
+      label: device.connection === "connecting" ? "Connecting" : "Offline",
+      note: "Connect this device before running or queuing a recipe.",
+      canRunNow: false,
+      canQueue: false,
+      actionLabel: "Connect first"
+    };
+  }
+  if (liveSession?.transfer) {
+    return {
+      status: "syncing",
+      label: "Syncing",
+      note: "Recipe inventory or upload is in progress.",
+      canRunNow: false,
+      canQueue: false,
+      actionLabel: "Wait for sync"
+    };
+  }
+  if (device.completionConfirmationPending) {
+    return {
+      status: "busy",
+      label: "Awaiting confirmation",
+      note: "Confirm the completed recipe before adding the next one.",
+      canRunNow: false,
+      canQueue: true,
+      actionLabel: "Add to queue"
+    };
+  }
+  if (currentOrder || device.currentJobId || hasLiveRuntime(device)) {
+    return {
+      status: "busy",
+      label: statusText === "awaiting_confirmation" ? "Awaiting ingredients" : "Running",
+      note: "This device is cooking now. The selected recipe can be added to its queue.",
+      canRunNow: false,
+      canQueue: true,
+      actionLabel: "Add to queue"
+    };
+  }
+  if (queuedCount > 0) {
+    return {
+      status: "queued",
+      label: `Queue ${queuedCount}`,
+      note: "This device already has queued work. The selected recipe will be placed after it.",
+      canRunNow: false,
+      canQueue: true,
+      actionLabel: "Add to queue"
+    };
+  }
+  return {
+    status: "idle",
+    label: "Idle",
+    note: "Ready to run the selected recipe immediately.",
+    canRunNow: true,
+    canQueue: false,
+    actionLabel: "Run now"
+  };
 }
 
 function inventoryIsFresh(device, maxAgeMs = 45000) {
@@ -2476,25 +2542,25 @@ function pickBestDevice(snapshot, order) {
 async function startOrderFlow(orderId, preferredSlot = null) {
   const snapshot = state();
   const order = snapshot.orders.current.find((item) => item.id === orderId);
-  if (!order) return;
+  if (!order) return "missing-order";
   const recipe = getEffectiveRecipe(snapshot, order);
   if (!recipe) {
     showToast(`No selected recipe matches ${order.itemName}`, "error");
-    return;
+    return "missing-recipe";
   }
   const device = preferredSlot ? snapshot.devices.find((item) => item.slot === Number(preferredSlot)) : pickBestDevice(snapshot, order);
   if (!device) {
     showToast("No connected device is ready for this recipe", "warning");
-    return;
+    return "no-device";
   }
   if (!canRunOnDevice(snapshot, order, device, recipe)) {
     showToast(`${recipe.displayName} is not enabled on Device ${device.slot}`, "error");
-    return;
+    return "not-allowed";
   }
   const liveSession = ble.getSession(device.slot);
   if (liveSession?.transfer) {
     showToast(`Device ${device.slot} is still syncing recipes. Try again in a moment.`, "warning");
-    return;
+    return "transfer-busy";
   }
 
   const busy = device.currentJobId || device.queueOrderIds.length > 0 || device.completionConfirmationPending || hasLiveRuntime(device);
@@ -2516,7 +2582,7 @@ async function startOrderFlow(orderId, preferredSlot = null) {
       appendActivity(draftDevice, `${draftOrder.itemName} queued${hasLiveRuntime(device) ? " behind live device work" : ""}`, "info");
     });
     showToast(`${order.itemName} queued on Device ${device.slot}`, "info");
-    return;
+    return "queued";
   }
 
   mutate((draft) => {
@@ -2588,6 +2654,7 @@ async function startOrderFlow(orderId, preferredSlot = null) {
       draftDevice.lastUpdatedAt = nowIso();
       appendFlowActivity(draftDevice, `Run command sent for ${recipe.firmwareName}`, "success");
     });
+    return "started";
   } catch (error) {
     mutate((draft) => {
       const draftOrder = draft.orders.current.find((item) => item.id === orderId);
@@ -2605,6 +2672,7 @@ async function startOrderFlow(orderId, preferredSlot = null) {
       }
     });
     showToast(error.message, "error");
+    return "failed";
   }
 }
 
@@ -2672,7 +2740,7 @@ async function runDeviceRecipe(slot, recipeId) {
   mutate((draft) => {
     draft.orders.current.unshift(order);
   });
-  await startOrderFlow(order.id, Number(slot));
+  return startOrderFlow(order.id, Number(slot));
 }
 
 async function completeIngredientStage(slot) {
@@ -3967,6 +4035,22 @@ function renderQueueTab(snapshot) {
 function renderManualModeTab(snapshot) {
   const device = getManualModeTarget(snapshot);
   const selectedSlot = Number(snapshot.ui.manualMode?.slot || device?.slot || 1);
+  const selectedRecipeId = String(snapshot.ui.manualMode?.recipeId || "");
+  const manualRecipes = getSelectedRecipes(snapshot);
+  const selectedRecipe = selectedRecipeId ? findRecipeById(snapshot, selectedRecipeId) : null;
+  const selectedRunState = device ? getManualDeviceRunState(snapshot, device) : null;
+  const recipeAllowedOnSelectedDevice =
+    Boolean(device && selectedRecipe && isRecipeAllowedOnDevice(snapshot, device, selectedRecipe.id));
+  const canSubmitManualRecipe =
+    Boolean(selectedRecipe && selectedRunState && (selectedRunState.canRunNow || selectedRunState.canQueue) && recipeAllowedOnSelectedDevice);
+  const idleDeviceLabels = snapshot.devices
+    .filter((item) => getManualDeviceRunState(snapshot, item).status === "idle")
+    .map((item) => `D${item.slot}`);
+  const manualRunMessage = !selectedRecipe
+    ? "Choose a recipe first."
+    : selectedRecipe && device && !recipeAllowedOnSelectedDevice
+      ? `${selectedRecipe.displayName} is not enabled on Device ${device.slot}. Enable it in device details before running.`
+      : selectedRunState?.note || "Choose a recipe and a device.";
   const pumpUnits = Math.max(1, Number(snapshot.ui.manualMode?.pumpUnits) || 10);
   const inductionStatus = getManualStatus(device?.telemetry.inductionStatus || "IDLE");
   const magnetronStatus = getManualStatus(device?.telemetry.magnetronStatus || "IDLE");
@@ -3976,18 +4060,49 @@ function renderManualModeTab(snapshot) {
     <section class="stack-section">
       <div class="mini-title">Manual Mode</div>
       <div class="settings-card">
+        <label class="field-label">
+          Recipe to run
+          <select class="field-input" data-input="manual-recipe-id">
+            <option value="">Select a recipe</option>
+            ${manualRecipes
+              .map(
+                (recipe) => `
+                  <option value="${recipe.id}" ${selectedRecipeId === recipe.id ? "selected" : ""}>${escapeHtml(recipe.displayName)}</option>
+                `
+              )
+              .join("")}
+          </select>
+        </label>
+        <div class="mini-title top-gap">Choose device</div>
         <div class="chip-row">
           ${snapshot.devices
-            .map(
-              (item) => `
-                <button class="chip-button ${selectedSlot === item.slot ? "selected" : ""}" data-action="select-manual-device" data-slot="${item.slot}">
-                  Device ${item.slot} ${item.connection === "connected" ? "Connected" : "Offline"}
+            .map((item) => {
+              const runState = getManualDeviceRunState(snapshot, item);
+              return `
+                <button class="chip-button ${selectedSlot === item.slot ? "selected" : ""} ${escapeHtml(runState.status)}" data-action="select-manual-device" data-slot="${item.slot}">
+                  Device ${item.slot} ${escapeHtml(runState.label)}
                 </button>
-              `
-            )
+              `;
+            })
             .join("")}
         </div>
-        <p class="subtle">Manual Mode talks directly to the selected device. Queue automation treats manual activity as busy.</p>
+        <div class="meta-grid top-gap">
+          <span>Idle devices: ${escapeHtml(idleDeviceLabels.length ? idleDeviceLabels.join(", ") : "None")}</span>
+          <span>Selected: ${escapeHtml(device ? `D${device.slot} ${selectedRunState?.label || ""}` : "None")}</span>
+        </div>
+        <p class="subtle top-gap">
+          ${escapeHtml(manualRunMessage)}
+        </p>
+        <div class="action-row top-gap">
+          <button class="primary-button" data-action="manual-run-selected-recipe" ${canSubmitManualRecipe ? "" : "disabled"}>
+            ${escapeHtml(selectedRunState?.actionLabel || "Run now")}
+          </button>
+          ${
+            device
+              ? `<button class="secondary-button" data-action="sync-selected-recipes" data-slot="${device.slot}">Check Device ${device.slot} recipes</button>`
+              : ""
+          }
+        </div>
       </div>
     </section>
     ${
@@ -4629,7 +4744,6 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
 function renderDevicePhone(snapshot, device) {
   const currentOrder = getCurrentJob(snapshot, device);
   const queueOrders = getQueueOrders(snapshot, device);
-  const selectableRecipes = getDeviceSyncRecipes(snapshot, device);
   const serialPhotoUrl = safeOptionalUrl(device.serialPhotoDataUrl, "serial photo");
   const runtimeRecipe = getRuntimeRecipe(snapshot, device);
   const activeTimeline = shouldRenderLiveTimeline(device, currentOrder);
@@ -4742,7 +4856,7 @@ function renderDevicePhone(snapshot, device) {
             }
           </section>
           <section class="stack-section">
-            <div class="mini-title">Manual run and inventory</div>
+            <div class="mini-title">Inventory and serial details</div>
             <div class="settings-card">
               ${
                 uploadState.summary
@@ -4768,22 +4882,9 @@ function renderDevicePhone(snapshot, device) {
                   `
                   : ""
               }
-              <label class="field-label">
-                Run selected recipe
-                <select class="field-input" data-device-recipe-select="${device.slot}">
-                  <option value="">Select a recipe</option>
-                  ${selectableRecipes
-                    .map(
-                      (recipe) => `
-                        <option value="${recipe.id}">${escapeHtml(recipe.displayName)}</option>
-                      `
-                    )
-                    .join("")}
-                </select>
-              </label>
               <div class="action-row">
-                <button class="primary-button small" data-action="run-device-selected-recipe" data-slot="${device.slot}">Run now</button>
                 <button class="secondary-button small" data-action="sync-selected-recipes" data-slot="${device.slot}">Check device recipes</button>
+                <button class="secondary-button small" data-action="switch-tab" data-tab="manual">Run from Manual Mode</button>
               </div>
               <label class="file-field">
                 <span>Serial number photo</span>
@@ -7064,13 +7165,33 @@ async function handleClick(event) {
     }
     return;
   }
-  if (action === "run-device-selected-recipe") {
-    const select = app.querySelector(`[data-device-recipe-select="${button.dataset.slot}"]`);
-    if (!select?.value) {
-      showToast("Select a recipe first", "warning");
+  if (action === "manual-run-selected-recipe") {
+    const snapshot = state();
+    const slot = Number(snapshot.ui.manualMode?.slot || 0);
+    const recipeId = String(snapshot.ui.manualMode?.recipeId || "");
+    const device = snapshot.devices.find((item) => item.slot === slot) || null;
+    const recipe = recipeId ? findRecipeById(snapshot, recipeId) : null;
+    if (!recipe) {
+      showToast("Select a recipe in Manual Mode first", "warning");
       return;
     }
-    await runDeviceRecipe(Number(button.dataset.slot), select.value);
+    if (!device) {
+      showToast("Select a device in Manual Mode first", "warning");
+      return;
+    }
+    if (device.connection !== "connected") {
+      showToast(`Device ${device.slot} is offline. Connect it before running or queuing a manual recipe.`, "warning");
+      return;
+    }
+    if (!isRecipeAllowedOnDevice(snapshot, device, recipe.id)) {
+      showToast(`${recipe.displayName} is not enabled on Device ${device.slot}`, "warning");
+      return;
+    }
+    const runState = getManualDeviceRunState(snapshot, device);
+    const result = await runDeviceRecipe(device.slot, recipe.id);
+    if (result === "started" && runState.canRunNow) {
+      showToast(`${recipe.displayName} starting on Device ${device.slot}`, "success");
+    }
     return;
   }
   if (action === "manual-induction-start") {
@@ -7344,6 +7465,13 @@ async function handleChange(event) {
   if (input.dataset.input === "manual-pump-units") {
     mutate((draft) => {
       draft.ui.manualMode.pumpUnits = Math.max(1, Math.trunc(Number(input.value) || 10));
+    });
+    return;
+  }
+
+  if (input.dataset.input === "manual-recipe-id") {
+    mutate((draft) => {
+      draft.ui.manualMode.recipeId = input.value;
     });
     return;
   }
