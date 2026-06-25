@@ -1858,6 +1858,19 @@ button {
   pointer-events: none;
 }
 
+.inventory-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(34, 151, 109, 0.12);
+  color: #187a59;
+  font-size: 0.8rem;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(34, 151, 109, 0.24);
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

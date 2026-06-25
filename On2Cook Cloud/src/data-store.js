@@ -582,6 +582,7 @@ function createDeviceSlot(slot, allowedRecipeIds = []) {
       summary: ""
     },
     allowedRecipeIds: [...allowedRecipeIds],
+    allowedRecipeIdsConfigured: false,
     availableRecipeNames: [],
     recipeInventoryUpdatedAt: "",
     syncedRecipeNames: [],
@@ -721,10 +722,15 @@ function hydrateDevices(devices, recipes) {
       ...createDeviceSlot(index + 1, defaultAllowedRecipeIds).telemetry,
       ...(existing.telemetry || {})
     };
-    if (!Array.isArray(hydrated.allowedRecipeIds) || hydrated.allowedRecipeIds.length === 0) {
+    const hadStoredAllowedRecipes = Array.isArray(existing.allowedRecipeIds);
+    const storedAllowedRecipeIds = hadStoredAllowedRecipes ? existing.allowedRecipeIds : [];
+    const validRecipeIds = new Set(recipes.map((recipe) => recipe.id));
+    hydrated.allowedRecipeIdsConfigured =
+      existing.allowedRecipeIdsConfigured === true || hadStoredAllowedRecipes;
+    if (!hadStoredAllowedRecipes) {
       hydrated.allowedRecipeIds = [...defaultAllowedRecipeIds];
     } else {
-      hydrated.allowedRecipeIds = Array.from(new Set([...hydrated.allowedRecipeIds, ...defaultAllowedRecipeIds]));
+      hydrated.allowedRecipeIds = Array.from(new Set(storedAllowedRecipeIds)).filter((recipeId) => validRecipeIds.has(recipeId));
     }
     if (!Array.isArray(hydrated.availableRecipeNames)) {
       hydrated.availableRecipeNames = [];

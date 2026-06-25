@@ -1,5 +1,11 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-06-25
+
+- Fixed device allowed-recipe toggles so manually unselected recipes stay unselected after refresh, restore, or cloud recipe merge.
+- Split device inventory chips from allowed-recipe chips: inventory now shows as read-only green storage status, while orange/grey chips remain the device permission toggles.
+- Bumped web cache version to `20260625a` / service-worker cache `v51`.
+
 ## 2026-06-22
 
 - Simplified the Kitchen Login gate to two choices only: Sign in with Email and Continue as Guest User.

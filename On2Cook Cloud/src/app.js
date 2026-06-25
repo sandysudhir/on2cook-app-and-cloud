@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260622d";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260622d";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260625a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260625a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260622d";
+} from "./ncb-services.js?v=20260625a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260622d";
+} from "./data-store.js?v=20260625a";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -1694,6 +1694,7 @@ function seedAllowedRecipeIdsIfNeeded(device, snapshot) {
 function syncSelectedRecipesToAllDevices(draft) {
   const selectedRecipeIds = draft.recipes.filter((recipe) => recipe.selected).map((recipe) => recipe.id);
   draft.devices.forEach((device) => {
+    if (device.allowedRecipeIdsConfigured === true) return;
     const existingIds = Array.isArray(device.allowedRecipeIds) ? device.allowedRecipeIds : [];
     device.allowedRecipeIds = Array.from(new Set([...existingIds, ...selectedRecipeIds]));
   });
@@ -1717,6 +1718,7 @@ function toggleRecipePermission(slot, recipeId) {
     const device = draft.devices.find((item) => item.slot === Number(slot));
     if (!device) return draft;
     seedAllowedRecipeIdsIfNeeded(device, draft);
+    device.allowedRecipeIdsConfigured = true;
     if (device.allowedRecipeIds.includes(recipeId)) {
       device.allowedRecipeIds = device.allowedRecipeIds.filter((item) => item !== recipeId);
     } else {
@@ -5756,7 +5758,7 @@ function renderModal(snapshot) {
               ${
                 inventoryPreview.length
                   ? `<div class="chip-row top-gap">${inventoryPreview
-                      .map((name) => `<span class="chip-button selected static-chip">${escapeHtml(name)}</span>`)
+                      .map((name) => `<span class="inventory-chip static-chip">${escapeHtml(name)}</span>`)
                       .join("")}</div>`
                   : `<div class="empty-card">No device recipe list has been read yet.</div>`
               }
@@ -5775,6 +5777,7 @@ function renderModal(snapshot) {
             </div>
             <div class="settings-card">
               <div class="mini-title">Recipes allowed on this device</div>
+              <div class="subtle">Orange recipes are enabled for this device. Grey recipes are imported but blocked from running here.</div>
               <div class="chip-row">
                 ${filteredRecipes
                   .map(
