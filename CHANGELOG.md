@@ -1,5 +1,12 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-07-03
+
+- Locked saved Web Bluetooth pairings to their assigned Device 1-5 windows so reconnects no longer fall back to a different cooker unless pairing is cleared.
+- Changed Connect All on Chrome/Edge to reconnect only already-assigned cooker windows and leave unassigned windows untouched.
+- Added a visible locked-cooker label on each device window and explanatory lock status inside Device Details.
+- Bumped web cache version to `20260703a` / service-worker cache `v52`.
+
 ## 2026-06-25
 
 - Fixed device allowed-recipe toggles so manually unselected recipes stay unselected after refresh, restore, or cloud recipe merge.

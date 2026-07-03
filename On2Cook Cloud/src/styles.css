@@ -1523,6 +1523,25 @@ button {
   font-size: 0.92rem;
 }
 
+.linked-device-label {
+  display: inline-flex;
+  margin-top: 8px;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: rgba(129, 103, 70, 0.1);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.linked-device-label.locked {
+  background: rgba(34, 151, 109, 0.12);
+  color: #187a59;
+  box-shadow: inset 0 0 0 1px rgba(34, 151, 109, 0.22);
+}
+
 .hero-head {
   background: linear-gradient(180deg, rgba(244, 123, 32, 0.13), rgba(244, 123, 32, 0.02));
 }
@@ -1733,6 +1752,14 @@ button {
 .order-card,
 .recipe-card {
   box-shadow: 0 14px 30px rgba(56, 40, 20, 0.08);
+}
+
+.compact-note {
+  padding: 12px;
+}
+
+.compact-note p {
+  margin: 6px 0 0;
 }
 
 .order-card h3,

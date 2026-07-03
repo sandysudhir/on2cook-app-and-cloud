@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260625a";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260625a";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260703a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260703a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260625a";
+} from "./ncb-services.js?v=20260703a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260625a";
+} from "./data-store.js?v=20260703a";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -2622,11 +2622,15 @@ async function connectDevice(slot) {
     const device = draft.devices.find((item) => item.slot === Number(slot));
     if (!device) return draft;
     device.connection = "connecting";
-    device.lastMessage = rememberedId ? "Reconnecting saved Bluetooth device" : "Opening Bluetooth chooser";
+    device.lastMessage = rememberedId
+      ? `Reconnecting locked cooker ${device.bluetoothName || `Device ${slot}`}`
+      : "Opening Bluetooth chooser to assign this window";
     appendActivity(device, device.lastMessage, "info");
   });
   try {
-    await ble.connect(Number(slot), rememberedId);
+    await ble.connect(Number(slot), rememberedId, {
+      lockToRememberedDevice: Boolean(rememberedId)
+    });
     showToast(`Device ${slot} connected`, "success");
   } catch (error) {
     mutate((draft) => {
@@ -2658,16 +2662,25 @@ async function connectAllDevices() {
       for (const slot of slots) {
         const current = getDevice(slot);
         if (current?.connection === "connected") continue;
+        if (!current?.browserDeviceId) {
+          mutate((draft) => {
+            const device = draft.devices.find((item) => item.slot === Number(slot));
+            if (!device) return draft;
+            device.connection = "disconnected";
+            device.lastMessage = "No locked cooker assigned to this window. Use Connect once to assign one.";
+          });
+          continue;
+        }
         mutate((draft) => {
           const device = draft.devices.find((item) => item.slot === Number(slot));
           if (!device) return draft;
           device.connection = "connecting";
-          device.lastMessage = current?.browserDeviceId
-            ? "Reconnecting saved Bluetooth device"
-            : `Select the On2Cook device for Device ${slot}`;
+          device.lastMessage = `Reconnecting locked cooker ${current?.bluetoothName || `Device ${slot}`}`;
         });
         try {
-          await ble.connect(Number(slot), current?.browserDeviceId || "");
+          await ble.connect(Number(slot), current.browserDeviceId, {
+            lockToRememberedDevice: true
+          });
         } catch (error) {
           failedSlots.push({ slot, error });
           mutate((draft) => {
@@ -2677,9 +2690,6 @@ async function connectAllDevices() {
             device.lastMessage = error.message;
             appendActivity(device, error.message, "warning");
           });
-          if (/cancelled/i.test(error.message) && !current?.browserDeviceId) {
-            break;
-          }
         }
       }
       if (failedSlots.length) {
@@ -4973,6 +4983,11 @@ function renderDevicePhone(snapshot, device) {
     connectionLabel === "connected" ? "cooking" : connectionLabel === "connecting" ? "starting" : "failed";
   const summaryMessage = getDeviceSummaryMessage(device);
   const uploadState = device.uploadState || emptyUploadState();
+  const linkedDeviceLabel = device.bluetoothName
+    ? `Locked to ${device.bluetoothName}`
+    : device.browserDeviceId
+      ? "Locked to saved cooker"
+      : "Not assigned";
   return `
     <section class="phone-frame device-phone ${device.connection}" data-scroll-key="frame-device-${device.slot}">
       <div class="phone-shell">
@@ -4981,6 +4996,7 @@ function renderDevicePhone(snapshot, device) {
             <div class="eyebrow">Device ${device.slot}</div>
             <h2>${escapeHtml(device.displayName)}</h2>
             <p>${escapeHtml(device.bluetoothName || "Not paired yet")}</p>
+            <span class="linked-device-label ${device.browserDeviceId ? "locked" : ""}">${escapeHtml(linkedDeviceLabel)}</span>
           </div>
           <span class="status-pill ${connectionTone}">
             ${escapeHtml(connectionLabel)}
@@ -5698,6 +5714,10 @@ function renderModal(snapshot) {
               <label class="field-label">Bluetooth name<input class="field-input" type="text" value="${escapeHtml(device.bluetoothName || "")}" disabled></label>
               <label class="field-label">Browser device ID<input class="field-input" type="text" value="${escapeHtml(device.browserDeviceId || "")}" disabled></label>
               <label class="field-label">Connection state<input class="field-input" type="text" value="${escapeHtml(device.connection)}" disabled></label>
+            </div>
+            <div class="settings-card compact-note">
+              <strong>${escapeHtml(device.browserDeviceId ? `This window is locked to ${device.bluetoothName || "a saved cooker"}` : "This window is not assigned to a cooker yet")}</strong>
+              <p class="subtle">${escapeHtml(device.browserDeviceId ? "Reconnect will only use this saved physical cooker. Use Clear pairing before assigning a different cooker to this window." : "Press Connect once and select the intended cooker. After that, this window will reconnect only to that cooker.")}</p>
             </div>
             <label class="toggle-row"><input type="checkbox" name="enabled" ${device.enabled ? "checked" : ""}> Device enabled for scheduling</label>
             <div class="settings-card">

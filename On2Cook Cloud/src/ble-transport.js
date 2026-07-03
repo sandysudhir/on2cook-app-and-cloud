@@ -314,8 +314,10 @@ export class BleTransport extends EventTarget {
     };
   }
 
-  async connect(slot, rememberedBrowserDeviceId = "") {
+  async connect(slot, rememberedBrowserDeviceId = "", options = {}) {
     const numericSlot = Number(slot);
+    const rememberedId = String(rememberedBrowserDeviceId || "").trim();
+    const lockToRememberedDevice = options.lockToRememberedDevice === true && Boolean(rememberedId);
     if (!this.supported) {
       throw new Error("Web Bluetooth is not available in this browser.");
     }
@@ -336,13 +338,19 @@ export class BleTransport extends EventTarget {
 
     const connectTask = (async () => {
       let rememberedFailed = false;
-      const rememberedDevice = await this.findRememberedDevice(rememberedBrowserDeviceId);
+      const rememberedDevice = await this.findRememberedDevice(rememberedId);
+      if (lockToRememberedDevice && !rememberedDevice) {
+        throw new Error(`Device ${numericSlot} is locked to a previously assigned cooker, but Chrome cannot currently see that paired device. Switch that cooker on and try again, or use Clear pairing before assigning a different cooker to this window.`);
+      }
       if (rememberedDevice) {
         try {
           return await this.openWebDevice(numericSlot, rememberedDevice);
         } catch (error) {
           rememberedFailed = true;
           console.warn("Saved Bluetooth device could not be reused.", error);
+          if (lockToRememberedDevice) {
+            throw this.formatWebBluetoothError(error, `Device ${numericSlot} is locked to ${rememberedDevice.name || "the saved cooker"}`);
+          }
           if (this.isChooserCancel(error)) {
             throw this.formatWebBluetoothError(error);
           }
