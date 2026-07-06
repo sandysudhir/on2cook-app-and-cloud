@@ -14,6 +14,8 @@
   --blue: #2d6cdf;
   --shadow: 0 24px 70px rgba(66, 42, 17, 0.14);
   --phone-shadow: 0 30px 60px rgba(39, 26, 12, 0.18);
+  --phone-width: 330px;
+  --phone-height: 690px;
   --radius-xl: 28px;
   --radius-lg: 18px;
   --radius-md: 12px;
@@ -1152,7 +1154,7 @@ button {
 }
 
 .surface {
-  padding: 24px 24px 40px;
+  padding: 14px 18px 28px;
 }
 
 .login-surface {
@@ -1257,9 +1259,9 @@ button {
   justify-content: space-between;
   align-items: end;
   gap: 20px;
-  padding: 28px 30px;
+  padding: 18px 22px;
   border: 1px solid var(--line);
-  border-radius: 24px;
+  border-radius: 20px;
   background: linear-gradient(140deg, rgba(255, 250, 242, 0.92), rgba(247, 238, 226, 0.88));
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -1284,7 +1286,7 @@ button {
 
 .hero-copy h1 {
   margin: 4px 0 8px;
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(1.7rem, 3vw, 2.35rem);
   line-height: 1.02;
 }
 
@@ -1292,6 +1294,8 @@ button {
   margin: 0;
   color: var(--muted);
   max-width: 62ch;
+  font-size: 0.94rem;
+  line-height: 1.35;
 }
 
 .eyebrow {
@@ -1408,9 +1412,9 @@ button {
 
 .screen-rail {
   display: flex;
-  gap: 22px;
+  gap: 18px;
   overflow-x: auto;
-  padding: 26px 4px 8px;
+  padding: 18px 2px 8px;
   scroll-snap-type: x proximity;
   scroll-padding-inline: 4px;
   -webkit-overflow-scrolling: touch;
@@ -1518,17 +1522,17 @@ button {
 }
 
 .phone-frame {
-  flex: 0 0 min(360px, calc(100vw - 44px));
-  width: min(360px, calc(100vw - 44px));
-  min-width: min(360px, calc(100vw - 44px));
-  max-width: min(360px, calc(100vw - 44px));
+  flex: 0 0 min(var(--phone-width), calc(100vw - 44px));
+  width: min(var(--phone-width), calc(100vw - 44px));
+  min-width: min(var(--phone-width), calc(100vw - 44px));
+  max-width: min(var(--phone-width), calc(100vw - 44px));
   scroll-snap-align: start;
 }
 
 .phone-shell {
   width: 100%;
   aspect-ratio: 9 / 19.5;
-  min-height: 720px;
+  min-height: var(--phone-height);
   border-radius: 34px;
   border: 1px solid rgba(108, 86, 61, 0.16);
   background:
@@ -1554,22 +1558,22 @@ button {
 }
 
 .phone-head {
-  padding: 34px 20px 18px;
+  padding: 32px 18px 14px;
   display: flex;
-  gap: 14px;
+  gap: 12px;
   justify-content: space-between;
   align-items: start;
 }
 
 .phone-head h2 {
   margin: 3px 0 4px;
-  font-size: 1.24rem;
+  font-size: 1.14rem;
 }
 
 .phone-head p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.86rem;
 }
 
 .linked-device-label {
@@ -2830,13 +2834,6 @@ textarea.field-input {
   height: 88px;
 }
 
-.control-phone {
-  flex-basis: min(430px, calc(100vw - 44px));
-  width: min(430px, calc(100vw - 44px));
-  min-width: min(430px, calc(100vw - 44px));
-  max-width: min(430px, calc(100vw - 44px));
-}
-
 .control-phone .phone-shell {
   background: #fffdf9;
 }
@@ -2847,8 +2844,8 @@ textarea.field-input {
 
 .dashboard-hero-head {
   align-items: center;
-  gap: 12px;
-  padding: 28px 18px 16px;
+  gap: 8px;
+  padding: 26px 14px 12px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 241, 0.8));
 }
 
@@ -2857,9 +2854,9 @@ textarea.field-input {
 }
 
 .dashboard-brand-logo {
-  width: 50px;
-  height: 50px;
-  border-radius: 18px;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
 }
 
 .dashboard-title-block {
@@ -2868,14 +2865,14 @@ textarea.field-input {
 
 .dashboard-title-block h2 {
   margin: 0;
-  font-size: 1.08rem;
+  font-size: 0.98rem;
   line-height: 1.1;
 }
 
 .dashboard-title-block p {
   margin-top: 4px;
   color: var(--ink);
-  font-size: 0.92rem;
+  font-size: 0.82rem;
 }
 
 .dropdown-mark {
@@ -2889,39 +2886,39 @@ textarea.field-input {
 }
 
 .dashboard-counter-card {
-  width: 50px;
-  min-height: 56px;
+  width: 40px;
+  min-height: 46px;
   display: grid;
   place-items: center;
   align-content: center;
   gap: 0;
-  border-radius: 14px;
+  border-radius: 12px;
   background: rgba(244, 123, 32, 0.08);
   color: var(--ink);
 }
 
 .dashboard-counter-card strong {
   color: var(--accent-strong);
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   line-height: 1;
 }
 
 .dashboard-counter-card span {
-  font-size: 1.24rem;
+  font-size: 1.08rem;
   font-weight: 900;
   line-height: 1.05;
 }
 
 .dashboard-counter-card small {
   color: var(--ink);
-  font-size: 0.66rem;
+  font-size: 0.54rem;
   font-weight: 800;
   white-space: nowrap;
 }
 
 .dashboard-bell-button {
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -3072,23 +3069,23 @@ textarea.field-input {
 
 .dashboard-device-strip {
   display: grid;
-  grid-template-columns: 16px repeat(5, minmax(92px, 1fr)) 16px;
+  grid-template-columns: 14px repeat(5, minmax(78px, 1fr)) 14px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
   padding-bottom: 10px;
   scrollbar-width: thin;
 }
 
 .dashboard-device-card {
-  min-height: 96px;
+  min-height: 82px;
   display: grid;
   grid-template-columns: 1fr auto;
   align-content: center;
   gap: 6px 8px;
-  padding: 12px 10px;
+  padding: 10px 8px;
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 15px;
   background: rgba(255, 255, 255, 0.86);
   color: var(--ink);
   text-align: left;
@@ -3100,14 +3097,14 @@ textarea.field-input {
 }
 
 .dashboard-device-card img {
-  width: 32px;
-  height: 32px;
+  width: 27px;
+  height: 27px;
   object-fit: contain;
 }
 
 .dashboard-device-card strong {
   justify-self: end;
-  font-size: 1.6rem;
+  font-size: 1.35rem;
   line-height: 1;
 }
 
@@ -3115,7 +3112,7 @@ textarea.field-input {
 .dashboard-device-card small {
   grid-column: 1 / -1;
   justify-self: center;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
 }
 
 .dashboard-device-card small {
