@@ -1894,6 +1894,16 @@ button {
   font-weight: 800;
 }
 
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .chip-button {
   min-height: 32px;
   padding: 0 10px;
@@ -2008,6 +2018,9 @@ button {
   grid-template-columns: 72px 1fr;
   gap: 12px;
   padding: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 252, 247, 0.95));
+  border-color: rgba(111, 92, 71, 0.12);
+  box-shadow: 0 12px 28px rgba(52, 38, 24, 0.08);
 }
 
 .recipe-thumb {
@@ -2034,6 +2047,19 @@ button {
 .recipe-copy {
   display: grid;
   gap: 8px;
+}
+
+.recipe-card .row.space {
+  align-items: start;
+  gap: 8px;
+}
+
+.recipe-card .status-pill {
+  flex: 0 0 auto;
+}
+
+.recipe-card.selected {
+  border-color: rgba(244, 123, 32, 0.24);
 }
 
 .field-label {
@@ -3402,6 +3428,214 @@ textarea.field-input {
   width: min(880px, 100%);
 }
 
+.refined-mobile-screen {
+  padding: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 250, 245, 0.96)),
+    var(--paper);
+  border-color: rgba(111, 92, 71, 0.12);
+}
+
+.refined-mobile-screen .modal-form {
+  padding: 0 18px 18px;
+}
+
+.refined-screen-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 74px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(111, 92, 71, 0.1);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.refined-brand-lockup {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.refined-brand-lockup img {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid rgba(111, 92, 71, 0.12);
+  object-fit: contain;
+}
+
+.refined-brand-lockup strong {
+  display: block;
+  font-size: 1.02rem;
+  line-height: 1.1;
+}
+
+.refined-brand-lockup span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.refined-stat-stack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.refined-stat-stack span {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 13px;
+  background: rgba(244, 123, 32, 0.08);
+  color: var(--ink);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.refined-stat-stack span b {
+  color: var(--accent-strong);
+  font-size: 0.74rem;
+}
+
+.refined-stat-stack i {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  color: var(--ink);
+  font-style: normal;
+}
+
+.refined-stat-stack i svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.refined-title-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px 4px;
+}
+
+.refined-title-row h3 {
+  margin: 0;
+}
+
+.refined-back-button {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(111, 92, 71, 0.12);
+}
+
+.refined-device-summary-card {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(111, 92, 71, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 26px rgba(52, 38, 24, 0.08);
+}
+
+.refined-device-image {
+  width: 86px;
+  min-height: 112px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.14), transparent 34%),
+    #171716;
+  box-shadow: inset 0 -20px 24px rgba(0, 0, 0, 0.32);
+}
+
+.refined-device-image img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 12px;
+  padding: 5px;
+}
+
+.refined-device-summary-copy {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.refined-device-summary-copy h3,
+.refined-device-summary-copy p {
+  margin: 0;
+}
+
+.refined-device-summary-copy p {
+  color: var(--muted);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.refined-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid rgba(111, 92, 71, 0.1);
+}
+
+.refined-info-grid span {
+  display: grid;
+  gap: 4px;
+  padding: 10px 8px 0 0;
+}
+
+.refined-info-grid small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.refined-info-grid b {
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.refined-edit-details summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.refined-toggle {
+  padding-inline: 4px;
+}
+
+.refined-live-card,
+.refined-current-card,
+.refined-inventory-card,
+.refined-recipe-access-card,
+.refined-allowed-card,
+.refined-actions-card,
+.refined-lock-note {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(111, 92, 71, 0.12);
+  box-shadow: none;
+}
+
 .modal-form {
   display: grid;
   gap: 12px;
@@ -3654,6 +3888,69 @@ textarea.field-input {
   .status-pill {
     max-width: 45%;
     white-space: nowrap;
+  }
+
+  .refined-mobile-screen {
+    max-height: calc(100vh - 16px);
+    border-radius: 22px;
+  }
+
+  .refined-mobile-screen .modal-form {
+    padding: 0 14px 14px;
+  }
+
+  .refined-screen-topbar {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .refined-brand-lockup {
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .refined-brand-lockup img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .refined-stat-stack {
+    gap: 6px;
+  }
+
+  .refined-stat-stack span {
+    min-width: 42px;
+    min-height: 42px;
+  }
+
+  .refined-stat-stack i {
+    width: 30px;
+    height: 30px;
+  }
+
+  .refined-title-row {
+    padding: 12px 14px 2px;
+  }
+
+  .refined-device-summary-card {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .refined-device-image {
+    width: 72px;
+    min-height: 96px;
+    border-radius: 15px;
+  }
+
+  .refined-device-image img {
+    width: 48px;
+    height: 48px;
+  }
+
+  .refined-info-grid {
+    grid-template-columns: 1fr 1fr;
   }
 
   .device-head h2 {

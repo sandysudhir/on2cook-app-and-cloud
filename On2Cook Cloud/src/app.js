@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706f";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706f";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706g";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706g";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260706f";
+} from "./ncb-services.js?v=20260706g";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260706f";
+} from "./data-store.js?v=20260706g";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -1166,7 +1166,8 @@ function renderUiIcon(name) {
     plus: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
     more: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5h.01M12 12h.01M12 19h.01"/></svg>`,
     chevronLeft: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>`,
-    chevronRight: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`
+    chevronRight: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`,
+    refresh: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6v5h-5"/><path d="M4 18v-5h5"/><path d="M18.5 9A7 7 0 0 0 6.4 5.8L4 8"/><path d="M5.5 15a7 7 0 0 0 12.1 3.2L20 16"/></svg>`
   };
   return icons[name] || "";
 }
@@ -1219,6 +1220,27 @@ function renderOrderDeviceAccess(snapshot) {
         <span class="strip-arrow">${renderUiIcon("chevronRight")}</span>
       </div>
     </section>
+  `;
+}
+
+function renderRefinedScreenTopBar(snapshot, title, subtitle = "") {
+  const connectedCount = snapshot.devices.filter((device) => device.connection === "connected").length;
+  const busyCount = snapshot.orders.current.filter((order) => ["starting", "cooking", "awaiting_confirmation"].includes(order.status)).length;
+  return `
+    <div class="refined-screen-topbar">
+      <div class="refined-brand-lockup">
+        <img src="./assets/on2cook-logo.png" alt="On2Cook">
+        <div>
+          <strong>${escapeHtml(title)}</strong>
+          ${subtitle ? `<span>${escapeHtml(subtitle)}</span>` : ""}
+        </div>
+      </div>
+      <div class="refined-stat-stack">
+        <span><b>D</b>${escapeHtml(connectedCount)}</span>
+        <span><b>B</b>${escapeHtml(busyCount)}</span>
+        <i>${renderUiIcon("bell")}</i>
+      </div>
+    </div>
   `;
 }
 
@@ -6115,28 +6137,53 @@ function renderModal(snapshot) {
     const inventoryPreview = (device.availableRecipeNames || []).slice(0, 12);
     return `
       <div class="modal-backdrop">
-        <div class="modal-card wide">
-          <div class="row space">
+        <div class="modal-card wide refined-mobile-screen device-detail-screen">
+          ${renderRefinedScreenTopBar(snapshot, "Device Details", `${device.displayName} | D${device.slot}`)}
+          <div class="refined-title-row">
+            <button class="icon-button refined-back-button" data-action="close-modal" aria-label="Back">${renderUiIcon("chevronLeft")}</button>
             <div>
               <div class="eyebrow">Device ${device.slot}</div>
               <h3>${escapeHtml(device.displayName)}</h3>
             </div>
-            <button class="icon-button" data-action="close-modal">x</button>
+            <button class="icon-button" type="button" data-action="request-status" data-slot="${device.slot}" aria-label="Refresh status">${renderUiIcon("refresh")}</button>
           </div>
           <form data-form="device-sheet" class="modal-form">
             <input type="hidden" name="slot" value="${device.slot}">
-            <div class="grid-two">
-              <label class="field-label">Display name<input class="field-input" type="text" name="displayName" value="${escapeHtml(device.displayName)}" required></label>
-              <label class="field-label">Bluetooth name<input class="field-input" type="text" value="${escapeHtml(device.bluetoothName || "")}" disabled></label>
-              <label class="field-label">Browser device ID<input class="field-input" type="text" value="${escapeHtml(device.browserDeviceId || "")}" disabled></label>
-              <label class="field-label">Connection state<input class="field-input" type="text" value="${escapeHtml(device.connection)}" disabled></label>
+            <div class="refined-device-summary-card">
+              <div class="refined-device-image">
+                <img src="./assets/on2cook-logo.png" alt="" aria-hidden="true">
+              </div>
+              <div class="refined-device-summary-copy">
+                <div class="row space">
+                  <div>
+                    <h3>${escapeHtml(device.displayName)}</h3>
+                    <p>${escapeHtml(device.bluetoothName || "Not paired yet")}</p>
+                  </div>
+                  ${renderStatusPill(device.connection === "connected" ? "cooking" : "failed")}
+                </div>
+                <div class="refined-info-grid">
+                  <span><small>Status</small><b>${escapeHtml(device.telemetry.workStatus || device.connection)}</b></span>
+                  <span><small>Mode</small><b>${escapeHtml(device.telemetry.mode || "Auto")}</b></span>
+                  <span><small>Firmware</small><b>${escapeHtml(device.telemetry.firmwareVersion || "Unknown")}</b></span>
+                  <span><small>Recipes</small><b>${escapeHtml((device.availableRecipeNames || []).length)}</b></span>
+                </div>
+              </div>
             </div>
-            <div class="settings-card compact-note">
-              <strong>${escapeHtml(device.browserDeviceId ? `This window is locked to ${device.bluetoothName || "a saved cooker"}` : "This window is not assigned to a cooker yet")}</strong>
-              <p class="subtle">${escapeHtml(device.browserDeviceId ? "Reconnect will only use this saved physical cooker. Use Clear pairing before assigning a different cooker to this window." : "Press Connect once and select the intended cooker. After that, this window will reconnect only to that cooker.")}</p>
+            <details class="settings-card refined-edit-details">
+              <summary>Pairing and display settings</summary>
+              <div class="grid-two top-gap">
+                <label class="field-label">Display name<input class="field-input" type="text" name="displayName" value="${escapeHtml(device.displayName)}" required></label>
+                <label class="field-label">Bluetooth name<input class="field-input" type="text" value="${escapeHtml(device.bluetoothName || "")}" disabled></label>
+                <label class="field-label">Browser device ID<input class="field-input" type="text" value="${escapeHtml(device.browserDeviceId || "")}" disabled></label>
+                <label class="field-label">Connection state<input class="field-input" type="text" value="${escapeHtml(device.connection)}" disabled></label>
+              </div>
+            </details>
+            <label class="toggle-row refined-toggle"><input type="checkbox" name="enabled" ${device.enabled ? "checked" : ""}> Device enabled for scheduling</label>
+            <div class="settings-card compact-note refined-lock-note">
+              <strong>${escapeHtml(device.browserDeviceId ? `Locked to ${device.bluetoothName || "a saved cooker"}` : "Not assigned to a cooker yet")}</strong>
+              <p class="subtle">${escapeHtml(device.browserDeviceId ? "Reconnect will use this saved physical cooker. Use Clear pairing before assigning a different cooker to this window." : "Press Connect once and select the intended cooker. After that this window will reconnect only to that cooker.")}</p>
             </div>
-            <label class="toggle-row"><input type="checkbox" name="enabled" ${device.enabled ? "checked" : ""}> Device enabled for scheduling</label>
-            <div class="settings-card">
+            <div class="settings-card refined-live-card">
               <div class="meta-grid">
                 <span>Firmware ${escapeHtml(device.telemetry.firmwareVersion || "Unknown")}</span>
                 <span>Work status ${escapeHtml(device.telemetry.workStatus || "offline")}</span>
@@ -6145,7 +6192,7 @@ function renderModal(snapshot) {
               </div>
               <p class="subtle">${escapeHtml(device.lastMessage || "No live messages yet")}</p>
             </div>
-            <div class="settings-card">
+            <div class="settings-card refined-current-card">
               <div class="mini-title">Current recipe and queue</div>
               <div class="subtle">${currentOrder ? `${escapeHtml(currentOrder.itemName)} is on this device` : hasLiveRuntime(device) ? `${escapeHtml(getLiveRecipeName(device))} is running on firmware` : "No live recipe assigned right now."}</div>
               <div class="meta-grid top-gap">
@@ -6185,7 +6232,7 @@ function renderModal(snapshot) {
                   : `<div class="empty-card">No queued items for this device.</div>`
               }
             </div>
-            <div class="settings-card">
+            <div class="settings-card refined-inventory-card">
               <div class="mini-title">Device recipe inventory</div>
               <div class="meta-grid">
                 <span>Known on device ${escapeHtml((device.availableRecipeNames || []).length)}</span>
@@ -6199,7 +6246,7 @@ function renderModal(snapshot) {
                   : `<div class="empty-card">No device recipe list has been read yet.</div>`
               }
             </div>
-            <div class="settings-card">
+            <div class="settings-card refined-recipe-access-card">
               <div class="mini-title">Recipe finder and allowed recipes</div>
               <div class="action-row">
                 ${safeOptionalUrl(snapshot.settings.recipeFinder.baseUrl, "recipe finder URL") ? `<a class="link-button" href="${escapeHtml(safeOptionalUrl(snapshot.settings.recipeFinder.baseUrl, "recipe finder URL"))}" target="_blank" rel="noreferrer">Open Recipe Finder</a>` : `<span class="subtle">Recipe finder URL is not configured.</span>`}
@@ -6211,7 +6258,7 @@ function renderModal(snapshot) {
               </label>
               <div class="subtle">Only recipes you explicitly allow here will be candidates for this device.</div>
             </div>
-            <div class="settings-card">
+            <div class="settings-card refined-allowed-card">
               <div class="mini-title">Recipes allowed on this device</div>
               <div class="subtle">Orange recipes are enabled for this device. Grey recipes are imported but blocked from running here.</div>
               <div class="chip-row">
@@ -6233,10 +6280,10 @@ function renderModal(snapshot) {
               ${
                 !recipeFilter && snapshot.recipes.filter((recipe) => recipe.selected).length > filteredRecipes.length
                   ? `<div class="subtle">Showing the first ${filteredRecipes.length} imported recipes. Use search to narrow the list.</div>`
-                  : ""
+                : ""
               }
             </div>
-            <div class="settings-card">
+            <div class="settings-card refined-actions-card">
               <div class="mini-title">Device actions</div>
               <div class="action-row">
                 ${

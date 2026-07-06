@@ -678,6 +678,7 @@ That means:
 - In the reviewed firmware path, that does not appear to happen.
 - So app-side "device already has this recipe" logic may be relying partly on cached names, not confirmed device names.
 - The web app now preserves known synced/run recipe names during an inventory check instead of showing a false `0 recipes on device` result when the firmware only sends `LISTRECIPES=COMPLETE`.
+- Visual refinement pass added a reusable compact screen header, cleaner device-detail summary card, refined device inventory/recipe access sections, and polished recipe cards based on the supplied reference screens while preserving existing BLE/order/queue actions.
 
 This is a protocol gap, not just a UI gap.
 
