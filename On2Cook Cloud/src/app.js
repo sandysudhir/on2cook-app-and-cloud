@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706c";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706c";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706d";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706d";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260706c";
+} from "./ncb-services.js?v=20260706d";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260706c";
+} from "./data-store.js?v=20260706d";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -507,12 +507,17 @@ function getCurrentJob(snapshot, device) {
 }
 
 function getQueueOrders(snapshot, device) {
+  const isQueuedForDevice = (order) =>
+    order &&
+    order.status === "queued" &&
+    order.assignedSlot === device.slot &&
+    order.id !== device.currentJobId;
   if (device.queueOrderIds.length > 0) {
     return device.queueOrderIds
       .map((orderId) => snapshot.orders.current.find((order) => order.id === orderId))
-      .filter(Boolean);
+      .filter(isQueuedForDevice);
   }
-  return snapshot.orders.current.filter((order) => order.assignedSlot === device.slot && order.status === "queued");
+  return snapshot.orders.current.filter(isQueuedForDevice);
 }
 
 function getSelectedRecipes(snapshot) {
@@ -5199,6 +5204,26 @@ function renderLastRunTab(device, label = "Last recipe sheet") {
   `;
 }
 
+function renderLastCookedCard(device) {
+  if (!device?.lastRun?.finishedAt) {
+    return `<div class="empty-card compact-empty">No recipe has run on this device yet.</div>`;
+  }
+  const outcome = device.lastRun.outcome === "aborted" ? "aborted" : "completed";
+  return `
+    <article class="last-cooked-card ${outcome}">
+      <button class="last-cooked-main" data-action="open-device-recipe-sheet" data-slot="${device.slot}">
+        <span class="status-dot ${outcome === "aborted" ? "failed" : "complete"}"></span>
+        <span>
+          <small>Last recipe ${escapeHtml(outcome)}</small>
+          <strong>${escapeHtml(device.lastRun.displayName || device.lastRun.firmwareName || "Last recipe")}</strong>
+        </span>
+        <span class="chevron">›</span>
+      </button>
+      ${renderLastRunMetrics(device.lastRun)}
+    </article>
+  `;
+}
+
 function renderTimelineIdleState(device) {
   if (device?.lastRun?.finishedAt) {
     const outcome = device.lastRun.outcome === "aborted" ? "aborted" : "completed";
@@ -5344,7 +5369,6 @@ function renderDevicePhone(snapshot, device) {
   const runtimeRecipe = getRuntimeRecipe(snapshot, device);
   const activeTimeline = shouldRenderLiveTimeline(device, currentOrder);
   const timelineRecipe = activeTimeline ? getDeviceTimelineRecipe(snapshot, device, runtimeRecipe) : null;
-  const headline = getDeviceRecipeHeadline(snapshot, device, currentOrder, timelineRecipe);
   const connectionLabel =
     device.connection === "connected"
       ? "connected"
@@ -5390,30 +5414,21 @@ function renderDevicePhone(snapshot, device) {
             ${renderCompactDeviceInfo(device, summaryMessage)}
           </section>
           <section class="stack-section">
-            <div class="mini-title">${hasActiveCook ? "Cooking now" : "Last cooked recipe"}</div>
-            ${
-              hasActiveCook
-                ? renderOperatorCookPanel(snapshot, device, currentOrder, timelineRecipe)
-                : headline
-                  ? `
-                    <article class="order-card compact customer-run-card">
-                      <div class="row space">
-                        <div>
-                          <div class="order-id">${escapeHtml(device.lastRun?.orderId || `DEVICE ${device.slot}`)}</div>
-                          <h3>${escapeHtml(headline.title)}</h3>
-                        </div>
-                        ${renderStatusPill(headline.status)}
-                      </div>
-                      <div class="subtle">${escapeHtml(headline.note)}</div>
-                      ${renderLastRunMetrics(device.lastRun)}
-                    </article>
-                  `
-                  : `<div class="empty-card">No recipe has run on this device yet.</div>`
-            }
+            <div class="mini-title">Last cooked recipe</div>
+            ${renderLastCookedCard(device)}
           </section>
-          <section class="stack-section">
+          ${
+            hasActiveCook
+              ? `
+                <section class="stack-section">
+                  <div class="mini-title">Cooking now</div>
+                  ${renderOperatorCookPanel(snapshot, device, currentOrder, timelineRecipe)}
+                </section>
+              `
+              : ""
+          }
+          <section class="stack-section queue-stack">
             <div class="mini-title">Next recipe and prep</div>
-            ${hasActiveCook ? "" : renderLastRunTab(device)}
             ${renderDeviceQueuePlan(snapshot, device, queueOrders, timelineRecipe)}
           </section>
         </div>

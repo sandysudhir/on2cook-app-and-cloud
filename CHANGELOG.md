@@ -2,6 +2,12 @@
 
 ## 2026-07-06
 
+- Fixed device screen ordering so the last completed/aborted recipe stays at the top, live cooking appears in the center, and only genuinely queued recipes appear at the bottom.
+- Tightened queue filtering so completed or aborted orders cannot reappear as queued work from stale device queue IDs.
+- Bumped web cache version to `20260706d` / service-worker cache `v56`.
+
+## 2026-07-06
+
 - Reworked each device queue into a large-screen prep view: the next recipe now shows starts-in time, wall-clock start time, cook duration, and the first ingredients to prepare from the recipe JSON.
 - Removed inventory/serial details from the visible device tile so the operator can see current cooking, upcoming prep, and queue information without scrolling.
 - Bumped web cache version to `20260706c` / service-worker cache `v55`.
