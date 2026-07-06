@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706g";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706g";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706h";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706h";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260706g";
+} from "./ncb-services.js?v=20260706h";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260706g";
+} from "./data-store.js?v=20260706h";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -5147,6 +5147,9 @@ function renderOperatorCookPanel(snapshot, device, currentOrder, recipe) {
   const nextPrompt = state.nextPrompt;
   const showNextPopup = nextPrompt && Number.isFinite(state.secondsToNext) && state.secondsToNext <= 5;
   const currentPrompt = state.currentPrompt;
+  const elapsedSeconds = elapsedSecondsBetween(device.activeRun?.startedAt || nowIso(), nowIso());
+  const remainingSeconds = getDeviceActiveRemainingSeconds(device, recipe);
+  const plannedSeconds = Number(device.activeRun?.durationSeconds) || getRecipeDuration(recipe);
   const currentActionHtml = currentPrompt?.type === "ingredient"
     ? `<button class="primary-button small" data-action="complete-ingredients" data-slot="${device.slot}">Ingredient added</button>`
     : "";
@@ -5159,6 +5162,11 @@ function renderOperatorCookPanel(snapshot, device, currentOrder, recipe) {
         </div>
         ${renderStatusPill(device.telemetry.workStatus || currentOrder?.status || "cooking")}
       </div>
+      <div class="operator-live-summary">
+        <span><b>${formatProClock(elapsedSeconds)}</b><small>elapsed</small></span>
+        <span><b>${formatProClock(remainingSeconds)}</b><small>remaining</small></span>
+        <span><b>${state.activeIndex + 1}${state.totalSteps ? `/${state.totalSteps}` : ""}</b><small>step</small></span>
+      </div>
       ${
         showNextPopup
           ? `<div class="operator-next-popup">
@@ -5166,17 +5174,10 @@ function renderOperatorCookPanel(snapshot, device, currentOrder, recipe) {
             </div>`
           : ""
       }
-      <div class="operator-now-grid">
-        <div class="operator-step-card">
-          <span>Current step</span>
-          <strong>${escapeHtml(step.Text || `Step ${state.activeIndex + 1}`)}</strong>
-          <small>Step ${state.activeIndex + 1}${state.totalSteps ? ` of ${state.totalSteps}` : ""} | ${secondsLabel(state.currentRemaining)} left</small>
-        </div>
-        <div class="operator-step-card muted">
-          <span>Step controls</span>
-          <strong>IH ${clampPercent(device.telemetry.indPower || step.Induction_power)}%</strong>
-          <small>MW ${clampPercent(device.telemetry.magPower || step.Magnetron_power)}% | Water ${escapeHtml(water.label)} | Slurry ${escapeHtml(slurry.label)}</small>
-        </div>
+      <div class="operator-current-step">
+        <span>Current step</span>
+        <strong>${escapeHtml(step.Text || `Step ${state.activeIndex + 1}`)}</strong>
+        <small>${secondsLabel(state.currentRemaining)} left</small>
       </div>
       ${currentPrompt ? renderOperatorPromptBlock(currentPrompt, "Add now", null, { actionHtml: currentActionHtml }) : ""}
       ${
@@ -5186,8 +5187,23 @@ function renderOperatorCookPanel(snapshot, device, currentOrder, recipe) {
       }
       <div class="action-row top-gap">
         <button class="danger-button small" data-action="abort-device" data-slot="${device.slot}">Abort recipe</button>
-        <button class="secondary-button small" data-action="open-device-sheet" data-slot="${device.slot}">Running details</button>
+        <button class="secondary-button small" data-action="open-device-sheet" data-slot="${device.slot}">Full details</button>
       </div>
+      <details class="operator-detail-tab">
+        <summary>Cook details</summary>
+        <div class="operator-now-grid">
+          <div class="operator-step-card">
+            <span>Current step</span>
+            <strong>${escapeHtml(step.Text || `Step ${state.activeIndex + 1}`)}</strong>
+            <small>Step ${state.activeIndex + 1}${state.totalSteps ? ` of ${state.totalSteps}` : ""} | planned ${formatProClock(plannedSeconds)}</small>
+          </div>
+          <div class="operator-step-card muted">
+            <span>Step controls</span>
+            <strong>IH ${clampPercent(device.telemetry.indPower || step.Induction_power)}%</strong>
+            <small>MW ${clampPercent(device.telemetry.magPower || step.Magnetron_power)}% | Water ${escapeHtml(water.label)} | Slurry ${escapeHtml(slurry.label)}</small>
+          </div>
+        </div>
+      </details>
     </article>
   `;
 }
@@ -5250,6 +5266,22 @@ function renderQueuePrepItems(recipe) {
   `;
 }
 
+function renderNextQueuedPrepPrompt(snapshot, queueOrders) {
+  if (!queueOrders.length) return "";
+  const nextOrder = queueOrders[0];
+  const recipe = getEffectiveRecipe(snapshot, nextOrder);
+  return `
+    <article class="next-prep-prompt">
+      <div>
+        <span>Prepare next</span>
+        <strong>${escapeHtml(nextOrder.itemName)}</strong>
+        <small>${escapeHtml(nextOrder.orderId)} | starts when this device is free</small>
+      </div>
+      ${renderQueuePrepItems(recipe)}
+    </article>
+  `;
+}
+
 function renderQueuedRecipeCard(snapshot, order, index, startInSeconds) {
   const recipe = getEffectiveRecipe(snapshot, order);
   const duration = getRecipeDuration(recipe);
@@ -5302,6 +5334,8 @@ function renderLastRunMetrics(run) {
   const actualSeconds = getRunActualSeconds(run);
   const plannedSeconds = Number(run.durationSeconds) || actualSeconds;
   const sinceSeconds = getSinceRunFinishedSeconds(run);
+  const sinceLabel = run.nextStartedAt ? "Wait before next" : `Since ${run.outcome === "aborted" ? "abort" : "completion"}`;
+  const sinceSmall = run.nextStartedAt ? `next started ${formatAgo(run.nextStartedAt)}` : formatAgo(run.finishedAt);
   return `
     <div class="last-run-metrics">
       <div>
@@ -5310,9 +5344,9 @@ function renderLastRunMetrics(run) {
         <small>of ${formatProClock(plannedSeconds)} planned</small>
       </div>
       <div>
-        <span>Since ${run.outcome === "aborted" ? "abort" : "completion"}</span>
-        <strong>+${formatProClock(sinceSeconds)}</strong>
-        <small>${formatAgo(run.finishedAt)}</small>
+        <span>${escapeHtml(sinceLabel)}</span>
+        <strong>${run.nextStartedAt ? "" : "+"}${formatProClock(sinceSeconds)}</strong>
+        <small>${escapeHtml(sinceSmall)}</small>
       </div>
     </div>
   `;
@@ -5559,6 +5593,13 @@ function renderDevicePhone(snapshot, device) {
                   ${renderOperatorCookPanel(snapshot, device, currentOrder, timelineRecipe)}
                 </section>
               `
+              : queueOrders.length
+                ? `
+                  <section class="stack-section">
+                    <div class="mini-title">Ready for next</div>
+                    ${renderNextQueuedPrepPrompt(snapshot, queueOrders)}
+                  </section>
+                `
               : ""
           }
           <section class="stack-section queue-stack">

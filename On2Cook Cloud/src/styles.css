@@ -2315,12 +2315,108 @@ textarea.field-input {
 
 .operator-cook-card {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: 9px;
+  padding: 12px;
   border: 1px solid rgba(244, 123, 32, 0.24);
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 248, 241, 0.92));
-  box-shadow: 0 16px 34px rgba(154, 80, 28, 0.08);
+  box-shadow: 0 10px 22px rgba(154, 80, 28, 0.06);
+}
+
+.operator-cook-card h3 {
+  margin: 1px 0 0;
+  font-size: 1rem;
+  line-height: 1.15;
+}
+
+.operator-live-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.operator-live-summary span,
+.operator-current-step,
+.next-prep-prompt {
+  border: 1px solid rgba(111, 92, 71, 0.12);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.operator-live-summary span {
+  display: grid;
+  gap: 1px;
+  padding: 8px 9px;
+}
+
+.operator-live-summary b {
+  color: #2e5bd8;
+  font-size: 0.96rem;
+}
+
+.operator-live-summary small,
+.operator-current-step span,
+.next-prep-prompt span {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.operator-current-step {
+  display: grid;
+  gap: 3px;
+  padding: 9px 10px;
+}
+
+.operator-current-step strong {
+  color: var(--ink);
+  font-size: 0.98rem;
+}
+
+.operator-current-step small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.operator-detail-tab {
+  border-top: 1px solid rgba(111, 92, 71, 0.1);
+  padding-top: 7px;
+}
+
+.operator-detail-tab summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.operator-detail-tab .operator-now-grid {
+  margin-top: 8px;
+}
+
+.next-prep-prompt {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  background: rgba(36, 154, 113, 0.07);
+  border-color: rgba(36, 154, 113, 0.18);
+}
+
+.next-prep-prompt > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.next-prep-prompt strong {
+  font-size: 1rem;
+}
+
+.next-prep-prompt small {
+  color: var(--muted);
 }
 
 .device-phone .phone-body {
