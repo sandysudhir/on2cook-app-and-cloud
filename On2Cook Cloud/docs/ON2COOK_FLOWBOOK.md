@@ -677,6 +677,7 @@ That means:
 - `readRecipesAvailable()` in the web app can only be fully correct if the firmware actually emits recipe names over BLE.
 - In the reviewed firmware path, that does not appear to happen.
 - So app-side "device already has this recipe" logic may be relying partly on cached names, not confirmed device names.
+- The web app now preserves known synced/run recipe names during an inventory check instead of showing a false `0 recipes on device` result when the firmware only sends `LISTRECIPES=COMPLETE`.
 
 This is a protocol gap, not just a UI gap.
 

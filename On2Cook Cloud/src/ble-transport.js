@@ -52,9 +52,12 @@ function parseKeyValues(message) {
 
 function normalizeRecipeInventoryName(value) {
   return String(value || "")
+    .replace(/\(size:\s*\d+\s*bytes?\)/i, "")
     .replace(/^.*[\\/]/, "")
+    .trim()
     .replace(/\.(txt|json|zip)$/i, "")
     .replace(/^\d+[\])\-.:\s]+/, "")
+    .replace(/^["']|["']$/g, "")
     .trim()
     .slice(0, 30);
 }
@@ -83,12 +86,17 @@ function extractRecipeInventoryNames(message) {
     .forEach((line) => {
       const lowered = line.toLowerCase();
       if (reserved.has(lowered)) return;
+      if (lowered.startsWith("===") || lowered.startsWith("total recipe files")) return;
+      if (lowered.startsWith("no recipe files") || lowered.startsWith("failed to open recipe")) return;
+      if (lowered.startsWith("recipe path is not a directory")) return;
       if (lowered.startsWith("status=") || lowered.startsWith("workstatus=") || lowered.startsWith("firmware=")) return;
       if (lowered.startsWith("readlog=") || lowered.startsWith("logfile=") || lowered.startsWith("listlog")) return;
+      const assignment = line.match(/^(?:recipes?|recipefile|file|name|recipe_name)\s*[:=]\s*(.+)$/i);
+      const inventoryLine = assignment ? assignment[1].trim() : line;
       const tokens =
-        /\.(txt|json|zip)$/i.test(line) || line.includes("/")
-          ? [line]
-          : line.split(",").map((token) => token.trim()).filter(Boolean);
+        /\.(txt|json|zip)(?:\s|$|\()/i.test(inventoryLine) || inventoryLine.includes("/")
+          ? [inventoryLine]
+          : inventoryLine.split(/[,;]/).map((token) => token.trim()).filter(Boolean);
       tokens.forEach((token) => {
         const normalized = normalizeRecipeInventoryName(token);
         if (!normalized) return;

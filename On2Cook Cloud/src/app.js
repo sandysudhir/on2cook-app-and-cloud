@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706e";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706e";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706f";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706f";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260706e";
+} from "./ncb-services.js?v=20260706f";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260706e";
+} from "./data-store.js?v=20260706f";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -556,6 +556,42 @@ function getKnownDeviceRecipeKeys(device) {
       .map((name) => normalizeRecipeNameKey(name))
       .filter(Boolean)
   );
+}
+
+function addKnownRecipeName(target, value) {
+  const clean = String(value || "").trim();
+  const key = normalizeRecipeNameKey(clean);
+  if (clean && key && !target.has(key)) {
+    target.set(key, clean);
+  }
+}
+
+function getKnownDeviceRecipeNames(snapshot, device) {
+  const names = new Map();
+  if (!device) return [];
+  [...(device.availableRecipeNames || []), ...(device.syncedRecipeNames || [])].forEach((name) =>
+    addKnownRecipeName(names, name)
+  );
+  [device.activeRun, device.lastRun].forEach((run) => {
+    addKnownRecipeName(names, run?.firmwareName);
+    addKnownRecipeName(names, run?.displayName);
+    const recipe = run?.recipeId ? findRecipeById(snapshot, run.recipeId) : null;
+    addKnownRecipeName(names, recipe?.firmwareName);
+  });
+  (snapshot?.orders?.current || [])
+    .filter(
+      (order) =>
+        order.targetSlot === device.slot ||
+        order.id === device.currentJobId ||
+        order.id === device.activeRun?.orderId ||
+        order.id === device.lastRun?.orderId
+    )
+    .forEach((order) => {
+      addKnownRecipeName(names, order.currentRunFirmwareName);
+      const recipe = getEffectiveRecipe(snapshot, order);
+      addKnownRecipeName(names, recipe?.firmwareName);
+    });
+  return [...names.values()].sort((left, right) => left.localeCompare(right));
 }
 
 function getLiveRecipeName(device) {
@@ -2345,30 +2381,53 @@ async function refreshDeviceRecipeInventory(slot, options = {}) {
   const device = getDevice(slot);
   if (!device || device.connection !== "connected") return [];
   if (!options.force && inventoryIsFresh(device)) {
-    return device.availableRecipeNames || [];
+    return getKnownDeviceRecipeNames(state(), device);
   }
+  const knownBefore = getKnownDeviceRecipeNames(state(), device);
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
     setInventoryCheckState(draftDevice, options.recipeNames || []);
   });
-  const inventoryNames = await ble.readRecipesAvailable(Number(slot), {
-    timeoutMs: options.timeoutMs || 4500
-  });
+  let inventoryNames = [];
+  let inventoryError = null;
+  try {
+    inventoryNames = await ble.readRecipesAvailable(Number(slot), {
+      timeoutMs: options.timeoutMs || 4500
+    });
+  } catch (error) {
+    inventoryError = error;
+  }
+  let resultNames = [];
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
-    mergeRecipeNames(draftDevice, inventoryNames);
+    const namesToMerge = inventoryNames.length > 0 ? inventoryNames : knownBefore;
+    mergeRecipeNames(draftDevice, namesToMerge);
+    resultNames = getKnownDeviceRecipeNames(draft, draftDevice);
+    const sourceLabel =
+      inventoryNames.length > 0
+        ? "confirmed by device"
+        : resultNames.length > 0
+          ? "known from prior sync"
+          : "firmware returned no names";
     draftDevice.uploadState = {
       ...draftDevice.uploadState,
       inventoryChecking: false,
+      recipeNames: resultNames,
+      totalRecipes: resultNames.length,
       summary:
-        inventoryNames.length > 0
-          ? `Checked device recipes: ${inventoryNames.length} found`
-          : "Checked device recipes: none reported"
+        resultNames.length > 0
+          ? `Inventory checked: ${resultNames.length} recipe${resultNames.length === 1 ? "" : "s"} on device (${sourceLabel})`
+          : inventoryError
+            ? `Inventory check returned no names: ${inventoryError.message}`
+            : "Inventory checked: no recipe names reported"
     };
   });
-  return inventoryNames;
+  if (inventoryError && resultNames.length === 0) {
+    throw inventoryError;
+  }
+  return resultNames;
 }
 
 async function ensureRecipesAvailableOnDevice(slot, recipes, options = {}) {
@@ -7776,8 +7835,8 @@ async function handleClick(event) {
       showToast(
         names.length > 0
           ? `Found ${names.length} recipe${names.length === 1 ? "" : "s"} on Device ${button.dataset.slot}`
-          : `No recipe names were reported by Device ${button.dataset.slot}`,
-        "success"
+          : `Device ${button.dataset.slot} did not return recipe names over BLE`,
+        names.length > 0 ? "success" : "warning"
       );
     } catch (error) {
       showToast(error.message || "Unable to read device recipes.", "error");
