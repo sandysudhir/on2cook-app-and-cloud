@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706c";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706c";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260706b";
+} from "./ncb-services.js?v=20260706c";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260706b";
+} from "./data-store.js?v=20260706c";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -5080,6 +5080,88 @@ function renderCompactTimelinePreview(device, recipe) {
   `;
 }
 
+function getDeviceActiveRemainingSeconds(device, recipe) {
+  const telemetryRemaining = Number(device.telemetry.remainingSeconds) || 0;
+  if (telemetryRemaining > 0) return telemetryRemaining;
+  const totalSeconds = Number(device.activeRun?.durationSeconds) || getRecipeDuration(recipe);
+  if (!totalSeconds || !device.activeRun?.startedAt) return 0;
+  return Math.max(0, totalSeconds - elapsedSecondsBetween(device.activeRun.startedAt, nowIso()));
+}
+
+function getRecipePrepItems(recipe, limit = 4) {
+  return recipeSheetIngredientsFromRecipe(recipe)
+    .filter((item) => item?.name)
+    .slice(0, limit)
+    .map((item) => {
+      const quantity = [item.quantity || "", item.unit || ""].filter(Boolean).join(" ").trim();
+      return {
+        name: item.name,
+        quantity
+      };
+    });
+}
+
+function renderQueuePrepItems(recipe) {
+  const prepItems = getRecipePrepItems(recipe, 4);
+  const allCount = recipeSheetIngredientsFromRecipe(recipe).filter((item) => item?.name).length;
+  if (!prepItems.length) return `<div class="subtle">Prep ingredients are not available for this recipe yet.</div>`;
+  return `
+    <div class="queue-prep-list">
+      ${prepItems
+        .map((item) => `<span>${escapeHtml(item.name)}${item.quantity ? ` <strong>${escapeHtml(item.quantity)}</strong>` : ""}</span>`)
+        .join("")}
+      ${allCount > prepItems.length ? `<span class="muted">+${allCount - prepItems.length} more</span>` : ""}
+    </div>
+  `;
+}
+
+function renderQueuedRecipeCard(snapshot, order, index, startInSeconds) {
+  const recipe = getEffectiveRecipe(snapshot, order);
+  const duration = getRecipeDuration(recipe);
+  const startsAtIso = new Date(Date.now() + startInSeconds * 1000).toISOString();
+  const imageUrl = safeOptionalUrl(recipe?.imageDataUrl || "", "queued recipe image");
+  return `
+    <article class="next-recipe-card ${index === 0 ? "primary-next" : ""}">
+      <div class="next-recipe-main">
+        ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(order.itemName)}">` : ""}
+        <div>
+          <span>${index === 0 ? "Next recipe" : `Queue ${index + 1}`}</span>
+          <strong>${escapeHtml(order.itemName)}</strong>
+          <small>${escapeHtml(order.orderId)} | cook time ${secondsLabel(duration)}</small>
+        </div>
+      </div>
+      <div class="next-recipe-timing">
+        <div>
+          <span>Starts in</span>
+          <strong>${startInSeconds <= 0 ? "Now" : formatProClock(startInSeconds)}</strong>
+        </div>
+        <div>
+          <span>Start at</span>
+          <strong>${escapeHtml(formatShortTime(startsAtIso))}</strong>
+        </div>
+      </div>
+      <div class="mini-title">Prep before start</div>
+      ${renderQueuePrepItems(recipe)}
+    </article>
+  `;
+}
+
+function renderDeviceQueuePlan(snapshot, device, queueOrders, activeRecipe) {
+  if (!queueOrders.length) return `<div class="empty-card compact-empty">Queue is empty.</div>`;
+  let cursorSeconds = getDeviceActiveRemainingSeconds(device, activeRecipe);
+  return `
+    <div class="device-queue-plan">
+      ${queueOrders
+        .map((order, index) => {
+          const card = renderQueuedRecipeCard(snapshot, order, index, cursorSeconds);
+          cursorSeconds += getRecipeDuration(getEffectiveRecipe(snapshot, order));
+          return card;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
 function renderLastRunMetrics(run) {
   if (!run?.finishedAt) return "";
   const actualSeconds = getRunActualSeconds(run);
@@ -5259,7 +5341,6 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
 function renderDevicePhone(snapshot, device) {
   const currentOrder = getCurrentJob(snapshot, device);
   const queueOrders = getQueueOrders(snapshot, device);
-  const serialPhotoUrl = safeOptionalUrl(device.serialPhotoDataUrl, "serial photo");
   const runtimeRecipe = getRuntimeRecipe(snapshot, device);
   const activeTimeline = shouldRenderLiveTimeline(device, currentOrder);
   const timelineRecipe = activeTimeline ? getDeviceTimelineRecipe(snapshot, device, runtimeRecipe) : null;
@@ -5273,7 +5354,6 @@ function renderDevicePhone(snapshot, device) {
   const connectionTone =
     connectionLabel === "connected" ? "cooking" : connectionLabel === "connecting" ? "starting" : "failed";
   const summaryMessage = getDeviceSummaryMessage(device);
-  const uploadState = device.uploadState || emptyUploadState();
   const hasActiveCook = Boolean(timelineRecipe && (currentOrder || hasLiveRuntime(device) || device.currentJobId || device.activeRun?.displayName));
   const linkedDeviceLabel = device.bluetoothName
     ? `Locked to ${device.bluetoothName}`
@@ -5313,7 +5393,7 @@ function renderDevicePhone(snapshot, device) {
             <div class="mini-title">${hasActiveCook ? "Cooking now" : "Last cooked recipe"}</div>
             ${
               hasActiveCook
-                ? `${renderOperatorCookPanel(snapshot, device, currentOrder, timelineRecipe)}${renderCompactTimelinePreview(device, timelineRecipe)}`
+                ? renderOperatorCookPanel(snapshot, device, currentOrder, timelineRecipe)
                 : headline
                   ? `
                     <article class="order-card compact customer-run-card">
@@ -5332,64 +5412,9 @@ function renderDevicePhone(snapshot, device) {
             }
           </section>
           <section class="stack-section">
-            <div class="mini-title">Queue</div>
-            ${renderLastRunTab(device)}
-            ${
-              queueOrders.length
-                ? queueOrders
-                    .map(
-                      (order) => `
-                        <div class="queue-item">
-                          <span>${escapeHtml(order.itemName)}</span>
-                          <span class="subtle">${escapeHtml(order.orderId)}</span>
-                        </div>
-                      `
-                    )
-                    .join("")
-                : `<div class="empty-card">Queue is empty.</div>`
-            }
-          </section>
-          <section class="stack-section">
-            <div class="mini-title">Inventory and serial details</div>
-            <div class="settings-card">
-              ${
-                uploadState.summary
-                  ? `
-                    <div class="upload-summary-card">
-                      <strong>${escapeHtml(uploadState.summary)}</strong>
-                      ${
-                        uploadState.recipeNames.length || uploadState.skippedRecipeNames.length
-                          ? `<div class="upload-name-list">
-                              ${[
-                                ...uploadState.recipeNames.map((name) => {
-                                  const normalized = normalizeRecipeNameKey(name);
-                                  const isDone = (uploadState.completedRecipeNames || []).some((item) => normalizeRecipeNameKey(item) === normalized);
-                                  const isCurrent = normalizeRecipeNameKey(uploadState.currentRecipeName) === normalized && uploadState.active;
-                                  return `<span class="upload-name-pill ${isDone ? "done" : isCurrent ? "live" : "pending"}">${escapeHtml(name)}</span>`;
-                                }),
-                                ...uploadState.skippedRecipeNames.map((name) => `<span class="upload-name-pill skipped">${escapeHtml(name)}</span>`)
-                              ].join("")}
-                            </div>`
-                          : ""
-                      }
-                    </div>
-                  `
-                  : ""
-              }
-              <div class="action-row">
-                <button class="secondary-button small" data-action="sync-selected-recipes" data-slot="${device.slot}">Check device recipes</button>
-                <button class="secondary-button small" data-action="switch-tab" data-tab="manual">Run from Manual Mode</button>
-              </div>
-              <label class="file-field">
-                <span>Serial number photo</span>
-                <input type="file" accept="image/*" data-input="serial-photo" data-slot="${device.slot}">
-              </label>
-              ${
-                serialPhotoUrl
-                  ? `<img class="serial-photo" src="${escapeHtml(serialPhotoUrl)}" alt="Serial photo for ${escapeHtml(device.displayName)}">`
-                  : ""
-              }
-            </div>
+            <div class="mini-title">Next recipe and prep</div>
+            ${hasActiveCook ? "" : renderLastRunTab(device)}
+            ${renderDeviceQueuePlan(snapshot, device, queueOrders, timelineRecipe)}
           </section>
         </div>
       </div>

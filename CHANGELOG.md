@@ -2,6 +2,12 @@
 
 ## 2026-07-06
 
+- Reworked each device queue into a large-screen prep view: the next recipe now shows starts-in time, wall-clock start time, cook duration, and the first ingredients to prepare from the recipe JSON.
+- Removed inventory/serial details from the visible device tile so the operator can see current cooking, upcoming prep, and queue information without scrolling.
+- Bumped web cache version to `20260706c` / service-worker cache `v55`.
+
+## 2026-07-06
+
 - Simplified each device cooking screen so live execution shows the current step, next manual ingredient/water check, urgent countdown prompts, abort access, and a compact timeline preview instead of the full telemetry/timeline stack.
 - Collapsed live firmware/status details into a small tap-to-open device info tab so operators can focus on what to add next.
 - Bumped web cache version to `20260706b` / service-worker cache `v54`.

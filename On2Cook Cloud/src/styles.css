@@ -2248,6 +2248,26 @@ textarea.field-input {
   box-shadow: 0 16px 34px rgba(154, 80, 28, 0.08);
 }
 
+.device-phone .phone-body {
+  padding-bottom: 14px;
+}
+
+.device-phone .stack-section {
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.device-phone .action-row {
+  gap: 7px;
+}
+
+.device-phone .secondary-button.small,
+.device-phone .primary-button.small,
+.device-phone .danger-button.small {
+  min-height: 34px;
+  padding-inline: 10px;
+}
+
 .operator-now-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2365,6 +2385,108 @@ textarea.field-input {
 
 .compact-timeline-bars span.live {
   background: var(--accent);
+}
+
+.device-queue-plan {
+  display: grid;
+  gap: 8px;
+}
+
+.next-recipe-card {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(45, 108, 223, 0.16);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.next-recipe-card.primary-next {
+  border-color: rgba(244, 123, 32, 0.28);
+  background: rgba(255, 248, 241, 0.88);
+}
+
+.next-recipe-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.next-recipe-main img {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.next-recipe-main span,
+.next-recipe-timing span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.next-recipe-main strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.12;
+}
+
+.next-recipe-main small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.next-recipe-timing {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.next-recipe-timing > div {
+  padding: 8px 10px;
+  border: 1px solid rgba(45, 108, 223, 0.12);
+  border-radius: 12px;
+  background: rgba(45, 108, 223, 0.05);
+}
+
+.next-recipe-timing strong {
+  color: #2e5bd8;
+  font-size: 1rem;
+}
+
+.queue-prep-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.queue-prep-list span {
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: rgba(36, 154, 113, 0.08);
+  color: var(--ink);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.queue-prep-list span strong {
+  color: var(--success);
+}
+
+.queue-prep-list .muted {
+  background: rgba(111, 92, 71, 0.08);
+  color: var(--muted);
+}
+
+.compact-empty {
+  padding: 11px 12px;
 }
 
 .timeline-card {
@@ -3456,7 +3578,8 @@ textarea.field-input {
 
   .operator-now-grid,
   .operator-prompt,
-  .device-info-tab {
+  .device-info-tab,
+  .next-recipe-timing {
     grid-template-columns: 1fr;
   }
 
