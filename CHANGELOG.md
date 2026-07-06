@@ -2,6 +2,12 @@
 
 ## 2026-07-06
 
+- Added four-channel step visibility across device timelines, live cooking summaries, and recipe sheets: Water, Slurry, Induction, and Microwave now appear for each recipe step.
+- Mapped Water to `pump_on` and Slurry to `purge_on` while keeping induction/microwave power from the existing firmware recipe JSON.
+- Bumped web cache version to `20260706e` / service-worker cache `v57`.
+
+## 2026-07-06
+
 - Fixed device screen ordering so the last completed/aborted recipe stays at the top, live cooking appears in the center, and only genuinely queued recipes appear at the bottom.
 - Tightened queue filtering so completed or aborted orders cannot reappear as queued work from stale device queue IDs.
 - Bumped web cache version to `20260706d` / service-worker cache `v56`.

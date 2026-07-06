@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706d";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706d";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706e";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706e";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260706d";
+} from "./ncb-services.js?v=20260706e";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260706d";
+} from "./data-store.js?v=20260706e";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -765,14 +765,45 @@ function getStepIngredient(recipe, stepIndex) {
 }
 
 function isWaterStep(step) {
-  const pumpValue = String(step?.pump_on || step?.purge_on || "").trim().toLowerCase();
+  const pumpValue = String(step?.pump_on || "").trim().toLowerCase();
   const title = String(step?.Text || "").toLowerCase();
   return (
     pumpValue === "on" ||
     (Number(step?.pump_on) || 0) > 0 ||
-    (Number(step?.purge_on) || 0) > 0 ||
     title.includes("water")
   );
+}
+
+function getLiquidStepValue(value) {
+  const text = String(value || "").trim();
+  if (!text || text === "0" || text.toLowerCase() === "off" || text.toLowerCase() === "false") {
+    return {
+      active: false,
+      fill: 0,
+      label: "Off"
+    };
+  }
+  if (text.toLowerCase() === "on" || text.toLowerCase() === "true") {
+    return {
+      active: true,
+      fill: 100,
+      label: "On"
+    };
+  }
+  const numeric = Number(text);
+  if (Number.isFinite(numeric) && numeric > 0) {
+    const liquidMl = numeric * 10;
+    return {
+      active: true,
+      fill: Math.min(100, Math.max(12, numeric)),
+      label: `${liquidMl} ml`
+    };
+  }
+  return {
+    active: true,
+    fill: 100,
+    label: text
+  };
 }
 
 function buildOperatorPrompt(recipe, step, stepIndex) {
@@ -4934,6 +4965,8 @@ function renderRecipeTimeline(snapshot, device, recipe, active = false) {
         ${steps
           .map((step, index) => {
             const duration = getInstructionDuration(step);
+            const water = getLiquidStepValue(step.pump_on);
+            const slurry = getLiquidStepValue(step.purge_on);
             const stepState = active
               ? index < activeStepIndex
                 ? "done"
@@ -4953,6 +4986,20 @@ function renderRecipeTimeline(snapshot, device, recipe, active = false) {
                     <strong>${escapeHtml(step.Text || `Step ${index + 1}`)}</strong>
                     <span class="subtle">${secondsLabel(duration)}${step.Weight ? ` • ${escapeHtml(step.Weight)}` : ""}</span>
                   </div>
+                </div>
+                <div class="power-track">
+                  <span class="power-label">Water</span>
+                  <div class="power-bar-shell water">
+                    <div class="power-bar-fill" style="width:${water.fill}%"></div>
+                  </div>
+                  <span class="power-value">${escapeHtml(water.label)}</span>
+                </div>
+                <div class="power-track">
+                  <span class="power-label">Slurry</span>
+                  <div class="power-bar-shell slurry">
+                    <div class="power-bar-fill" style="width:${slurry.fill}%"></div>
+                  </div>
+                  <span class="power-value">${escapeHtml(slurry.label)}</span>
                 </div>
                 <div class="power-track">
                   <span class="power-label">Induction</span>
@@ -5008,6 +5055,8 @@ function renderOperatorPromptBlock(prompt, label, seconds = null, options = {}) 
 function renderOperatorCookPanel(snapshot, device, currentOrder, recipe) {
   const state = getOperatorStepState(device, recipe);
   const step = state.currentStep || {};
+  const water = getLiquidStepValue(step.pump_on);
+  const slurry = getLiquidStepValue(step.purge_on);
   const recipeName =
     device.activeRun?.displayName ||
     currentOrder?.itemName ||
@@ -5043,9 +5092,9 @@ function renderOperatorCookPanel(snapshot, device, currentOrder, recipe) {
           <small>Step ${state.activeIndex + 1}${state.totalSteps ? ` of ${state.totalSteps}` : ""} | ${secondsLabel(state.currentRemaining)} left</small>
         </div>
         <div class="operator-step-card muted">
-          <span>Power</span>
+          <span>Step controls</span>
           <strong>IH ${clampPercent(device.telemetry.indPower || step.Induction_power)}%</strong>
-          <small>MW ${clampPercent(device.telemetry.magPower || step.Magnetron_power)}% | Lid ${escapeHtml(step.lid || "closed")}</small>
+          <small>MW ${clampPercent(device.telemetry.magPower || step.Magnetron_power)}% | Water ${escapeHtml(water.label)} | Slurry ${escapeHtml(slurry.label)}</small>
         </div>
       </div>
       ${currentPrompt ? renderOperatorPromptBlock(currentPrompt, "Add now", null, { actionHtml: currentActionHtml }) : ""}
@@ -5275,14 +5324,18 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
         label: minute.title || `Minute ${index + 1}`,
         lid: minute.lidOpen ? "Lid open" : "Lid closed",
         ind: Math.max(...minute.subBlocks.map((block) => Number(block.inductionPower) || 0)),
-        mag: minute.subBlocks.some((block) => block.microwaveActive) ? "On" : "Off"
+        mag: minute.subBlocks.some((block) => block.microwaveActive) ? "On" : "Off",
+        water: (minute.waterBlocks || []).some((amount) => Number(amount) > 0) ? `${(minute.waterBlocks || []).reduce((total, amount) => total + (Number(amount) || 0), 0)} ml` : "Off",
+        slurry: "Off"
       }))
     : Array.isArray(recipe?.recipeJson?.Instruction)
       ? recipe.recipeJson.Instruction.map((step, index) => ({
           label: step.Text || `Step ${index + 1}`,
           lid: step.lid || "",
           ind: step.Induction_power || 0,
-          mag: step.Magnetron_on_time ? "On" : "Off"
+          mag: step.Magnetron_on_time ? "On" : "Off",
+          water: getLiquidStepValue(step.pump_on).label,
+          slurry: getLiquidStepValue(step.purge_on).label
         }))
       : [];
   return `
@@ -5330,7 +5383,7 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
       <section class="stack-section">
         <div class="mini-title">Cooking steps</div>
         <div class="recipe-sheet-list">
-          ${steps.slice(0, 12).map((step, index) => `<div><span>${index + 1}. ${escapeHtml(step.label)} | ${escapeHtml(step.lid)}</span><strong>IH ${escapeHtml(step.ind)} | MW ${escapeHtml(step.mag)}</strong></div>`).join("") || `<div class="empty-card">No cooking steps available.</div>`}
+          ${steps.slice(0, 12).map((step, index) => `<div><span>${index + 1}. ${escapeHtml(step.label)} | ${escapeHtml(step.lid)}</span><strong>W ${escapeHtml(step.water || "Off")} | SL ${escapeHtml(step.slurry || "Off")} | IH ${escapeHtml(step.ind)} | MW ${escapeHtml(step.mag)}</strong></div>`).join("") || `<div class="empty-card">No cooking steps available.</div>`}
         </div>
       </section>
       ${
