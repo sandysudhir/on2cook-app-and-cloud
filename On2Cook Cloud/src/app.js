@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706i";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706i";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706j";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706j";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260706i";
+} from "./ncb-services.js?v=20260706j";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260706i";
+} from "./data-store.js?v=20260706j";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -6694,22 +6694,6 @@ function render() {
   }
   app.innerHTML = `
     <div class="surface ${IS_APK_MODE ? "apk-surface" : ""}">
-      ${
-        IS_APK_MODE
-          ? ""
-          : `<header class="page-hero">
-              <div class="hero-copy">
-                <h1>On2Cook Cloud orchestration</h1>
-                <p>Order-first mobile layout, direct Web Bluetooth transport, five-device session support, and a recipe pipeline seeded from your local On2Cook recipe archive.</p>
-              </div>
-              <div class="hero-stats">
-                <div class="summary-chip">Orders ${snapshot.orders.current.length}</div>
-                <div class="summary-chip">Connected ${getConnectedDevices(snapshot).length}</div>
-                <div class="summary-chip">Selected recipes ${getSelectedRecipes(snapshot).length}</div>
-                <button class="secondary-button small" data-action="switch-tab" data-tab="settings">Settings</button>
-              </div>
-            </header>`
-      }
       ${snapshot.ui.toast ? `<div class="toast ${snapshot.ui.toastTone}">${escapeHtml(snapshot.ui.toast)}</div>` : ""}
       ${renderOrderNotice(snapshot)}
       ${renderApkScreenSwitcher(snapshot)}

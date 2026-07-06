@@ -783,3 +783,11 @@ The most important protocol truths are:
 3. `add_confirm=<step>` is required for instruction progression.
 4. `stop=100` must remain device-driven.
 5. inventory confirmation needs a real BLE list response from firmware if we want safe just-in-time syncing.
+
+## 14. Screen Layout Correction - July 6, 2026
+
+The outer web-only "On2Cook Cloud orchestration" hero was removed from the signed-in app view because it duplicated the in-phone On2Cook Cloud header and stole vertical space from the order-first workflow. The order/control phone is now the primary first viewport, followed by the device phones in the same horizontal rail.
+
+The control phone header now uses fixed grid tracks for the On2Cook logo, kitchen name, device count, busy order count, and notification/connect button. This prevents the kitchen title and counters from squeezing each other and keeps the screen closer to the supplied reference layout.
+
+New-order alerts are fixed overlays instead of sticky blocks, so they no longer push the phone screens down or resize the visible cooking/order area.
