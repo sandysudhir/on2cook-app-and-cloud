@@ -1,5 +1,13 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-07-06
+
+- Restyled the main On2Cook Cloud control screen to match the supplied mobile dashboard reference with a cleaner header, live device/busy-order counters, icon tabs, device access cards, and stronger order cards.
+- Added an explicit Available devices strip under every pending/queued order so connected and recipe-eligible devices can be selected directly per order.
+- Added the same connected-device selector under selected recipe cards, so recipes only show devices that are actually connected and enabled for that recipe.
+- Kept the top tab navigation visible for web and APK/mobile layouts while preserving existing order/device actions.
+- Bumped web cache version to `20260706a` / service-worker cache `v53`.
+
 ## 2026-07-03
 
 - Locked saved Web Bluetooth pairings to their assigned Device 1-5 windows so reconnects no longer fall back to a different cooker unless pairing is cleared.

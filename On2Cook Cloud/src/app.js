@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260703a";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260703a";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260703a";
+} from "./ncb-services.js?v=20260706a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260703a";
+} from "./data-store.js?v=20260706a";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -981,6 +981,22 @@ function renderOrderStageBadge(order) {
   return `<span class="order-stage-badge ${stage.tone}">${escapeHtml(stage.label)}</span>`;
 }
 
+function renderUiIcon(name) {
+  const icons = {
+    orders: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h14M7 12h14M7 18h14"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>`,
+    recipes: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10a6 6 0 0 1 12 0"/><path d="M5 10h14v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><path d="M9 10V8m6 2V8"/></svg>`,
+    queue: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>`,
+    manual: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="8" rx="4"/><circle cx="9" cy="12" r="2"/></svg>`,
+    global: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>`,
+    bell: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17h12l-1.4-2.4V10a4.6 4.6 0 0 0-9.2 0v4.6z"/><path d="M10 20h4"/></svg>`,
+    plus: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
+    more: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5h.01M12 12h.01M12 19h.01"/></svg>`,
+    chevronLeft: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>`,
+    chevronRight: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`
+  };
+  return icons[name] || "";
+}
+
 function renderContextOrderAction(order, perms) {
   if (order.status === "awaiting_confirmation") {
     return `<button class="primary-button small" data-action="mark-order-completed" data-order-id="${order.id}">Mark Completed</button>`;
@@ -997,27 +1013,36 @@ function renderContextOrderAction(order, perms) {
 function renderOrderDeviceAccess(snapshot) {
   const devices = snapshot.devices.slice(0, 5);
   return `
-    <section class="stack-section order-device-access">
-      <div class="row space">
+    <section class="stack-section order-device-access dashboard-device-access">
+      <div class="dashboard-section-title">
         <div class="mini-title">Device access</div>
-        <span class="subtle">Tap D1-D5 to view or select a device</span>
+        <button class="text-link-button" type="button" data-action="order-jump-device" data-slot="1">View All ${renderUiIcon("chevronRight")}</button>
       </div>
-      <div class="order-device-strip">
+      <div class="dashboard-device-strip">
+        <span class="strip-arrow">${renderUiIcon("chevronLeft")}</span>
         ${devices
           .map(
-            (device) => `
+            (device) => {
+              const runState = getManualDeviceRunState(snapshot, device);
+              const online = device.connection === "connected";
+              const active = runState.status === "busy" || runState.status === "syncing";
+              return `
               <button
-                class="order-device-button ${device.connection === "connected" ? "connected" : "offline"}"
+                class="dashboard-device-card ${online ? "online" : "offline"} ${active ? "active" : ""}"
                 type="button"
                 data-action="order-jump-device"
                 data-slot="${device.slot}"
               >
-                <strong>D${device.slot}</strong>
-                <span>${escapeHtml(device.connection === "connected" ? "Connected" : "Offline")}</span>
+                <img src="./assets/on2cook-logo.png" alt="" aria-hidden="true">
+                <strong>${device.slot}</strong>
+                <span><i></i>${escapeHtml(online ? "Online" : "Offline")}</span>
+                <small>${escapeHtml(active ? runState.label : online ? "Idle" : "Offline")}</small>
               </button>
-            `
+            `;
+            }
           )
           .join("")}
+        <span class="strip-arrow">${renderUiIcon("chevronRight")}</span>
       </div>
     </section>
   `;
@@ -3909,23 +3934,26 @@ function stopProLiveTimer() {
 function renderControlTabs(snapshot) {
   const perms = currentPermissions(snapshot);
   const tabs = [
-    ["orders", "Orders"],
-    ["recipes", "Recipes"],
-    ["queue", "Queue"],
-    ["manual", "Manual Mode"],
-    perms.canSelectGlobalRecipes ? ["global", "Global Recipes"] : null
+    ["orders", "Orders", "orders"],
+    ["recipes", "Recipes", "recipes"],
+    ["queue", "Queue", "queue"],
+    ["manual", "Manual Mode", "manual"],
+    perms.canSelectGlobalRecipes ? ["global", "Global Recipes", "global"] : null
   ].filter(Boolean);
   return `
-    <nav class="tab-strip">
+    <nav class="tab-strip dashboard-tabs">
+      <span class="tab-edge-icon">${renderUiIcon("chevronLeft")}</span>
       ${tabs
         .map(
-          ([id, label]) => `
+          ([id, label, icon]) => `
             <button class="tab-button ${snapshot.ui.activeTab === id ? "active" : ""}" data-action="switch-tab" data-tab="${id}">
-              ${label}
+              <span class="tab-icon">${renderUiIcon(icon)}</span>
+              <span>${label}</span>
             </button>
           `
         )
         .join("")}
+      <span class="tab-edge-icon">${renderUiIcon("chevronRight")}</span>
     </nav>
   `;
 }
@@ -4034,21 +4062,24 @@ function renderCurrentOrders(snapshot, perms) {
     ["Starting / Cooking", snapshot.orders.current.filter((order) => ["starting", "cooking", "awaiting_confirmation"].includes(order.status))]
   ];
   return `
-    <div class="section-head">
-      <div class="segment-row">
+    <div class="section-head dashboard-order-head">
+      <div class="segment-row dashboard-segments">
         <button class="segment ${snapshot.ui.orderMode === "current" ? "active" : ""}" data-action="switch-order-mode" data-mode="current">Current</button>
         <button class="segment ${snapshot.ui.orderMode === "previous" ? "active" : ""}" data-action="switch-order-mode" data-mode="previous">Previous</button>
       </div>
-      <button class="primary-button" data-action="open-manual-order">Manual Order</button>
+      <button class="primary-button dashboard-manual-order" data-action="open-manual-order">
+        <span>${renderUiIcon("plus")}</span>
+        Manual Order
+      </button>
     </div>
     ${renderOrderDeviceAccess(snapshot)}
     <section class="stack-section">
-      <div class="queue-summary">
-        <div class="summary-chip">Pending ${pendingCount}</div>
-        <div class="summary-chip">Queued ${queuedCount}</div>
-        <div class="summary-chip">${bridgeActive ? `Server feed ${snapshot.orders.current.length}` : `Next feed ${incomingCount}`}</div>
+      <div class="queue-summary dashboard-status-row">
+        <div class="summary-chip pending-tone">Pending ${pendingCount}</div>
+        <div class="summary-chip queued-tone">Queued ${queuedCount}</div>
+        <div class="summary-chip feed-tone">${bridgeActive ? `Server Feed ${snapshot.orders.current.length}` : `Server Feed ${incomingCount}`}</div>
       </div>
-      <p class="subtle">
+      <p class="subtle dashboard-feed-note">
         ${
           bridgeActive
             ? `KOT bridge is active. Current orders are coming from the server endpoint ${escapeHtml(KOT_BRIDGE_URL)}.`
@@ -4096,20 +4127,28 @@ function renderPreviousOrders(snapshot) {
 function renderOrderCard(snapshot, order, perms) {
   const connectedDevices = getConnectedDevices(snapshot);
   const allowManualRouting = perms.canAssignQueues && ["pending", "queued"].includes(order.status);
-  const deviceChips = connectedDevices
+  const recipe = getEffectiveRecipe(snapshot, order);
+  const availableDevices = connectedDevices.filter((device) => !recipe || isRecipeAllowedOnDevice(snapshot, device, recipe.id));
+  const blockedConnectedDevices = connectedDevices.filter((device) => recipe && !isRecipeAllowedOnDevice(snapshot, device, recipe.id));
+  const deviceButtons = availableDevices
     .map(
-      (device) => `
-        <button class="chip-button ${order.assignedSlot === device.slot ? "selected" : ""}" data-action="assign-order-device" data-order-id="${order.id}" data-slot="${device.slot}">
-          Device ${device.slot}
+      (device) => {
+        const runState = getManualDeviceRunState(snapshot, device);
+        return `
+        <button class="order-device-assign-button ${order.assignedSlot === device.slot ? "selected" : ""} ${escapeHtml(runState.status)}" data-action="assign-order-device" data-order-id="${order.id}" data-slot="${device.slot}">
+          <strong>D${device.slot}</strong>
+          <span>${escapeHtml(runState.canRunNow ? "Idle" : runState.label)}</span>
         </button>
-      `
+      `;
+      }
     )
     .join("");
   const assigned = order.assignedSlot ? `Device ${order.assignedSlot}` : "Auto";
   const orderType = getOrderType(order);
   const thumbUrl = getOrderThumbUrl(order);
+  const canCook = ["pending", "queued"].includes(order.status) && perms.canAssignQueues;
   return `
-    <article class="order-card order-card-rich">
+    <article class="order-card order-card-rich dashboard-order-card">
       <div class="row space order-card-topline">
         <div class="chip-row">
           ${renderOrderStageBadge(order)}
@@ -4134,17 +4173,31 @@ function renderOrderCard(snapshot, order, perms) {
           <span class="order-source-pill">${escapeHtml(order.source)}</span>
         </div>
       </div>
-      <div class="meta-grid">
+      <div class="meta-grid dashboard-order-meta">
         <span>${escapeHtml(order.quantity)}</span>
         <span>${escapeHtml(assigned)}</span>
         <span>${escapeHtml(getOrderPaymentLabel(order))}</span>
       </div>
-      <p class="subtle">${escapeHtml(order.specialInstructions || "No special instructions")}</p>
-      <div class="action-row">
+      ${order.specialInstructions ? `<p class="subtle">${escapeHtml(order.specialInstructions)}</p>` : ""}
+      <div class="action-row dashboard-order-actions">
         <button class="secondary-button small" data-action="open-order-details" data-order-id="${order.id}">Details</button>
-        ${renderContextOrderAction(order, perms)}
+        ${canCook ? `<button class="secondary-button small assign-recipe-button" data-action="auto-assign-order" data-order-id="${order.id}">Assign Recipe</button>` : renderContextOrderAction(order, perms)}
+        ${canCook ? `<button class="primary-button small cook-now-button" data-action="auto-assign-order" data-order-id="${order.id}">Cook Now</button>` : ""}
+        <button class="icon-button more-order-button" data-action="open-order-details" data-order-id="${order.id}" aria-label="More order details">${renderUiIcon("more")}</button>
       </div>
-      ${allowManualRouting ? `<div class="chip-row">${deviceChips || `<span class="subtle">No connected devices</span>`}</div>` : ""}
+      ${
+        allowManualRouting
+          ? `
+            <div class="available-device-panel">
+              <div class="available-device-title">Available devices</div>
+              <div class="available-device-row">
+                ${deviceButtons || `<span class="subtle">${connectedDevices.length ? "No connected device is enabled for this recipe" : "No connected devices"}</span>`}
+              </div>
+              ${blockedConnectedDevices.length ? `<div class="subtle">Blocked here: ${blockedConnectedDevices.map((device) => `D${device.slot}`).join(", ")} not enabled for this recipe.</div>` : ""}
+            </div>
+          `
+          : ""
+      }
     </article>
   `;
 }
@@ -4419,12 +4472,16 @@ function renderManualModeTab(snapshot) {
 function renderRecipeCard(snapshot, recipe, perms) {
   const selectedClass = recipe.selected ? "selected" : "";
   const recipeImageUrl = safeOptionalUrl(recipe.imageDataUrl, "recipe image");
-  const devices = snapshot.devices
+  const connectedDevices = snapshot.devices.filter((device) => device.connection === "connected");
+  const availableDevices = connectedDevices.filter((device) => isRecipeAllowedOnDevice(snapshot, device, recipe.id));
+  const blockedConnectedDevices = connectedDevices.filter((device) => !isRecipeAllowedOnDevice(snapshot, device, recipe.id));
+  const devices = availableDevices
     .map((device) => {
-      const allowed = isRecipeAllowedOnDevice(snapshot, device, recipe.id);
+      const runState = getDeviceRunState(snapshot, device);
       return `
-        <button class="chip-button ${allowed ? "selected" : ""}" data-action="toggle-recipe-device" data-slot="${device.slot}" data-recipe-id="${recipe.id}">
-          D${device.slot}
+        <button class="order-device-assign-button ${escapeHtml(runState.status)}" data-action="run-recipe-on-device" data-slot="${device.slot}" data-recipe-id="${recipe.id}">
+          <strong>D${device.slot}</strong>
+          <span>${escapeHtml(runState.label)}</span>
         </button>
       `;
     })
@@ -4462,7 +4519,17 @@ function renderRecipeCard(snapshot, recipe, perms) {
               : ""
           }
         </div>
-        ${perms.canEditDevicePermissions ? `<div class="chip-row">${devices}</div>` : ""}
+        ${
+          recipe.selected
+            ? `<div class="available-device-panel recipe-device-panel">
+                <div class="available-device-title">Available devices</div>
+                <div class="available-device-row">
+                  ${devices || `<span class="subtle">${connectedDevices.length ? "No connected device is enabled for this recipe" : "No connected devices"}</span>`}
+                </div>
+                ${blockedConnectedDevices.length ? `<div class="subtle">Blocked here: ${blockedConnectedDevices.map((device) => `D${device.slot}`).join(", ")} not enabled for this recipe.</div>` : ""}
+              </div>`
+            : ""
+        }
       </div>
     </article>
   `;
@@ -4673,6 +4740,10 @@ function renderControlPhone(snapshot) {
   const perms = currentPermissions(snapshot);
   const connectedCount = getConnectedDevices(snapshot).length;
   const connectingCount = snapshot.devices.filter((device) => device.connection === "connecting").length;
+  const busyOrderCount = snapshot.orders.current.filter((order) =>
+    ["queued", "starting", "cooking", "awaiting_confirmation"].includes(order.status)
+  ).length;
+  const noticeCount = snapshot.ui.orderNotice ? 1 : 0;
   const body =
     snapshot.ui.activeTab === "orders"
       ? snapshot.ui.orderMode === "current"
@@ -4691,22 +4762,32 @@ function renderControlPhone(snapshot) {
   return `
     <section class="phone-frame control-phone" data-scroll-key="frame-control">
       <div class="phone-shell">
-        <header class="phone-head hero-head">
-          <img class="brand-logo" src="./assets/on2cook-logo.png" alt="On2Cook">
-          <div class="grow">
-            <div class="eyebrow">On2Cook Cloud</div>
-            <h2>${escapeHtml(snapshot.facilities[0]?.name || "Kitchen console")}</h2>
-            <p>${escapeHtml(getCurrentUser(snapshot).displayName)} | ${escapeHtml(getCurrentUser(snapshot).role)}</p>
+        <header class="phone-head hero-head dashboard-hero-head">
+          <img class="brand-logo dashboard-brand-logo" src="./assets/on2cook-logo.png" alt="On2Cook">
+          <div class="dashboard-title-block">
+            <h2>On2Cook Cloud</h2>
+            <p>${escapeHtml(snapshot.facilities[0]?.name || "Kitchen console")} <span class="dropdown-mark">⌄</span></p>
+          </div>
+          <div class="dashboard-header-spacer"></div>
+          <div class="dashboard-counter-card">
+            <strong>D</strong>
+            <span>${escapeHtml(connectedCount)}</span>
+            <small>Devices</small>
+          </div>
+          <div class="dashboard-counter-card">
+            <strong>B</strong>
+            <span>${escapeHtml(busyOrderCount)}</span>
+            <small>Busy Orders</small>
           </div>
           <button
-            class="icon-button bluetooth-home-button ${connectedCount > 0 ? "connected" : ""}"
+            class="icon-button bluetooth-home-button dashboard-bell-button ${connectedCount > 0 ? "connected" : ""}"
             type="button"
             data-action="connect-all-devices"
             title="Connect all On2Cook devices"
             aria-label="Connect all On2Cook devices"
           >
-            <span class="bluetooth-glyph">B</span>
-            <span class="bluetooth-count">${connectingCount > 0 ? "..." : connectedCount}</span>
+            <span class="bell-glyph">${renderUiIcon("bell")}</span>
+            <span class="bluetooth-count">${connectingCount > 0 ? "..." : noticeCount}</span>
           </button>
         </header>
         ${renderControlTabs(snapshot)}
@@ -7044,6 +7125,33 @@ async function handleClick(event) {
   }
   if (action === "assign-order-device") {
     await startOrderFlow(button.dataset.orderId, Number(button.dataset.slot));
+    return;
+  }
+  if (action === "run-recipe-on-device") {
+    const slot = Number(button.dataset.slot);
+    const recipeId = button.dataset.recipeId || "";
+    const snapshot = state();
+    const device = snapshot.devices.find((item) => item.slot === slot);
+    const recipe = findRecipeById(snapshot, recipeId);
+    if (!device || device.connection !== "connected") {
+      showToast(`Device ${slot || ""} is offline. Connect it before assigning this recipe.`, "warning");
+      return;
+    }
+    if (!recipe) {
+      showToast("Recipe not found.", "error");
+      return;
+    }
+    if (!isRecipeAllowedOnDevice(snapshot, device, recipe.id)) {
+      showToast(`${recipe.displayName} is not enabled on Device ${device.slot}`, "warning");
+      return;
+    }
+    const runState = getDeviceRunState(snapshot, device);
+    const result = await runDeviceRecipe(device.slot, recipe.id);
+    if (result === "started") {
+      showToast(`${recipe.displayName} starting on Device ${device.slot}`, "success");
+    } else if (runState.status !== "idle") {
+      showToast(`${recipe.displayName} added to Device ${device.slot} queue`, "success");
+    }
     return;
   }
   if (action === "open-order-details") {
