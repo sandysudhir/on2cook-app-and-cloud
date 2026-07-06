@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706a";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706a";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706b";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706b";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260706a";
+} from "./ncb-services.js?v=20260706b";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260706a";
+} from "./data-store.js?v=20260706b";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -729,6 +729,108 @@ function getInstructionDuration(step) {
     Number(step?.durationInSec) ||
     Math.max(Number(step?.Induction_on_time) || 0, Number(step?.Magnetron_on_time) || 0, Number(step?.wait_time) || 0)
   );
+}
+
+function getRecipeStepElapsed(device, recipe) {
+  const totalSeconds = Number(device.activeRun?.durationSeconds) || getRecipeDuration(recipe);
+  const remaining = Math.max(0, Number(device.telemetry.remainingSeconds) || 0);
+  if (totalSeconds && remaining) return Math.max(0, totalSeconds - remaining);
+  if (device.activeRun?.startedAt) return elapsedSecondsBetween(device.activeRun.startedAt, nowIso());
+  return 0;
+}
+
+function getStepTiming(recipe, stepIndex) {
+  const steps = Array.isArray(recipe?.recipeJson?.Instruction) ? recipe.recipeJson.Instruction : [];
+  const startsAt = steps.slice(0, Math.max(0, stepIndex)).reduce((total, step) => total + getInstructionDuration(step), 0);
+  const duration = getInstructionDuration(steps[stepIndex]);
+  return {
+    startsAt,
+    endsAt: startsAt + duration,
+    duration
+  };
+}
+
+function getStepIngredient(recipe, stepIndex) {
+  const ingredients = Array.isArray(recipe?.recipeJson?.Ingredients)
+    ? recipe.recipeJson.Ingredients
+    : Array.isArray(recipe?.recipeJson?.Ingredient)
+      ? recipe.recipeJson.Ingredient
+      : [];
+  return ingredients[stepIndex] || null;
+}
+
+function isWaterStep(step) {
+  const pumpValue = String(step?.pump_on || step?.purge_on || "").trim().toLowerCase();
+  const title = String(step?.Text || "").toLowerCase();
+  return (
+    pumpValue === "on" ||
+    (Number(step?.pump_on) || 0) > 0 ||
+    (Number(step?.purge_on) || 0) > 0 ||
+    title.includes("water")
+  );
+}
+
+function buildOperatorPrompt(recipe, step, stepIndex) {
+  if (!step) return null;
+  if (isWaterStep(step)) {
+    return {
+      type: "water",
+      title: "Check water",
+      detail: "Confirm the pump has enough water before this automatic water step.",
+      tone: "water"
+    };
+  }
+  const ingredient = getStepIngredient(recipe, stepIndex);
+  if (ingredient) {
+    const parsed = splitIngredientNameWeight(ingredient, stepIndex);
+    const quantity = [parsed.quantity || "", parsed.unit || ""].filter(Boolean).join(" ").trim();
+    return {
+      type: "ingredient",
+      title: `Add ${parsed.name}`,
+      detail: quantity || step.Weight || step.Text || "",
+      tone: "ingredient"
+    };
+  }
+  if (step.Weight && String(step.Weight).trim() && String(step.Weight).trim() !== "0") {
+    return {
+      type: "ingredient",
+      title: step.Text ? `Add ${step.Text}` : `Add ingredient ${stepIndex + 1}`,
+      detail: step.Weight,
+      tone: "ingredient"
+    };
+  }
+  return null;
+}
+
+function getOperatorStepState(device, recipe) {
+  const steps = Array.isArray(recipe?.recipeJson?.Instruction) ? recipe.recipeJson.Instruction : [];
+  const activeIndex = Math.max(0, Math.min(steps.length - 1, Number(device.telemetry.stepNo || 1) - 1));
+  const currentStep = steps[activeIndex] || null;
+  const elapsed = getRecipeStepElapsed(device, recipe);
+  const currentTiming = getStepTiming(recipe, activeIndex);
+  const currentPrompt = buildOperatorPrompt(recipe, currentStep, activeIndex);
+  let nextIndex = -1;
+  let nextPrompt = null;
+  for (let index = activeIndex + 1; index < steps.length; index += 1) {
+    const prompt = buildOperatorPrompt(recipe, steps[index], index);
+    if (prompt) {
+      nextIndex = index;
+      nextPrompt = prompt;
+      break;
+    }
+  }
+  const nextTiming = nextIndex >= 0 ? getStepTiming(recipe, nextIndex) : null;
+  const secondsToNext = nextTiming ? Math.max(0, Math.ceil(nextTiming.startsAt - elapsed)) : null;
+  return {
+    activeIndex,
+    currentStep,
+    currentPrompt,
+    currentRemaining: Math.max(0, Math.ceil(currentTiming.endsAt - elapsed)),
+    nextIndex,
+    nextPrompt,
+    secondsToNext,
+    totalSteps: steps.length
+  };
 }
 
 function getDeviceEta(snapshot, device) {
@@ -4870,6 +4972,114 @@ function renderRecipeTimeline(snapshot, device, recipe, active = false) {
   `;
 }
 
+function renderCompactDeviceInfo(device, summaryMessage) {
+  return `
+    <button class="device-info-tab" data-action="open-device-sheet" data-slot="${device.slot}">
+      <span>
+        <strong>${escapeHtml(device.telemetry.workStatus || device.connection || "offline")}</strong>
+        <small>${escapeHtml(summaryMessage || "Tap for live details")}</small>
+      </span>
+      <span class="subtle">${escapeHtml(device.lastUpdatedAt ? formatAgo(device.lastUpdatedAt) : "Never")}</span>
+    </button>
+  `;
+}
+
+function renderOperatorPromptBlock(prompt, label, seconds = null, options = {}) {
+  if (!prompt) return "";
+  const urgent = Number.isFinite(seconds) && seconds <= 5;
+  const prefix = urgent ? `${label} in -${Math.max(0, seconds)}s` : seconds === null ? label : `${label} in ${formatProClock(seconds)}`;
+  return `
+    <div class="operator-prompt ${prompt.tone || ""} ${urgent ? "urgent" : ""}">
+      <div>
+        <span>${escapeHtml(prefix)}</span>
+        <strong>${escapeHtml(prompt.title)}</strong>
+        ${prompt.detail ? `<small>${escapeHtml(prompt.detail)}</small>` : ""}
+      </div>
+      ${options.actionHtml || ""}
+    </div>
+  `;
+}
+
+function renderOperatorCookPanel(snapshot, device, currentOrder, recipe) {
+  const state = getOperatorStepState(device, recipe);
+  const step = state.currentStep || {};
+  const recipeName =
+    device.activeRun?.displayName ||
+    currentOrder?.itemName ||
+    recipe?.displayName ||
+    getLiveRecipeName(device) ||
+    "Recipe running";
+  const nextPrompt = state.nextPrompt;
+  const showNextPopup = nextPrompt && Number.isFinite(state.secondsToNext) && state.secondsToNext <= 5;
+  const currentPrompt = state.currentPrompt;
+  const currentActionHtml = currentPrompt?.type === "ingredient"
+    ? `<button class="primary-button small" data-action="complete-ingredients" data-slot="${device.slot}">Ingredient added</button>`
+    : "";
+  return `
+    <article class="operator-cook-card">
+      <div class="row space">
+        <div>
+          <div class="order-id">${escapeHtml(currentOrder?.orderId || `DEVICE ${device.slot}`)}</div>
+          <h3>${escapeHtml(recipeName)}</h3>
+        </div>
+        ${renderStatusPill(device.telemetry.workStatus || currentOrder?.status || "cooking")}
+      </div>
+      ${
+        showNextPopup
+          ? `<div class="operator-next-popup">
+              ${renderOperatorPromptBlock(nextPrompt, "Next step", state.secondsToNext)}
+            </div>`
+          : ""
+      }
+      <div class="operator-now-grid">
+        <div class="operator-step-card">
+          <span>Current step</span>
+          <strong>${escapeHtml(step.Text || `Step ${state.activeIndex + 1}`)}</strong>
+          <small>Step ${state.activeIndex + 1}${state.totalSteps ? ` of ${state.totalSteps}` : ""} | ${secondsLabel(state.currentRemaining)} left</small>
+        </div>
+        <div class="operator-step-card muted">
+          <span>Power</span>
+          <strong>IH ${clampPercent(device.telemetry.indPower || step.Induction_power)}%</strong>
+          <small>MW ${clampPercent(device.telemetry.magPower || step.Magnetron_power)}% | Lid ${escapeHtml(step.lid || "closed")}</small>
+        </div>
+      </div>
+      ${currentPrompt ? renderOperatorPromptBlock(currentPrompt, "Add now", null, { actionHtml: currentActionHtml }) : ""}
+      ${
+        nextPrompt && !showNextPopup
+          ? renderOperatorPromptBlock(nextPrompt, "Next", state.secondsToNext)
+          : `<div class="operator-prompt quiet"><div><span>Next</span><strong>No manual ingredient due yet</strong><small>Automatic cooking continues.</small></div></div>`
+      }
+      <div class="action-row top-gap">
+        <button class="danger-button small" data-action="abort-device" data-slot="${device.slot}">Abort recipe</button>
+        <button class="secondary-button small" data-action="open-device-sheet" data-slot="${device.slot}">Running details</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderCompactTimelinePreview(device, recipe) {
+  const steps = Array.isArray(recipe?.recipeJson?.Instruction) ? recipe.recipeJson.Instruction : [];
+  if (!steps.length) return "";
+  const activeIndex = Math.max(0, Number(device.telemetry.stepNo || 1) - 1);
+  return `
+    <div class="compact-timeline-preview">
+      <div class="row space">
+        <span>Timeline preview</span>
+        <strong>${escapeHtml(`Step ${activeIndex + 1}/${steps.length}`)}</strong>
+      </div>
+      <div class="compact-timeline-bars">
+        ${steps
+          .map((step, index) => {
+            const width = Math.max(8, Math.min(100, (getInstructionDuration(step) / Math.max(1, getRecipeDuration(recipe))) * 100));
+            const state = index < activeIndex ? "done" : index === activeIndex ? "live" : "upcoming";
+            return `<span class="${state}" style="flex-basis:${width}%"></span>`;
+          })
+          .join("")}
+      </div>
+    </div>
+  `;
+}
+
 function renderLastRunMetrics(run) {
   if (!run?.finishedAt) return "";
   const actualSeconds = getRunActualSeconds(run);
@@ -5064,6 +5274,7 @@ function renderDevicePhone(snapshot, device) {
     connectionLabel === "connected" ? "cooking" : connectionLabel === "connecting" ? "starting" : "failed";
   const summaryMessage = getDeviceSummaryMessage(device);
   const uploadState = device.uploadState || emptyUploadState();
+  const hasActiveCook = Boolean(timelineRecipe && (currentOrder || hasLiveRuntime(device) || device.currentJobId || device.activeRun?.displayName));
   const linkedDeviceLabel = device.bluetoothName
     ? `Locked to ${device.bluetoothName}`
     : device.browserDeviceId
@@ -5085,20 +5296,6 @@ function renderDevicePhone(snapshot, device) {
         </header>
         <div class="phone-body" data-scroll-key="body-device-${device.slot}">
           <section class="stack-section">
-            <div class="summary-card">
-              <div class="row space">
-                <strong>Last updated</strong>
-                <span class="subtle">${escapeHtml(device.lastUpdatedAt ? formatAgo(device.lastUpdatedAt) : "Never")}</span>
-              </div>
-              <div class="subtle">${escapeHtml(summaryMessage)}</div>
-              <div class="meta-grid top-gap">
-                <span>Status: ${escapeHtml(device.telemetry.workStatus || "offline")}</span>
-                <span>ETA: ${secondsLabel(device.telemetry.remainingSeconds)}</span>
-                <span>Firmware: ${escapeHtml(device.telemetry.firmwareVersion || "Unknown")}</span>
-                <span>Recipes on device: ${escapeHtml((device.availableRecipeNames || []).length)}</span>
-                <span>Inventory: ${escapeHtml(device.recipeInventoryUpdatedAt ? formatAgo(device.recipeInventoryUpdatedAt) : "Unknown")}</span>
-              </div>
-            </div>
             <div class="action-row">
               ${
                 device.connection === "connected"
@@ -5110,42 +5307,28 @@ function renderDevicePhone(snapshot, device) {
               <button class="secondary-button small" data-action="request-firmware" data-slot="${device.slot}">Firmware</button>
               <button class="secondary-button small" data-action="list-logs" data-slot="${device.slot}">Logs</button>
             </div>
+            ${renderCompactDeviceInfo(device, summaryMessage)}
           </section>
           <section class="stack-section">
-            <div class="mini-title">Last cooked recipe</div>
-            ${renderActiveRunTab(device)}
+            <div class="mini-title">${hasActiveCook ? "Cooking now" : "Last cooked recipe"}</div>
             ${
-              headline
-                ? `
-                  <article class="order-card compact customer-run-card">
-                    <div class="row space">
-                      <div>
-                        <div class="order-id">${escapeHtml(currentOrder?.orderId || device.lastRun?.orderId || `DEVICE ${device.slot}`)}</div>
-                        <h3>${escapeHtml(headline.title)}</h3>
+              hasActiveCook
+                ? `${renderOperatorCookPanel(snapshot, device, currentOrder, timelineRecipe)}${renderCompactTimelinePreview(device, timelineRecipe)}`
+                : headline
+                  ? `
+                    <article class="order-card compact customer-run-card">
+                      <div class="row space">
+                        <div>
+                          <div class="order-id">${escapeHtml(device.lastRun?.orderId || `DEVICE ${device.slot}`)}</div>
+                          <h3>${escapeHtml(headline.title)}</h3>
+                        </div>
+                        ${renderStatusPill(headline.status)}
                       </div>
-                      ${renderStatusPill(headline.status)}
-                    </div>
-                    <div class="subtle">${escapeHtml(headline.note)}</div>
-                    ${renderLastRunMetrics(device.lastRun)}
-                    <div class="meta-grid top-gap">
-                      <span>Step ${escapeHtml(device.telemetry.stepNo || device.lastRun?.stepNo || 0)}</span>
-                      <span>Induction ${escapeHtml(`${clampPercent(device.telemetry.indPower)}%`)}</span>
-                      <span>Microwave ${escapeHtml(`${clampPercent(device.telemetry.magPower)}%`)}</span>
-                    </div>
-                    ${
-                      device.connection === "connected" && (currentOrder || hasLiveRuntime(device) || device.currentJobId)
-                        ? `<div class="action-row top-gap"><button class="danger-button small" data-action="abort-device" data-slot="${device.slot}">Abort recipe</button></div>`
-                        : ""
-                    }
-                  </article>
-                `
-                : `<div class="empty-card">No recipe has run on this device yet.</div>`
-            }
-          </section>
-          <section class="stack-section">
-            <div class="mini-title">Execution timeline</div>
-            ${
-              timelineRecipe ? renderRecipeTimeline(snapshot, device, timelineRecipe, true) : renderTimelineIdleState(device)
+                      <div class="subtle">${escapeHtml(headline.note)}</div>
+                      ${renderLastRunMetrics(device.lastRun)}
+                    </article>
+                  `
+                  : `<div class="empty-card">No recipe has run on this device yet.</div>`
             }
           </section>
           <section class="stack-section">

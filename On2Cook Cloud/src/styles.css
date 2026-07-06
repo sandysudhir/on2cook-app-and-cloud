@@ -2205,6 +2205,168 @@ textarea.field-input {
   gap: 10px;
 }
 
+.device-info-tab {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(111, 92, 71, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--ink);
+  text-align: left;
+}
+
+.device-info-tab strong,
+.device-info-tab small {
+  display: block;
+}
+
+.device-info-tab strong {
+  text-transform: capitalize;
+}
+
+.device-info-tab small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.operator-cook-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(244, 123, 32, 0.24);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 248, 241, 0.92));
+  box-shadow: 0 16px 34px rgba(154, 80, 28, 0.08);
+}
+
+.operator-now-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.operator-step-card {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(244, 123, 32, 0.16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.operator-step-card.muted {
+  border-color: rgba(57, 100, 196, 0.14);
+  background: rgba(57, 100, 196, 0.05);
+}
+
+.operator-step-card span,
+.operator-prompt span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.operator-step-card strong,
+.operator-prompt strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.operator-step-card small,
+.operator-prompt small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.operator-prompt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(36, 154, 113, 0.18);
+  border-radius: 14px;
+  background: rgba(36, 154, 113, 0.08);
+}
+
+.operator-prompt > div {
+  display: grid;
+  gap: 3px;
+}
+
+.operator-prompt.water {
+  border-color: rgba(45, 108, 223, 0.2);
+  background: rgba(45, 108, 223, 0.08);
+}
+
+.operator-prompt.quiet {
+  border-color: rgba(111, 92, 71, 0.12);
+  background: rgba(111, 92, 71, 0.04);
+}
+
+.operator-prompt.urgent,
+.operator-next-popup {
+  border-color: rgba(244, 123, 32, 0.42);
+  background: rgba(244, 123, 32, 0.12);
+}
+
+.operator-next-popup {
+  padding: 6px;
+  border: 1px solid rgba(244, 123, 32, 0.28);
+  border-radius: 18px;
+  box-shadow: 0 14px 28px rgba(244, 123, 32, 0.14);
+}
+
+.compact-timeline-preview {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(111, 92, 71, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.compact-timeline-preview span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.compact-timeline-bars {
+  display: flex;
+  gap: 3px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(111, 92, 71, 0.08);
+}
+
+.compact-timeline-bars span {
+  min-width: 8px;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(111, 92, 71, 0.16);
+}
+
+.compact-timeline-bars span.done {
+  background: rgba(36, 154, 113, 0.42);
+}
+
+.compact-timeline-bars span.live {
+  background: var(--accent);
+}
+
 .timeline-card {
   display: grid;
   gap: 12px;
@@ -3290,6 +3452,12 @@ textarea.field-input {
   .recipe-card,
   .queue-device-card {
     border-radius: 16px;
+  }
+
+  .operator-now-grid,
+  .operator-prompt,
+  .device-info-tab {
+    grid-template-columns: 1fr;
   }
 
   .primary-button,

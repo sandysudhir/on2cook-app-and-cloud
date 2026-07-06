@@ -2,6 +2,12 @@
 
 ## 2026-07-06
 
+- Simplified each device cooking screen so live execution shows the current step, next manual ingredient/water check, urgent countdown prompts, abort access, and a compact timeline preview instead of the full telemetry/timeline stack.
+- Collapsed live firmware/status details into a small tap-to-open device info tab so operators can focus on what to add next.
+- Bumped web cache version to `20260706b` / service-worker cache `v54`.
+
+## 2026-07-06
+
 - Restyled the main On2Cook Cloud control screen to match the supplied mobile dashboard reference with a cleaner header, live device/busy-order counters, icon tabs, device access cards, and stronger order cards.
 - Added an explicit Available devices strip under every pending/queued order so connected and recipe-eligible devices can be selected directly per order.
 - Added the same connected-device selector under selected recipe cards, so recipes only show devices that are actually connected and enabled for that recipe.
