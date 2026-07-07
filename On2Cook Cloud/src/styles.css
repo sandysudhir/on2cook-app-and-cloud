@@ -4626,6 +4626,105 @@ textarea.field-input {
   letter-spacing: 0.13em;
 }
 
+.surface:not(.login-surface) .modal-backdrop:has(.device-detail-screen) {
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(14px);
+}
+
+.surface:not(.login-surface) .device-detail-screen {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(170deg, rgba(35, 34, 34, 0.98) 0%, rgba(18, 18, 18, 0.99) 48%, rgba(7, 7, 7, 1) 100%);
+  box-shadow:
+    0 34px 88px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-screen-topbar {
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-brand-lockup strong,
+.surface:not(.login-surface) .device-detail-screen .refined-title-row h3,
+.surface:not(.login-surface) .device-detail-screen .refined-device-summary-copy h3,
+.surface:not(.login-surface) .device-detail-screen .refined-info-grid b {
+  color: #fffaf5;
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-brand-lockup span,
+.surface:not(.login-surface) .device-detail-screen .refined-device-summary-copy p,
+.surface:not(.login-surface) .device-detail-screen .refined-info-grid small {
+  color: #a9a39e;
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-stat-stack span {
+  color: #fffaf5;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 74, 20, 0.16), rgba(255, 255, 255, 0.06));
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-stat-stack span b {
+  color: #ff5a24;
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-stat-stack i,
+.surface:not(.login-surface) .device-detail-screen .refined-back-button {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-device-summary-card {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+  box-shadow:
+    0 22px 46px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-device-image {
+  border: 1px solid rgba(255, 74, 20, 0.22);
+  background:
+    linear-gradient(145deg, rgba(237, 27, 47, 0.2), rgba(255, 74, 20, 0.1)),
+    #111;
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-info-grid {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.surface:not(.login-surface) .device-detail-screen .settings-card,
+.surface:not(.login-surface) .device-detail-screen .empty-card,
+.surface:not(.login-surface) .device-detail-screen .queue-item,
+.surface:not(.login-surface) .device-detail-screen .activity-row {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.032));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.surface:not(.login-surface) .device-detail-screen .refined-edit-details summary,
+.surface:not(.login-surface) .device-detail-screen .mini-title {
+  color: #ff5a24;
+}
+
+.surface:not(.login-surface) .device-detail-screen .chip-button.selected {
+  color: #fff;
+  border-color: rgba(255, 74, 20, 0.52);
+  background: linear-gradient(135deg, rgba(237, 27, 47, 0.42), rgba(255, 74, 20, 0.28));
+}
+
+.surface:not(.login-surface) .device-detail-screen .activity-badge,
+.surface:not(.login-surface) .device-detail-screen .inventory-chip {
+  color: #fffaf5;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.075);
+}
+
 .modal-form {
   display: grid;
   gap: 12px;

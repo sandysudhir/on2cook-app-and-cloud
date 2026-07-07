@@ -816,4 +816,6 @@ On narrow mobile screens the new-order notice now renders as a compact bottom to
 
 The second refinement pass tightened the device-management layout specifically: tab icons now sit in fixed centered slots, device headers use compact aligned logo/status geometry, and device action buttons use a predictable grid so the screen feels cleaner on both desktop and phone widths.
 
+The latest pass extends that same premium dark language to the Device Details management sheet, including pairing, firmware, inventory, allowed recipes, device actions, and saved logs.
+
 This was a visual/layout pass only. BLE transport, recipe upload timing, order queue logic, and firmware command strings were not changed.
