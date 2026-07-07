@@ -2281,6 +2281,156 @@ textarea.field-input {
   word-break: break-word;
 }
 
+.live-logs-modal {
+  width: min(1040px, calc(100vw - 28px));
+  display: grid;
+  gap: 14px;
+}
+
+.live-log-status-card {
+  display: grid;
+  gap: 10px;
+}
+
+.live-log-feed {
+  display: grid;
+  gap: 10px;
+  max-height: min(58vh, 560px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.live-log-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.live-log-row.tx {
+  border-color: rgba(244, 123, 32, 0.24);
+}
+
+.live-log-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.live-log-row-head b {
+  color: var(--accent-strong);
+  text-transform: uppercase;
+}
+
+.live-log-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.live-log-grid span {
+  min-width: 0;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(21, 21, 21, 0.035);
+}
+
+.live-log-grid small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stored-log-table th {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.live-log-grid strong {
+  display: block;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+}
+
+.live-log-message {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(21, 21, 21, 0.04);
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.stored-log-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.stored-log-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.stored-log-group {
+  display: grid;
+  gap: 8px;
+}
+
+.stored-log-group-title {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stored-log-table-wrap {
+  max-height: 340px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.stored-log-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+
+.stored-log-table th,
+.stored-log-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.stored-log-table td {
+  color: var(--ink);
+}
+
+.stored-log-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 .customer-run-card {
   display: grid;
   gap: 10px;
@@ -5039,6 +5189,48 @@ textarea.field-input {
 .surface:not(.login-surface) .next-recipe-card strong,
 .surface:not(.login-surface) .operator-cook-card strong {
   color: #fffaf5;
+}
+
+.surface:not(.login-surface) .live-logs-modal,
+.surface:not(.login-surface) .modal-card.live-logs-modal {
+  color: #f8f5f1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(170deg, rgba(35, 34, 34, 0.98) 0%, rgba(18, 18, 18, 0.99) 48%, rgba(7, 7, 7, 1) 100%);
+  box-shadow:
+    0 34px 88px rgba(0, 0, 0, 0.58),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.surface:not(.login-surface) .live-log-row,
+.surface:not(.login-surface) .stored-log-table-wrap,
+.surface:not(.login-surface) .live-log-grid span {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.032));
+}
+
+.surface:not(.login-surface) .live-log-row-head,
+.surface:not(.login-surface) .live-log-message,
+.surface:not(.login-surface) .stored-log-group-title,
+.surface:not(.login-surface) .stored-log-table th,
+.surface:not(.login-surface) .stored-log-table td {
+  color: #d8d0c8;
+}
+
+.surface:not(.login-surface) .live-log-row-head b,
+.surface:not(.login-surface) .live-log-grid strong {
+  color: #fffaf5;
+}
+
+.surface:not(.login-surface) .live-log-message {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.surface:not(.login-surface) .stored-log-table th,
+.surface:not(.login-surface) .stored-log-table td {
+  border-color: rgba(255, 255, 255, 0.09);
 }
 
 @media (min-width: 900px) {

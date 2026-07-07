@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707g";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707g";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707h";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707h";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707g";
+} from "./ncb-services.js?v=20260707h";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707g";
+} from "./data-store.js?v=20260707h";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -1387,6 +1387,7 @@ function appendFlowActivity(device, text, tone = "info", at = nowIso()) {
 }
 
 const MAX_LIVE_DEVICE_LOG_CHARS = 120000;
+const MAX_LIVE_LOG_ENTRIES = 300;
 
 function emptyLogFetchState() {
   return {
@@ -1400,6 +1401,18 @@ function emptyLogFetchState() {
     error: "",
     status: "",
     updatedAt: ""
+  };
+}
+
+function emptyLiveLogState() {
+  return {
+    active: false,
+    starting: false,
+    error: "",
+    status: "Live logs are off.",
+    openedAt: "",
+    updatedAt: "",
+    entries: []
   };
 }
 
@@ -1419,6 +1432,157 @@ function ensureDeviceLogState(device) {
     ...(device.logFetch || {})
   };
   return device.logFetch;
+}
+
+function ensureDeviceLiveLogState(device) {
+  device.liveLog = {
+    ...emptyLiveLogState(),
+    ...(device.liveLog || {})
+  };
+  if (!Array.isArray(device.liveLog.entries)) {
+    device.liveLog.entries = [];
+  }
+  return device.liveLog;
+}
+
+function parseLooseKeyValues(message) {
+  const parsed = {};
+  String(message || "")
+    .split(/[,|\n\r]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .forEach((part) => {
+      const separatorIndex = part.search(/[:=]/);
+      if (separatorIndex <= 0) return;
+      const key = part.slice(0, separatorIndex).trim();
+      const value = part.slice(separatorIndex + 1).trim();
+      if (!key || !value) return;
+      parsed[key] = value;
+    });
+  return parsed;
+}
+
+function pickParsedValue(parsed, names, fallback = "") {
+  const pairs = Object.entries(parsed || {});
+  for (const name of names) {
+    const direct = parsed?.[name];
+    if (direct !== undefined && direct !== null && String(direct).trim() !== "") return String(direct).trim();
+    const found = pairs.find(([key]) => key.toLowerCase() === String(name).toLowerCase());
+    if (found && String(found[1]).trim() !== "") return String(found[1]).trim();
+  }
+  return fallback;
+}
+
+function formatLiveLogPower(value) {
+  const clean = String(value || "").trim();
+  if (!clean) return "-";
+  if (/^\d+$/.test(clean)) return `${clean}%`;
+  return clean;
+}
+
+function buildLiveLogEntry(device, detail = {}) {
+  const rawMessage = String(detail.message || "").trim();
+  const parsed = {
+    ...parseLooseKeyValues(rawMessage),
+    ...(detail.parsed || {})
+  };
+  const recipeName =
+    pickParsedValue(parsed, ["RECIPE", "recipe", "RECIPENAME", "recipe_name"], "") ||
+    device.activeRun?.displayName ||
+    device.telemetry?.currentRecipe ||
+    "";
+  const stepNo =
+    pickParsedValue(parsed, ["STEP", "step", "STEPNO", "stepNo", "INSTR", "instruction"], "") ||
+    (device.telemetry?.stepNo ? String(device.telemetry.stepNo) : "");
+  const induction =
+    pickParsedValue(parsed, ["INDPOWER", "indPower", "Induction_power", "induction", "IH", "IND"], "") ||
+    (device.telemetry?.inductionPower ? String(device.telemetry.inductionPower) : "");
+  const microwave =
+    pickParsedValue(parsed, ["MAGPOWER", "magPower", "Magnetron_power", "microwave", "MW", "MAG"], "") ||
+    (device.telemetry?.microwavePower ? String(device.telemetry.microwavePower) : "");
+  const stirrer =
+    pickParsedValue(parsed, ["STIRRER", "stirrer", "stirrer_on", "STR"], "") ||
+    device.telemetry?.stirrer ||
+    "";
+  const pump =
+    pickParsedValue(parsed, ["PUMP", "pump", "pump_on", "WATER", "water", "purge_on"], "") ||
+    device.telemetry?.pump ||
+    "";
+  const temperature = pickParsedValue(parsed, ["TEMP", "TEMPERATURE", "PAN_TEMP", "temperature", "temp", "NTC"], "");
+  const currentVoltage = [
+    pickParsedValue(parsed, ["CURRENT", "current", "CUR", "I"], ""),
+    pickParsedValue(parsed, ["VOLTAGE", "voltage", "VOLT", "V"], "")
+  ].filter(Boolean).join(" / ");
+  const error = pickParsedValue(parsed, ["ERROR", "error", "ERR", "FAULT", "fault"], "");
+  return {
+    id: safeRandomId("live-log"),
+    at: detail.at || nowIso(),
+    direction: detail.direction || "rx",
+    channel: detail.channel || "device",
+    recipeName,
+    stepNo,
+    induction: formatLiveLogPower(induction),
+    microwave: formatLiveLogPower(microwave),
+    stirrer: stirrer || "-",
+    pump: pump || "-",
+    temperature: temperature || "-",
+    currentVoltage: currentVoltage || "-",
+    error: error || "",
+    message: rawMessage || detail.message || ""
+  };
+}
+
+function appendLiveLogEntry(device, detail = {}) {
+  const liveLog = ensureDeviceLiveLogState(device);
+  if (!liveLog.active && !liveLog.starting) return;
+  const message = String(detail.message || "").trim();
+  if (!message) return;
+  liveLog.entries.push(buildLiveLogEntry(device, detail));
+  if (liveLog.entries.length > MAX_LIVE_LOG_ENTRIES) {
+    liveLog.entries = liveLog.entries.slice(-MAX_LIVE_LOG_ENTRIES);
+  }
+  liveLog.updatedAt = detail.at || nowIso();
+}
+
+function startLiveLogState(device, at = nowIso()) {
+  const liveLog = ensureDeviceLiveLogState(device);
+  liveLog.active = true;
+  liveLog.starting = true;
+  liveLog.error = "";
+  liveLog.status = "Starting live log stream...";
+  liveLog.openedAt = at;
+  liveLog.updatedAt = at;
+  device.lastUpdatedAt = at;
+  device.lastMessage = "Live logs requested";
+}
+
+function markLiveLogReady(device, at = nowIso()) {
+  const liveLog = ensureDeviceLiveLogState(device);
+  liveLog.active = true;
+  liveLog.starting = false;
+  liveLog.error = "";
+  liveLog.status = "Live log stream is on.";
+  liveLog.updatedAt = at;
+  device.lastUpdatedAt = at;
+}
+
+function stopLiveLogState(device, at = nowIso()) {
+  const liveLog = ensureDeviceLiveLogState(device);
+  liveLog.active = false;
+  liveLog.starting = false;
+  liveLog.status = "Live log stream is off.";
+  liveLog.updatedAt = at;
+  device.lastUpdatedAt = at;
+}
+
+function failLiveLogState(device, error, at = nowIso()) {
+  const liveLog = ensureDeviceLiveLogState(device);
+  liveLog.active = false;
+  liveLog.starting = false;
+  liveLog.error = error;
+  liveLog.status = error;
+  liveLog.updatedAt = at;
+  device.lastUpdatedAt = at;
 }
 
 function beginDeviceLogListing(device, at = nowIso()) {
@@ -1450,7 +1614,15 @@ function beginDeviceLogRead(device, rawName, at = nowIso()) {
 function handleDeviceLogControlMessage(device, message, at = nowIso()) {
   const logFetch = ensureDeviceLogState(device);
   const text = String(message || "").trim();
-  if (text.startsWith("LOGFILE=")) {
+  if (text === "LOGSTATUS=BUSY") {
+    logFetch.listing = false;
+    logFetch.reading = false;
+    logFetch.error = "Device is busy. Logs can be downloaded after current cooking ends.";
+    logFetch.status = logFetch.error;
+  } else if (text === "LOGSTATUS=IDLE") {
+    logFetch.error = "";
+    logFetch.status = "Device is idle. Stored logs can be downloaded.";
+  } else if (text.startsWith("LOGFILE=")) {
     const rawName = text.replace(/^LOGFILE=/, "").trim();
     if (!rawName) return;
     const exists = device.logFiles.some((item) => item.rawName === rawName);
@@ -1510,6 +1682,96 @@ function appendDeviceLogChunk(device, message, at = nowIso()) {
   logFetch.updatedAt = at;
   device.lastUpdatedAt = at;
   return true;
+}
+
+function parseLogFileDate(rawName) {
+  const text = String(rawName || "");
+  const match =
+    text.match(/(20\d{2})[-_]?([01]\d)[-_]?([0-3]\d)/) ||
+    text.match(/([0-3]\d)[-_]([01]\d)[-_](20\d{2})/);
+  if (!match) return null;
+  const year = match[1].length === 4 ? match[1] : match[3];
+  const month = match[1].length === 4 ? match[2] : match[2];
+  const day = match[1].length === 4 ? match[3] : match[1];
+  const date = new Date(`${year}-${month}-${day}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function groupLogFiles(logFiles = []) {
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startWeek = startToday - 6 * 24 * 60 * 60 * 1000;
+  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const groups = {
+    Today: [],
+    "This week": [],
+    "This month": [],
+    Older: []
+  };
+  logFiles.forEach((file) => {
+    const date = parseLogFileDate(file.rawName || file.displayName);
+    const time = date?.getTime() || 0;
+    if (time >= startToday) groups.Today.push(file);
+    else if (time >= startWeek) groups["This week"].push(file);
+    else if (time >= startMonth) groups["This month"].push(file);
+    else groups.Older.push(file);
+  });
+  return groups;
+}
+
+function parseStoredLogRows(content = "") {
+  return String(content || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 500)
+    .map((line) => {
+      const parsed = parseLooseKeyValues(line);
+      return {
+        time: pickParsedValue(parsed, ["TIME", "time", "timestamp", "at"], ""),
+        recipe: pickParsedValue(parsed, ["RECIPE", "recipe", "RECIPENAME"], ""),
+        step: pickParsedValue(parsed, ["STEP", "step", "INSTR"], ""),
+        induction: formatLiveLogPower(pickParsedValue(parsed, ["INDPOWER", "IH", "IND", "induction"], "")),
+        microwave: formatLiveLogPower(pickParsedValue(parsed, ["MAGPOWER", "MW", "MAG", "microwave"], "")),
+        stirrer: pickParsedValue(parsed, ["STIRRER", "STR", "stirrer"], "-"),
+        pump: pickParsedValue(parsed, ["PUMP", "WATER", "pump", "water"], "-"),
+        temperature: pickParsedValue(parsed, ["TEMP", "temperature", "PAN_TEMP"], "-"),
+        currentVoltage: [
+          pickParsedValue(parsed, ["CURRENT", "I", "current"], ""),
+          pickParsedValue(parsed, ["VOLTAGE", "V", "voltage"], "")
+        ].filter(Boolean).join(" / ") || "-",
+        error: pickParsedValue(parsed, ["ERROR", "ERR", "FAULT", "error"], ""),
+        message: line
+      };
+    });
+}
+
+function csvEscape(value) {
+  const text = String(value ?? "");
+  return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function buildStoredLogCsv(content = "") {
+  const rows = parseStoredLogRows(content);
+  const headers = ["Time", "Recipe", "Step", "Induction", "Microwave", "Stirrer", "Pump/Water", "Temperature", "Current/Voltage", "Error", "Message"];
+  return [
+    headers.join(","),
+    ...rows.map((row) =>
+      [
+        row.time,
+        row.recipe,
+        row.step,
+        row.induction,
+        row.microwave,
+        row.stirrer,
+        row.pump,
+        row.temperature,
+        row.currentVoltage,
+        row.error,
+        row.message
+      ].map(csvEscape).join(",")
+    )
+  ].join("\n");
 }
 
 function mergeRecipeNames(device, recipeNames, at = nowIso()) {
@@ -1633,13 +1895,32 @@ function showOrderNotice(order) {
   });
 }
 
+function stopLiveLogForModal(modal = state().ui.activeModal) {
+  if (!modal || modal.type !== "live-logs") return;
+  const slot = Number(modal.payload?.slot);
+  if (!slot) return;
+  ble.setLiveLog(slot, false).catch((error) => {
+    console.warn("[On2Cook] Unable to stop live log stream.", error);
+  });
+  mutate((draft) => {
+    const device = draft.devices.find((item) => item.slot === slot);
+    if (!device) return draft;
+    stopLiveLogState(device);
+  });
+}
+
 function openModal(type, payload = {}) {
+  const activeModal = state().ui.activeModal;
+  if (activeModal?.type === "live-logs" && type !== "live-logs") {
+    stopLiveLogForModal(activeModal);
+  }
   mutate((draft) => {
     draft.ui.activeModal = { type, payload };
   });
 }
 
 function closeModal() {
+  stopLiveLogForModal();
   stopProLiveTimer();
   setNativeOrientation("portrait");
   proStudioShellOrientation = "portrait";
@@ -2652,6 +2933,7 @@ function handleTransportEvents() {
       device.baselineRecipeSyncPending = false;
       device.telemetry.workStatus = "offline";
       device.telemetry.disconnectedAt = nowIso();
+      failLiveLogState(device, "Device disconnected. Live log stream stopped.", nowIso());
       appendActivity(device, "Device disconnected. Active work returned to pending.", "warning");
     });
   });
@@ -2662,6 +2944,7 @@ function handleTransportEvents() {
       const device = draft.devices.find((item) => item.slot === Number(slot));
       if (!device) return draft;
       appendTransportActivity(device, "tx", channel, message, at);
+      appendLiveLogEntry(device, { direction: "tx", channel, message, at });
     });
   });
 
@@ -2693,6 +2976,7 @@ function handleTransportEvents() {
       if (capturedLogChunk) {
         return draft;
       }
+      appendLiveLogEntry(device, { direction: "rx", channel, message, parsed: event.detail.parsed, at });
       if (!device.uploadState?.active && !device.uploadState?.inventoryChecking) {
         device.lastMessage = message;
       }
@@ -3552,6 +3836,56 @@ async function restartRecipe(slot) {
   showToast("Restart is disabled in the web app until a device-side restart flow is defined without stop=100.", "warning");
 }
 
+async function openLiveLogs(slot) {
+  const device = getDevice(slot);
+  if (!device) return;
+  openModal("live-logs", { slot: Number(slot) });
+  if (device.connection !== "connected") {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      failLiveLogState(draftDevice, "Connect the device to stream live logs.");
+    });
+    showToast("Connect the device first to view live logs.", "warning");
+    return;
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    startLiveLogState(draftDevice);
+    appendFlowActivity(draftDevice, "Live Logs opened: livelog=ON sent", "info");
+  });
+  try {
+    await ble.setLiveLog(Number(slot), true);
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      markLiveLogReady(draftDevice);
+    });
+  } catch (error) {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      failLiveLogState(draftDevice, error.message || "Unable to start live logs.");
+    });
+    throw error;
+  }
+}
+
+async function stopLiveLogs(slot) {
+  const device = getDevice(slot);
+  if (!device) return;
+  if (device.connection === "connected") {
+    await ble.setLiveLog(Number(slot), false);
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    stopLiveLogState(draftDevice);
+    appendFlowActivity(draftDevice, "Live Logs closed: livelog=OFF sent", "info");
+  });
+}
+
 async function listDeviceLogs(slot) {
   const device = getDevice(slot);
   if (!device) return;
@@ -3563,8 +3897,28 @@ async function listDeviceLogs(slot) {
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
+    const logFetch = ensureDeviceLogState(draftDevice);
+    logFetch.listing = true;
+    logFetch.error = "";
+    logFetch.status = "Checking LOGSTATUS=? before stored log download...";
+    logFetch.updatedAt = nowIso();
+  });
+  const logStatus = await ble.checkLogStatus(Number(slot));
+  if (logStatus === "BUSY") {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      handleDeviceLogControlMessage(draftDevice, "LOGSTATUS=BUSY");
+      appendFlowActivity(draftDevice, "Stored log download blocked because device is busy", "warning");
+    });
+    showToast("Device is busy. Logs can be downloaded after current cooking ends.", "warning");
+    return;
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
     beginDeviceLogListing(draftDevice);
-    appendFlowActivity(draftDevice, "Firmware log list requested", "info");
+    appendFlowActivity(draftDevice, "Stored historical log list requested after LOGSTATUS=IDLE", "info");
   });
   await ble.listLogs(Number(slot));
 }
@@ -3579,6 +3933,16 @@ async function readDeviceLog(slot, rawName) {
     showToast("Connect the device before reading a firmware log.", "warning");
     return;
   }
+  const logStatus = await ble.checkLogStatus(Number(slot));
+  if (logStatus === "BUSY") {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      handleDeviceLogControlMessage(draftDevice, "LOGSTATUS=BUSY");
+    });
+    showToast("Device is busy. Logs can be downloaded after current cooking ends.", "warning");
+    return;
+  }
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
@@ -3586,6 +3950,32 @@ async function readDeviceLog(slot, rawName) {
     appendFlowActivity(draftDevice, `Firmware log requested: ${formatLogFileDisplay(cleanName)}`, "info");
   });
   await ble.readLog(Number(slot), cleanName);
+}
+
+function exportDeviceLog(slot, format = "txt") {
+  const device = getDevice(slot);
+  if (!device) return;
+  const logFetch = {
+    ...emptyLogFetchState(),
+    ...(device.logFetch || {})
+  };
+  if (!logFetch.content) {
+    showToast("No stored log content is available to export.", "warning");
+    return;
+  }
+  const safeFormat = format === "csv" ? "csv" : "txt";
+  const baseName = (logFetch.activeDisplayName || formatLogFileDisplay(logFetch.activeFile) || `device-${slot}-log`)
+    .replace(/[^A-Za-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 70) || `device-${slot}-log`;
+  const content = safeFormat === "csv" ? buildStoredLogCsv(logFetch.content) : logFetch.content;
+  const blob = new Blob([content], { type: safeFormat === "csv" ? "text/csv" : "text/plain" });
+  const href = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.download = `${baseName}.${safeFormat}`;
+  anchor.click();
+  URL.revokeObjectURL(href);
 }
 
 function updateNestedSetting(path, value) {
@@ -3615,38 +4005,120 @@ function renderStatusPill(status) {
   return `<span class="status-pill ${tone}">${escapeHtml(status.replaceAll("_", " "))}</span>`;
 }
 
+function renderLiveLogsModal(snapshot, device) {
+  const liveLog = {
+    ...emptyLiveLogState(),
+    ...(device.liveLog || {})
+  };
+  const entries = Array.isArray(liveLog.entries) ? liveLog.entries.slice(-160).reverse() : [];
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card live-logs-modal">
+        <div class="row space">
+          <div>
+            <div class="eyebrow">Live Logs</div>
+            <h3>${escapeHtml(device.displayName)}</h3>
+            <p class="subtle">Real-time diagnostics only. Opens with livelog=ON and closes with livelog=OFF.</p>
+          </div>
+          <button class="icon-button" data-action="close-modal" aria-label="Close live logs">x</button>
+        </div>
+        <div class="settings-card live-log-status-card">
+          <div class="meta-grid">
+            <span>Connection ${escapeHtml(device.connection)}</span>
+            <span>Stream ${escapeHtml(liveLog.active ? "ON" : "OFF")}</span>
+            <span>Updated ${escapeHtml(liveLog.updatedAt ? formatTimestamp(liveLog.updatedAt) : "Never")}</span>
+          </div>
+          <div class="log-status-line ${liveLog.error ? "error" : ""}">${escapeHtml(liveLog.error || liveLog.status || "Live logs are off.")}</div>
+          <div class="action-row">
+            <button class="primary-button small" type="button" data-action="start-live-logs" data-slot="${device.slot}" ${device.connection === "connected" ? "" : "disabled"}>Start Live Logs</button>
+            <button class="secondary-button small" type="button" data-action="stop-live-logs" data-slot="${device.slot}" ${device.connection === "connected" ? "" : "disabled"}>Stop Live Logs</button>
+            <button class="secondary-button small" type="button" data-action="clear-live-logs" data-slot="${device.slot}">Clear Feed</button>
+          </div>
+        </div>
+        <div class="live-log-feed">
+          ${
+            entries.length
+              ? entries
+                  .map(
+                    (entry) => `
+                      <article class="live-log-row ${escapeHtml(entry.direction || "rx")}">
+                        <div class="live-log-row-head">
+                          <span>${escapeHtml(formatTimestamp(entry.at))}</span>
+                          <b>${escapeHtml(entry.direction || "rx")} ${escapeHtml(entry.channel || "device")}</b>
+                        </div>
+                        <div class="live-log-grid">
+                          <span><small>Recipe</small><strong>${escapeHtml(entry.recipeName || "-")}</strong></span>
+                          <span><small>Step</small><strong>${escapeHtml(entry.stepNo || "-")}</strong></span>
+                          <span><small>Induction</small><strong>${escapeHtml(entry.induction || "-")}</strong></span>
+                          <span><small>Microwave</small><strong>${escapeHtml(entry.microwave || "-")}</strong></span>
+                          <span><small>Stirrer</small><strong>${escapeHtml(entry.stirrer || "-")}</strong></span>
+                          <span><small>Water/Pump</small><strong>${escapeHtml(entry.pump || "-")}</strong></span>
+                          <span><small>Temp</small><strong>${escapeHtml(entry.temperature || "-")}</strong></span>
+                          <span><small>V/I</small><strong>${escapeHtml(entry.currentVoltage || "-")}</strong></span>
+                        </div>
+                        ${entry.error ? `<div class="log-status-line error">${escapeHtml(entry.error)}</div>` : ""}
+                        <pre class="live-log-message">${escapeHtml(entry.message || "")}</pre>
+                      </article>
+                    `
+                  )
+                  .join("")
+              : `<div class="empty-card">No live values received yet. Keep this open while the device is connected and cooking.</div>`
+          }
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderFirmwareLogPanel(device) {
   const logFetch = {
     ...emptyLogFetchState(),
     ...(device.logFetch || {})
   };
   const logFiles = Array.isArray(device.logFiles) ? device.logFiles : [];
+  const grouped = groupLogFiles(logFiles);
+  const rows = parseStoredLogRows(logFetch.content || "");
   return `
-    <div class="settings-card">
+    <div class="settings-card stored-log-panel">
       <div class="row space">
-        <div class="mini-title">Firmware logs</div>
+        <div>
+          <div class="mini-title">Stored historical logs</div>
+          <p class="subtle">Uses LOGSTATUS=? before LISTLOGS. READLOG is available only when the device is idle.</p>
+        </div>
         <span class="subtle">${escapeHtml(logFetch.updatedAt ? formatTimestamp(logFetch.updatedAt) : "Not fetched yet")}</span>
       </div>
       <div class="action-row">
         <button class="secondary-button" type="button" data-action="list-logs" data-slot="${device.slot}">
-          ${logFetch.listing ? "Refreshing..." : "List device logs"}
+          ${logFetch.listing ? "Checking..." : "Bottom Logs"}
         </button>
       </div>
       ${
         logFetch.status || logFetch.error
           ? `<div class="log-status-line ${logFetch.error ? "error" : ""}">${escapeHtml(logFetch.error || logFetch.status)}</div>`
-          : `<div class="subtle">Fetch the list from the connected device, then select a log to read it.</div>`
+          : `<div class="subtle">Tap Bottom Logs to check status, list stored log files, and select a file to download.</div>`
       }
       ${
         logFiles.length
-          ? `<div class="log-file-list">
-              ${logFiles
+          ? `<div class="stored-log-groups">
+              ${Object.entries(grouped)
+                .filter(([, files]) => files.length)
                 .map(
-                  (file) => `
-                    <button class="log-file-button ${file.rawName === logFetch.activeFile ? "selected" : ""}" type="button" data-action="read-device-log" data-slot="${device.slot}" data-file-name="${escapeHtml(file.rawName)}">
-                      <span>${escapeHtml(file.displayName || formatLogFileDisplay(file.rawName))}</span>
-                      <small>${file.rawName === logFetch.activeFile && logFetch.reading ? "reading" : "open"}</small>
-                    </button>
+                  ([groupName, files]) => `
+                    <div class="stored-log-group">
+                      <div class="stored-log-group-title">${escapeHtml(groupName)}</div>
+                      <div class="log-file-list">
+                        ${files
+                          .map(
+                            (file) => `
+                              <button class="log-file-button ${file.rawName === logFetch.activeFile ? "selected" : ""}" type="button" data-action="read-device-log" data-slot="${device.slot}" data-file-name="${escapeHtml(file.rawName)}">
+                                <span>${escapeHtml(file.displayName || formatLogFileDisplay(file.rawName))}</span>
+                                <small>${file.rawName === logFetch.activeFile && logFetch.reading ? "reading" : "READLOG"}</small>
+                              </button>
+                            `
+                          )
+                          .join("")}
+                      </div>
+                    </div>
                   `
                 )
                 .join("")}
@@ -3660,7 +4132,53 @@ function renderFirmwareLogPanel(device) {
                 <strong>${escapeHtml(logFetch.activeDisplayName || formatLogFileDisplay(logFetch.activeFile))}</strong>
                 <span class="subtle">${escapeHtml(logFetch.reading ? "Receiving..." : logFetch.complete ? "Complete" : "Ready")}</span>
               </div>
-              <pre class="log-content">${escapeHtml(logFetch.content || (logFetch.reading ? "Waiting for log data..." : "No log content received yet."))}</pre>
+              <div class="action-row">
+                <button class="secondary-button small" type="button" data-action="export-device-log" data-slot="${device.slot}" data-format="txt" ${logFetch.content ? "" : "disabled"}>Export TXT</button>
+                <button class="secondary-button small" type="button" data-action="export-device-log" data-slot="${device.slot}" data-format="csv" ${logFetch.content ? "" : "disabled"}>Export CSV</button>
+              </div>
+              ${
+                rows.length
+                  ? `<div class="stored-log-table-wrap">
+                      <table class="stored-log-table">
+                        <thead>
+                          <tr>
+                            <th>Time</th>
+                            <th>Recipe</th>
+                            <th>Step</th>
+                            <th>Ind</th>
+                            <th>Micro</th>
+                            <th>Stirrer</th>
+                            <th>Water</th>
+                            <th>Temp</th>
+                            <th>V/I</th>
+                            <th>Error</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          ${rows
+                            .slice(0, 120)
+                            .map(
+                              (row) => `
+                                <tr>
+                                  <td>${escapeHtml(row.time || "-")}</td>
+                                  <td>${escapeHtml(row.recipe || "-")}</td>
+                                  <td>${escapeHtml(row.step || "-")}</td>
+                                  <td>${escapeHtml(row.induction || "-")}</td>
+                                  <td>${escapeHtml(row.microwave || "-")}</td>
+                                  <td>${escapeHtml(row.stirrer || "-")}</td>
+                                  <td>${escapeHtml(row.pump || "-")}</td>
+                                  <td>${escapeHtml(row.temperature || "-")}</td>
+                                  <td>${escapeHtml(row.currentVoltage || "-")}</td>
+                                  <td>${escapeHtml(row.error || "-")}</td>
+                                </tr>
+                              `
+                            )
+                            .join("")}
+                        </tbody>
+                      </table>
+                    </div>`
+                  : `<pre class="log-content">${escapeHtml(logFetch.content || (logFetch.reading ? "Waiting for log data..." : "No log content received yet."))}</pre>`
+              }
             </div>`
           : ""
       }
@@ -5590,7 +6108,7 @@ function renderDevicePhone(snapshot, device) {
               <button class="secondary-button small" data-action="open-device-sheet" data-slot="${device.slot}">Details</button>
               <button class="secondary-button small" data-action="request-status" data-slot="${device.slot}">Status</button>
               <button class="secondary-button small" data-action="request-firmware" data-slot="${device.slot}">Firmware</button>
-              <button class="secondary-button small" data-action="list-logs" data-slot="${device.slot}">Logs</button>
+              <button class="secondary-button small" data-action="open-live-logs" data-slot="${device.slot}">Live Logs</button>
             </div>
             ${renderCompactDeviceInfo(device, summaryMessage)}
           </section>
@@ -6170,6 +6688,12 @@ function renderModal(snapshot) {
     `;
   }
 
+  if (modal.type === "live-logs") {
+    const device = getDevice(modal.payload.slot);
+    if (!device) return "";
+    return renderLiveLogsModal(snapshot, device);
+  }
+
   if (modal.type === "device-sheet") {
     const device = getDevice(modal.payload.slot);
     if (!device) return "";
@@ -6348,7 +6872,7 @@ function renderModal(snapshot) {
                 <button class="secondary-button" type="button" data-action="sync-selected-recipes" data-slot="${device.slot}">Check device recipes</button>
                 <button class="secondary-button" type="button" data-action="read-device-recipes" data-slot="${device.slot}">Read recipes</button>
                 <button class="secondary-button" type="button" data-action="request-status" data-slot="${device.slot}">Refresh status</button>
-                <button class="secondary-button" type="button" data-action="list-logs" data-slot="${device.slot}">Fetch logs</button>
+                <button class="secondary-button" type="button" data-action="open-live-logs" data-slot="${device.slot}">Live Logs</button>
                 <button class="danger-button" type="button" data-action="clear-device-binding" data-slot="${device.slot}">Clear pairing</button>
               </div>
             </div>
@@ -7531,12 +8055,38 @@ async function handleClick(event) {
     await ble.requestFirmwareVersion(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
+  if (action === "open-live-logs") {
+    await openLiveLogs(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "start-live-logs") {
+    await openLiveLogs(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "stop-live-logs") {
+    await stopLiveLogs(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "clear-live-logs") {
+    mutate((draft) => {
+      const device = draft.devices.find((item) => item.slot === Number(button.dataset.slot));
+      if (!device) return draft;
+      const liveLog = ensureDeviceLiveLogState(device);
+      liveLog.entries = [];
+      liveLog.updatedAt = nowIso();
+    });
+    return;
+  }
   if (action === "list-logs") {
     await listDeviceLogs(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "read-device-log") {
     await readDeviceLog(Number(button.dataset.slot), button.dataset.fileName || "").catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "export-device-log") {
+    exportDeviceLog(Number(button.dataset.slot), button.dataset.format || "txt");
     return;
   }
   if (action === "auto-assign-order") {

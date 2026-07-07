@@ -822,4 +822,6 @@ The final dashboard polish pass tightened the main On2Cook Cloud device-manageme
 
 The follow-up dark mode pass further consolidated the Onto Cloud device-management screen into a single premium dark visual system. The shell, header, navigation, device access strip, order cards, summary chips, and device panels now use one refined black/charcoal palette with On2Cook red-orange accents, tighter icon alignment, and one-line Manual/Global R navigation labels.
 
+Log handling is now split into two separate BLE workflows. The device-level Live Logs action opens a diagnostics modal and sends `livelog=ON`; closing or stopping that modal sends `livelog=OFF`, and the feed shows real-time BLE/telemetry values only. Stored historical logs remain in the device details/inventory area: the app first sends `LOGSTATUS=?`, blocks with a busy message when the cooker is running, calls `LISTLOGS` only when idle, groups returned files by age, reads a selected file with `READLOG=<filename>`, and allows TXT/CSV export.
+
 This was a visual/layout pass only. BLE transport, recipe upload timing, order queue logic, and firmware command strings were not changed.

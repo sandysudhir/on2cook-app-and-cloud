@@ -654,6 +654,7 @@ export class BleTransport extends EventTarget {
     if (!message) return;
 
     const isLogControlMessage =
+      message.startsWith("LOGSTATUS=") ||
       message.startsWith("LOGFILE=") ||
       message.startsWith("READLOG=") ||
       message === "LISTLOGS=COMPLETE" ||
@@ -1084,6 +1085,21 @@ export class BleTransport extends EventTarget {
 
   async listLogs(slot) {
     await this.sendCommand(slot, "LISTLOGS");
+  }
+
+  async checkLogStatus(slot, options = {}) {
+    const waitPromise = this.waitForDeviceMessage(
+      slot,
+      (detail) => /^LOGSTATUS=(IDLE|BUSY)$/i.test(String(detail.message || "").trim()),
+      {
+        timeoutMs: options.timeoutMs || 3200,
+        description: "log status",
+        forceFresh: true
+      }
+    );
+    await this.sendCommand(slot, "LOGSTATUS=?");
+    const detail = await waitPromise;
+    return String(detail.message || "").trim().toUpperCase().includes("BUSY") ? "BUSY" : "IDLE";
   }
 
   async readLog(slot, fileName) {
