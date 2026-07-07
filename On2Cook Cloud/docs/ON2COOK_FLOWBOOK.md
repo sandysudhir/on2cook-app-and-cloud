@@ -825,3 +825,21 @@ The follow-up dark mode pass further consolidated the Onto Cloud device-manageme
 Log handling is now split into two separate BLE workflows. The device-level Live Logs action opens a diagnostics modal and sends `livelog=ON`; closing or stopping that modal sends `livelog=OFF`, and the feed shows real-time BLE/telemetry values only. Stored historical logs remain in the device details/inventory area: the app first sends `LOGSTATUS=?`, blocks with a busy message when the cooker is running, calls `LISTLOGS` only when idle, groups returned files by age, reads a selected file with `READLOG=<filename>`, and allows TXT/CSV export.
 
 This was a visual/layout pass only. BLE transport, recipe upload timing, order queue logic, and firmware command strings were not changed.
+
+## 18. Device Queue Timeline Card - July 7, 2026
+
+The Device Details sheet now has a functional Queue Timeline card split into three sections:
+
+1. Cooked history: completed or aborted jobs previously run on the selected device. Completed rows use a green check marker. Each history row has Cook Again, which creates a new queued job and leaves the historical record untouched.
+2. NOW: the active device recipe, if one is running. This is marked with the orange current anchor and shows the start time plus remaining time.
+3. Upcoming queue: jobs waiting for the selected device. Each queued job shows its estimated start time, cook duration, and controls to move up, move down, move to next, or start.
+
+Queue editing rules implemented:
+
+- Upcoming jobs are ordered by `device.queueOrderIds`.
+- Up/down buttons reorder only future queued jobs.
+- Next moves any upcoming item to the first queued position.
+- If the device is connected and idle, Start now removes the selected job from the queue and starts it immediately.
+- If the device is already cooking, Stop Current & Start Selected moves the selected job to next position and sends the normal abort command for the active recipe. The selected job starts only after the device acknowledges the abort and the scheduler sees the device idle.
+- Cook Again creates a fresh queued order with `recook: true`; it does not edit or delete the old cooked-history entry.
+- Repeated jobs show the Re-cook tag in the upcoming queue.

@@ -2719,6 +2719,165 @@ textarea.field-input {
   gap: 8px;
 }
 
+.queue-timeline-card {
+  display: grid;
+  gap: 16px;
+}
+
+.queue-timeline-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.queue-timeline-header p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.queue-timeline-section {
+  display: grid;
+  gap: 8px;
+  position: relative;
+}
+
+.queue-section-title {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.queue-timeline-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(111, 92, 71, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.queue-timeline-row.upcoming {
+  grid-template-columns: 30px minmax(0, 1fr);
+}
+
+.queue-timeline-marker {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.queue-timeline-marker.complete {
+  color: #fff;
+  background: #20a866;
+}
+
+.queue-timeline-marker.failed {
+  color: #fff;
+  background: var(--danger);
+}
+
+.queue-timeline-marker.current {
+  border: 5px solid #fff;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px rgba(244, 123, 32, 0.32);
+}
+
+.queue-timeline-marker.pending {
+  border: 2px solid rgba(111, 92, 71, 0.28);
+  background: rgba(111, 92, 71, 0.08);
+}
+
+.queue-timeline-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.queue-timeline-copy strong {
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+
+.queue-timeline-copy small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.queue-timeline-row.now {
+  border-color: rgba(244, 123, 32, 0.26);
+  background: rgba(255, 248, 241, 0.9);
+}
+
+.queue-timeline-row.history.completed {
+  border-color: rgba(32, 168, 102, 0.2);
+}
+
+.queue-timeline-row.upcoming.recook {
+  border-color: rgba(45, 108, 223, 0.24);
+}
+
+.queue-timeline-controls {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.queue-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: var(--accent-strong);
+  background: rgba(244, 123, 32, 0.13);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.queue-tag.live {
+  color: #fff;
+  background: var(--accent);
+}
+
+.queue-tag.recook {
+  color: var(--blue);
+  background: rgba(45, 108, 223, 0.12);
+}
+
+.primary-button.micro,
+.secondary-button.micro,
+.danger-button.micro {
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+}
+
+.icon-button.tiny {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
 .next-recipe-card {
   display: grid;
   gap: 9px;
@@ -4873,6 +5032,48 @@ textarea.field-input {
   color: #fffaf5;
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.075);
+}
+
+.surface:not(.login-surface) .device-detail-screen .queue-timeline-header p,
+.surface:not(.login-surface) .device-detail-screen .queue-section-title,
+.surface:not(.login-surface) .device-detail-screen .queue-timeline-copy small {
+  color: #a9a39e;
+}
+
+.surface:not(.login-surface) .device-detail-screen .queue-timeline-row {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.032));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.surface:not(.login-surface) .device-detail-screen .queue-timeline-copy strong {
+  color: #fffaf5;
+}
+
+.surface:not(.login-surface) .device-detail-screen .queue-timeline-row.now {
+  border-color: rgba(255, 74, 20, 0.32);
+  background: linear-gradient(135deg, rgba(237, 27, 47, 0.18), rgba(255, 74, 20, 0.08));
+}
+
+.surface:not(.login-surface) .device-detail-screen .queue-timeline-marker.pending {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.surface:not(.login-surface) .device-detail-screen .queue-tag {
+  color: #ffb99a;
+  background: rgba(255, 74, 20, 0.16);
+}
+
+.surface:not(.login-surface) .device-detail-screen .queue-tag.live {
+  color: #fff;
+  background: linear-gradient(135deg, #ed1b2f, #ff4a14);
+}
+
+.surface:not(.login-surface) .device-detail-screen .queue-tag.recook {
+  color: #9fc1ff;
+  background: rgba(45, 108, 223, 0.18);
 }
 
 /* Premium dark dashboard polish */

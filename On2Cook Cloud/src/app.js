@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707h";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707h";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707i";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707i";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707h";
+} from "./ncb-services.js?v=20260707i";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707h";
+} from "./data-store.js?v=20260707i";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -512,12 +512,121 @@ function getQueueOrders(snapshot, device) {
     order.status === "queued" &&
     order.assignedSlot === device.slot &&
     order.id !== device.currentJobId;
-  if (device.queueOrderIds.length > 0) {
-    return device.queueOrderIds
-      .map((orderId) => snapshot.orders.current.find((order) => order.id === orderId))
-      .filter(isQueuedForDevice);
+  const queued = snapshot.orders.current.filter(isQueuedForDevice);
+  if (!device.queueOrderIds.length) return queued;
+  const orderIndex = new Map(device.queueOrderIds.map((orderId, index) => [orderId, index]));
+  return queued.sort((left, right) => {
+    const leftIndex = orderIndex.has(left.id) ? orderIndex.get(left.id) : Number.MAX_SAFE_INTEGER;
+    const rightIndex = orderIndex.has(right.id) ? orderIndex.get(right.id) : Number.MAX_SAFE_INTEGER;
+    if (leftIndex !== rightIndex) return leftIndex - rightIndex;
+    return snapshot.orders.current.indexOf(left) - snapshot.orders.current.indexOf(right);
+  });
+}
+
+function getDeviceQueuedOrderIds(draft, device) {
+  return getQueueOrders(draft, device).map((order) => order.id);
+}
+
+function isDeviceActivelyCooking(device) {
+  return Boolean(device.currentJobId || device.completionConfirmationPending || hasLiveRuntime(device) || device.activeRun?.displayName || device.activeRun?.firmwareName);
+}
+
+function getDeviceCookedHistoryRows(snapshot, device, limit = 8) {
+  const rows = [];
+  const seen = new Set();
+  const addRunRow = (run, sourceOrder = null, key = "") => {
+    if (!run?.finishedAt && !sourceOrder?.createdAt) return;
+    const recipe =
+      getRecipeForRunRecord(snapshot, run) ||
+      (sourceOrder ? getEffectiveRecipe(snapshot, sourceOrder) : null) ||
+      findEffectiveRecipeForOrder(snapshot, sourceOrder?.recipeLookup || sourceOrder?.itemName || run?.displayName || run?.firmwareName);
+    const sourceId = sourceOrder?.id || run?.orderId || key;
+    const dedupeKey = `${sourceId || ""}:${run?.finishedAt || sourceOrder?.createdAt || ""}`;
+    if (seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
+    rows.push({
+      key: key || `history-${rows.length}`,
+      orderId: sourceOrder?.id || run?.orderId || "",
+      displayOrderId: sourceOrder?.orderId || run?.orderId || "",
+      recipeId: run?.recipeId || sourceOrder?.activeRecipeId || recipe?.id || "",
+      displayName: run?.displayName || sourceOrder?.itemName || recipe?.displayName || run?.firmwareName || "Recipe",
+      firmwareName: run?.firmwareName || sourceOrder?.currentRunFirmwareName || recipe?.firmwareName || "",
+      outcome: run?.outcome || sourceOrder?.status || "completed",
+      finishedAt: run?.finishedAt || sourceOrder?.createdAt || "",
+      durationSeconds: Number(run?.durationSeconds) || getRecipeDuration(recipe),
+      actualDurationSeconds: Number(run?.actualDurationSeconds) || 0,
+      recook: Boolean(sourceOrder?.recook)
+    });
+  };
+
+  if (device.lastRun?.finishedAt) {
+    addRunRow(device.lastRun, null, `last-${device.slot}`);
   }
-  return snapshot.orders.current.filter(isQueuedForDevice);
+
+  (snapshot.orders.previous || [])
+    .filter(
+      (order) =>
+        order.assignedSlot === device.slot ||
+        order.targetSlot === device.slot ||
+        device.historyOrderIds.includes(order.id)
+    )
+    .forEach((order) => {
+      addRunRow(
+        {
+          orderId: order.id,
+          recipeId: order.activeRecipeId,
+          displayName: order.itemName,
+          firmwareName: order.currentRunFirmwareName,
+          startedAt: order.startedAt || order.createdAt,
+          finishedAt: order.finishedAt || order.createdAt,
+          durationSeconds: getRecipeDuration(getEffectiveRecipe(snapshot, order)),
+          outcome: order.status === "aborted" ? "aborted" : "completed"
+        },
+        order,
+        `order-${order.id}`
+      );
+    });
+
+  return rows
+    .sort((left, right) => new Date(right.finishedAt || 0).getTime() - new Date(left.finishedAt || 0).getTime())
+    .slice(0, limit);
+}
+
+function getQueueTimelineModel(snapshot, device) {
+  const currentOrder = getCurrentJob(snapshot, device);
+  const runtimeRecipe = getRuntimeRecipe(snapshot, device) || (currentOrder ? getEffectiveRecipe(snapshot, currentOrder) : null);
+  const upcoming = getQueueOrders(snapshot, device);
+  const currentActive = isDeviceActivelyCooking(device);
+  const remainingSeconds = currentActive ? getDeviceActiveRemainingSeconds(device, runtimeRecipe) : 0;
+  let cursorSeconds = remainingSeconds;
+  return {
+    cooked: getDeviceCookedHistoryRows(snapshot, device),
+    now: currentActive
+      ? {
+          orderId: currentOrder?.id || device.currentJobId || "",
+          displayOrderId: currentOrder?.orderId || "",
+          displayName: device.activeRun?.displayName || currentOrder?.itemName || runtimeRecipe?.displayName || getLiveRecipeName(device) || "Cooking now",
+          status: device.telemetry.workStatus || currentOrder?.status || "cooking",
+          startedAt: device.activeRun?.startedAt || currentOrder?.createdAt || "",
+          remainingSeconds,
+          recipe: runtimeRecipe
+        }
+      : null,
+    upcoming: upcoming.map((order, index) => {
+      const recipe = getEffectiveRecipe(snapshot, order);
+      const startsInSeconds = cursorSeconds;
+      const durationSeconds = getRecipeDuration(recipe);
+      cursorSeconds += durationSeconds;
+      return {
+        order,
+        recipe,
+        index,
+        startsInSeconds,
+        startsAt: new Date(Date.now() + startsInSeconds * 1000).toISOString(),
+        durationSeconds
+      };
+    })
+  };
 }
 
 function getSelectedRecipes(snapshot) {
@@ -3286,7 +3395,7 @@ function pickBestDevice(snapshot, order) {
   return candidates[0] || null;
 }
 
-async function startOrderFlow(orderId, preferredSlot = null) {
+async function startOrderFlow(orderId, preferredSlot = null, options = {}) {
   const snapshot = state();
   const order = snapshot.orders.current.find((item) => item.id === orderId);
   if (!order) return "missing-order";
@@ -3310,7 +3419,11 @@ async function startOrderFlow(orderId, preferredSlot = null) {
     return "transfer-busy";
   }
 
-  const busy = device.currentJobId || device.queueOrderIds.length > 0 || device.completionConfirmationPending || hasLiveRuntime(device);
+  const busy =
+    device.currentJobId ||
+    (!options.ignoreQueuedWork && device.queueOrderIds.length > 0) ||
+    device.completionConfirmationPending ||
+    hasLiveRuntime(device);
   if (busy) {
     mutate((draft) => {
       const draftOrder = draft.orders.current.find((item) => item.id === orderId);
@@ -3488,6 +3601,121 @@ async function runDeviceRecipe(slot, recipeId) {
     draft.orders.current.unshift(order);
   });
   return startOrderFlow(order.id, Number(slot));
+}
+
+function reorderDeviceQueueItem(slot, orderId, mode) {
+  let label = "";
+  mutate((draft) => {
+    const device = draft.devices.find((item) => item.slot === Number(slot));
+    if (!device) return draft;
+    const ids = getDeviceQueuedOrderIds(draft, device);
+    const index = ids.indexOf(orderId);
+    if (index < 0) return draft;
+    const [picked] = ids.splice(index, 1);
+    if (mode === "up") {
+      ids.splice(Math.max(0, index - 1), 0, picked);
+      label = "moved up";
+    } else if (mode === "down") {
+      ids.splice(Math.min(ids.length, index + 1), 0, picked);
+      label = "moved down";
+    } else {
+      ids.unshift(picked);
+      label = "moved to next";
+    }
+    device.queueOrderIds = ids;
+    appendActivity(device, `Queue item ${label}`, "info");
+  });
+  if (label) showToast(`Queue item ${label}`, "success");
+}
+
+async function startQueuedOrderNow(slot, orderId) {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(slot));
+  if (!device) return;
+  if (device.connection !== "connected") {
+    showToast(`Device ${slot} is offline. Connect it before starting queued work.`, "warning");
+    return;
+  }
+  if (isDeviceActivelyCooking(device)) {
+    showToast("Device is cooking. Use Stop Current & Start Selected if you want to interrupt it.", "warning");
+    return;
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    const draftOrder = draft.orders.current.find((item) => item.id === orderId);
+    if (!draftDevice || !draftOrder) return draft;
+    draftDevice.queueOrderIds = getDeviceQueuedOrderIds(draft, draftDevice).filter((item) => item !== orderId);
+    draftOrder.status = "pending";
+    appendActivity(draftDevice, `${draftOrder.itemName} selected as current from queue timeline`, "info");
+  });
+  await startOrderFlow(orderId, Number(slot), { ignoreQueuedWork: true });
+}
+
+async function stopCurrentAndStartQueued(slot, orderId) {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(slot));
+  if (!device) return;
+  reorderDeviceQueueItem(slot, orderId, "next");
+  if (!isDeviceActivelyCooking(device)) {
+    await startQueuedOrderNow(slot, orderId);
+    return;
+  }
+  await abortCurrentRecipe(Number(slot));
+  showToast(`Device ${slot} will start the selected queued recipe after the abort is acknowledged.`, "warning");
+}
+
+function queueCookAgainFromHistory(slot, historyKey) {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(slot));
+  if (!device) return;
+  const historyRow = getDeviceCookedHistoryRows(snapshot, device, 30).find((row) => row.key === historyKey);
+  if (!historyRow) {
+    showToast("Cooked history item was not found.", "error");
+    return;
+  }
+  const recipe =
+    (historyRow.recipeId ? findRecipeById(snapshot, historyRow.recipeId) : null) ||
+    findRecipeByFirmwareName(snapshot, historyRow.firmwareName) ||
+    findEffectiveRecipeForOrder(snapshot, historyRow.displayName);
+  if (!recipe) {
+    showToast(`No recipe record matches ${historyRow.displayName}`, "error");
+    return;
+  }
+  const queueOrder = decorateOrderRecord(
+    {
+      id: safeRandomId("recook"),
+      orderId: `#R${Date.now().toString().slice(-5)}`,
+      itemName: recipe.displayName || historyRow.displayName,
+      recipeLookup: recipe.displayName || historyRow.displayName,
+      quantity: "1 batch",
+      source: "Re-cook",
+      specialInstructions: "Repeated from cooked history",
+      accentColor: "#f47b20",
+      createdAt: nowIso(),
+      status: "queued",
+      assignedSlot: Number(slot),
+      assignedMode: "device",
+      activeRecipeId: recipe.id,
+      currentRunRecipeName: recipe.displayName,
+      currentRunFirmwareName: recipe.firmwareName,
+      targetSlot: Number(slot),
+      manual: true,
+      recook: true,
+      historySourceId: historyRow.orderId || historyRow.key,
+      historyNote: "Cook Again from queue timeline"
+    },
+    recipe,
+    snapshot.orders.current.length
+  );
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    const ids = getDeviceQueuedOrderIds(draft, draftDevice);
+    draft.orders.current.push(queueOrder);
+    draftDevice.queueOrderIds = [...ids, queueOrder.id];
+    appendActivity(draftDevice, `${queueOrder.itemName} added to queue as Cook Again`, "info");
+  });
+  showToast(`${queueOrder.itemName} added to Device ${slot} queue as Re-cook`, "success");
 }
 
 async function completeIngredientStage(slot) {
@@ -5859,6 +6087,111 @@ function renderDeviceQueuePlan(snapshot, device, queueOrders, activeRecipe) {
   `;
 }
 
+function renderQueueTimelineHistoryRow(row, device) {
+  const completed = row.outcome !== "aborted";
+  return `
+    <article class="queue-timeline-row history ${completed ? "completed" : "aborted"}">
+      <span class="queue-timeline-marker ${completed ? "complete" : "failed"}">${completed ? "&#10003;" : "!"}</span>
+      <div class="queue-timeline-copy">
+        <strong>${escapeHtml(row.displayName)}</strong>
+        <small>${escapeHtml(completed ? "completed" : "aborted")} | ${escapeHtml(formatShortTime(row.finishedAt))}</small>
+      </div>
+      ${row.recook ? `<span class="queue-tag recook">Re-cook</span>` : ""}
+      <button class="secondary-button micro" type="button" data-action="queue-cook-again" data-slot="${device.slot}" data-history-key="${escapeHtml(row.key)}">Cook Again</button>
+    </article>
+  `;
+}
+
+function renderQueueTimelineNow(model) {
+  if (!model.now) {
+    return `
+      <article class="queue-timeline-row now idle">
+        <span class="queue-timeline-marker current"></span>
+        <div class="queue-timeline-copy">
+          <strong>No active recipe</strong>
+          <small>Device is idle. Start any upcoming item when ready.</small>
+        </div>
+      </article>
+    `;
+  }
+  return `
+    <article class="queue-timeline-row now">
+      <span class="queue-timeline-marker current"></span>
+      <div class="queue-timeline-copy">
+        <strong>${escapeHtml(model.now.displayName)}</strong>
+        <small>${escapeHtml(model.now.status || "Cooking")} | ${escapeHtml(formatShortTime(model.now.startedAt || nowIso()))} | ${secondsLabel(model.now.remainingSeconds)} left</small>
+      </div>
+      <span class="queue-tag live">NOW</span>
+    </article>
+  `;
+}
+
+function renderQueueTimelineUpcomingRow(item, device, isBusy) {
+  const order = item.order;
+  const canStartNow = device.connection === "connected" && !isBusy;
+  const canForceStart = device.connection === "connected" && isBusy;
+  return `
+    <article class="queue-timeline-row upcoming ${order.recook ? "recook" : ""}">
+      <span class="queue-timeline-marker pending"></span>
+      <div class="queue-timeline-copy">
+        <strong>${escapeHtml(order.itemName)}</strong>
+        <small>${escapeHtml(order.orderId)} | Upcoming | ${escapeHtml(formatShortTime(item.startsAt))} | ${secondsLabel(item.durationSeconds)}</small>
+        ${order.recook ? `<span class="queue-tag recook">Re-cook</span>` : ""}
+      </div>
+      <div class="queue-timeline-controls" aria-label="Queue controls for ${escapeHtml(order.itemName)}">
+        <button class="icon-button tiny" type="button" data-action="queue-move-up" data-slot="${device.slot}" data-order-id="${order.id}" ${item.index === 0 ? "disabled" : ""} aria-label="Move up">&uarr;</button>
+        <button class="icon-button tiny" type="button" data-action="queue-move-down" data-slot="${device.slot}" data-order-id="${order.id}" ${item.index === item.total - 1 ? "disabled" : ""} aria-label="Move down">&darr;</button>
+        <button class="secondary-button micro" type="button" data-action="queue-move-next" data-slot="${device.slot}" data-order-id="${order.id}" ${item.index === 0 ? "disabled" : ""}>Next</button>
+        ${
+          canStartNow
+            ? `<button class="primary-button micro" type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${order.id}">Start now</button>`
+            : canForceStart
+              ? `<button class="danger-button micro" type="button" data-action="queue-force-start" data-slot="${device.slot}" data-order-id="${order.id}">Stop Current & Start Selected</button>`
+              : `<button class="secondary-button micro" type="button" disabled>Connect first</button>`
+        }
+      </div>
+    </article>
+  `;
+}
+
+function renderQueueTimelineCard(snapshot, device) {
+  const model = getQueueTimelineModel(snapshot, device);
+  const isBusy = isDeviceActivelyCooking(device);
+  return `
+    <div class="queue-timeline-card">
+      <div class="queue-timeline-header">
+        <div>
+          <div class="mini-title">Queue timeline</div>
+          <p>Cooked history, current recipe, and upcoming queue for Device ${device.slot}.</p>
+        </div>
+        <span class="queue-tag">${model.upcoming.length} upcoming</span>
+      </div>
+      <section class="queue-timeline-section cooked">
+        <div class="queue-section-title">Cooked history</div>
+        ${
+          model.cooked.length
+            ? model.cooked.map((row) => renderQueueTimelineHistoryRow(row, device)).join("")
+            : `<div class="empty-card compact-empty">No completed recipes recorded for this device yet.</div>`
+        }
+      </section>
+      <section class="queue-timeline-section now">
+        <div class="queue-section-title">NOW</div>
+        ${renderQueueTimelineNow(model)}
+      </section>
+      <section class="queue-timeline-section upcoming">
+        <div class="queue-section-title">Upcoming queue</div>
+        ${
+          model.upcoming.length
+            ? model.upcoming
+                .map((item) => renderQueueTimelineUpcomingRow({ ...item, total: model.upcoming.length }, device, isBusy))
+                .join("")
+            : `<div class="empty-card compact-empty">Queue is empty. Cook Again or assign an order to add work here.</div>`
+        }
+      </section>
+    </div>
+  `;
+}
+
 function renderLastRunMetrics(run) {
   if (!run?.finishedAt) return "";
   const actualSeconds = getRunActualSeconds(run);
@@ -6771,21 +7104,7 @@ function renderModal(snapshot) {
               <p class="subtle">${escapeHtml(device.lastMessage || "No live messages yet")}</p>
             </div>
             <div class="settings-card refined-current-card">
-              <div class="mini-title">Current recipe and queue</div>
-              <div class="subtle">${currentOrder ? `${escapeHtml(currentOrder.itemName)} is on this device` : hasLiveRuntime(device) ? `${escapeHtml(getLiveRecipeName(device))} is running on firmware` : "No live recipe assigned right now."}</div>
-              <div class="meta-grid top-gap">
-                <span>Mode ${escapeHtml(device.telemetry.mode || "Unknown")}</span>
-                <span>Step ${escapeHtml(device.telemetry.stepNo || 0)}</span>
-                <span>Status ${escapeHtml(device.telemetry.status || "Unknown")}</span>
-                <span>Stirrer ${escapeHtml(formatStirrerDisplay(device.telemetry.stirrer || DEFAULT_STIRRER_LEVEL))}</span>
-              </div>
-              ${
-                currentIngredient
-                  ? `<div class="empty-card top-gap"><strong>${escapeHtml(currentIngredient.title || `Ingredient ${device.telemetry.stepNo || 1}`)}</strong><div class="subtle">${escapeHtml(currentIngredient.weight || "")}${currentIngredient.text ? ` | ${escapeHtml(currentIngredient.text)}` : ""}</div></div>`
-                  : currentInstruction
-                    ? `<div class="empty-card top-gap"><strong>${escapeHtml(currentInstruction.Text || `Step ${device.telemetry.stepNo || 1}`)}</strong><div class="subtle">Lid ${escapeHtml(currentInstruction.lid || "Closed")} | Ind ${escapeHtml(currentInstruction.Induction_on_time || 0)}s | Mag ${escapeHtml(currentInstruction.Magnetron_on_time || 0)}s</div></div>`
-                    : ""
-              }
+              ${renderQueueTimelineCard(snapshot, device)}
               ${
                 telemetryMode.includes("ingredient") || telemetryMode.includes("cooking") || currentOrder || hasLiveRuntime(device)
                   ? `<div class="action-row top-gap">
@@ -6794,20 +7113,6 @@ function renderModal(snapshot) {
                       <button class="danger-button" type="button" data-action="abort-device" data-slot="${device.slot}">Abort recipe</button>
                     </div>`
                   : ""
-              }
-              ${
-                queueOrders.length
-                  ? queueOrders
-                      .map(
-                        (order) => `
-                          <div class="queue-item">
-                            <span>${escapeHtml(order.itemName)}</span>
-                            <span class="subtle">${escapeHtml(order.orderId)}</span>
-                          </div>
-                        `
-                      )
-                      .join("")
-                  : `<div class="empty-card">No queued items for this device.</div>`
               }
             </div>
             <div class="settings-card refined-inventory-card">
@@ -8095,6 +8400,30 @@ async function handleClick(event) {
   }
   if (action === "assign-order-device") {
     await startOrderFlow(button.dataset.orderId, Number(button.dataset.slot));
+    return;
+  }
+  if (action === "queue-move-up") {
+    reorderDeviceQueueItem(Number(button.dataset.slot), button.dataset.orderId || "", "up");
+    return;
+  }
+  if (action === "queue-move-down") {
+    reorderDeviceQueueItem(Number(button.dataset.slot), button.dataset.orderId || "", "down");
+    return;
+  }
+  if (action === "queue-move-next") {
+    reorderDeviceQueueItem(Number(button.dataset.slot), button.dataset.orderId || "", "next");
+    return;
+  }
+  if (action === "queue-start-now") {
+    await startQueuedOrderNow(Number(button.dataset.slot), button.dataset.orderId || "");
+    return;
+  }
+  if (action === "queue-force-start") {
+    await stopCurrentAndStartQueued(Number(button.dataset.slot), button.dataset.orderId || "");
+    return;
+  }
+  if (action === "queue-cook-again") {
+    queueCookAgainFromHistory(Number(button.dataset.slot), button.dataset.historyKey || "");
     return;
   }
   if (action === "run-recipe-on-device") {
