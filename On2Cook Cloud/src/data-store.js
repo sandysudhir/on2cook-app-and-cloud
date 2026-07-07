@@ -538,6 +538,8 @@ function createDeviceSlot(slot, allowedRecipeIds = []) {
     displayName: `On2Cook-0${slot}`,
     browserDeviceId: "",
     bluetoothName: "",
+    macAddress: "",
+    hardwareVersion: "",
     serialPhotoDataUrl: "",
     enabled: true,
     connection: "disconnected",

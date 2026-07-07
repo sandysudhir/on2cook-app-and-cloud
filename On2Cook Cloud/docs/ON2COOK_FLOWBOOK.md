@@ -862,3 +862,15 @@ Add Recipe behavior:
 - The selected recipe is enabled for the target device, then the app checks the device inventory and uploads the firmware JSON only if the recipe is missing.
 - Cook Now starts the normal run flow when the device is idle.
 - Add to Queue creates a queued job for that device after the recipe availability check/upload completes.
+
+## 20. Inventory & Serial Details Card - July 7, 2026
+
+Device Details now has a compact Inventory & Serial Details card with four always-visible fields: Recipes on device, Last sync, MAC ID, and Logs status.
+
+The three card actions are separated by purpose:
+
+- Details opens full device metadata: device number, MAC ID or browser device ID fallback, firmware version, hardware version, assigned user, connection history, and health status.
+- Firmware sends `Firmware=?` to the connected cooker and updates the displayed firmware version when the device replies.
+- Logs opens the stored historical log download screen. It runs `LOGSTATUS=?` first, blocks downloads while the cooker is busy, then uses `LISTLOGS` and `READLOG=<filename>` for historical files. This remains separate from Live Logs, which only streams real-time diagnostics with `livelog=ON/OFF`.
+
+Native APK BLE connections now preserve the `macAddress` supplied by the native bridge. Web Bluetooth still falls back to Chrome's browser device ID because Chrome does not expose the real BLE MAC address.

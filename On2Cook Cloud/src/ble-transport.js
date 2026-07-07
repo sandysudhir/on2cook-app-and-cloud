@@ -482,6 +482,7 @@ export class BleTransport extends EventTarget {
         slot,
         browserDeviceId: session.browserDeviceId,
         bluetoothName: session.bluetoothName,
+        macAddress: session.macAddress,
         serviceUuid: SERVICE_UUID
       });
       return;

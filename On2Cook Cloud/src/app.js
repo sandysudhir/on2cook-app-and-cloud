@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707j";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707j";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707k";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707k";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707j";
+} from "./ncb-services.js?v=20260707k";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707j";
+} from "./data-store.js?v=20260707k";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -3062,7 +3062,7 @@ async function retryOrderRunAfterUpload(slot, orderId, recipe) {
 
 function handleTransportEvents() {
   ble.addEventListener("device-connected", (event) => {
-    const { slot, browserDeviceId, bluetoothName } = event.detail;
+    const { slot, browserDeviceId, bluetoothName, macAddress } = event.detail;
     mutate((draft) => {
       const device = draft.devices.find((item) => item.slot === Number(slot));
       if (!device) return draft;
@@ -3078,6 +3078,7 @@ function handleTransportEvents() {
       }
       device.browserDeviceId = browserDeviceId;
       device.bluetoothName = bluetoothName;
+      device.macAddress = macAddress || device.macAddress || "";
       device.connection = "connected";
       device.baselineRecipeSyncPending = false;
       device.uploadState = emptyUploadState();
@@ -4286,7 +4287,7 @@ async function stopLiveLogs(slot) {
 async function listDeviceLogs(slot) {
   const device = getDevice(slot);
   if (!device) return;
-  openModal("device-sheet", { slot: Number(slot) });
+  openModal("stored-logs", { slot: Number(slot) });
   if (device.connection !== "connected") {
     showToast("Connect the device first to fetch firmware logs. Showing saved log state.", "info");
     return;
@@ -4325,7 +4326,7 @@ async function readDeviceLog(slot, rawName) {
   if (!device) return;
   const cleanName = String(rawName || "").trim();
   if (!cleanName) return;
-  openModal("device-sheet", { slot: Number(slot) });
+  openModal("stored-logs", { slot: Number(slot) });
   if (device.connection !== "connected") {
     showToast("Connect the device before reading a firmware log.", "warning");
     return;
@@ -4579,6 +4580,185 @@ function renderFirmwareLogPanel(device) {
             </div>`
           : ""
       }
+    </div>
+  `;
+}
+
+function getDeviceMacLabel(device) {
+  if (device.macAddress) return device.macAddress;
+  if (device.telemetry?.macAddress) return device.telemetry.macAddress;
+  if (device.browserDeviceId?.startsWith("native:")) return device.browserDeviceId.replace(/^native:/, "");
+  if (device.browserDeviceId) return `Browser ID ${device.browserDeviceId}`;
+  return "Unknown";
+}
+
+function getDeviceHardwareLabel(device) {
+  return device.hardwareVersion || device.telemetry?.hardwareVersion || "Unknown";
+}
+
+function getDeviceAssignedUserLabel(snapshot, device) {
+  const currentUser = getCurrentUser(snapshot);
+  return device.assignedUserName || device.assignedUserEmail || currentUser?.displayName || currentUser?.email || "Unassigned";
+}
+
+function getDeviceHealthLabel(device) {
+  if (device.connection !== "connected") return "Offline";
+  if (device.logFetch?.error || device.liveLog?.error) return "Needs attention";
+  if (device.telemetry?.workStatus === "offline") return "Waiting for status";
+  if (isDeviceActivelyCooking(device)) return "Cooking";
+  return "Healthy";
+}
+
+function getDeviceLogsStatusLabel(device) {
+  const logFetch = {
+    ...emptyLogFetchState(),
+    ...(device.logFetch || {})
+  };
+  if (logFetch.error) return "Error";
+  if (logFetch.reading) return "Reading";
+  if (logFetch.listing) return "Checking";
+  if (logFetch.updatedAt) {
+    const count = Array.isArray(device.logFiles) ? device.logFiles.length : 0;
+    return `${count} file${count === 1 ? "" : "s"}`;
+  }
+  return "Not checked";
+}
+
+function getDeviceLastSyncLabel(device) {
+  return device.recipeInventoryUpdatedAt || device.logFetch?.updatedAt || device.lastUpdatedAt
+    ? formatTimestamp(device.recipeInventoryUpdatedAt || device.logFetch?.updatedAt || device.lastUpdatedAt)
+    : "Never";
+}
+
+function getDeviceConnectionHistory(device) {
+  return (device.activity || [])
+    .filter((item) => /connect|disconnect|pair|locked|cleared|offline/i.test(`${item.text || ""} ${item.label || ""}`))
+    .slice(0, 8);
+}
+
+function renderInventorySerialDetailsCard(snapshot, device) {
+  const recipeCount = Array.isArray(device.availableRecipeNames) ? device.availableRecipeNames.length : 0;
+  const firmware = device.telemetry?.firmwareVersion || "Unknown";
+  const logsStatus = getDeviceLogsStatusLabel(device);
+  return `
+    <div class="settings-card inventory-serial-card">
+      <div class="row space inventory-serial-heading">
+        <div>
+          <div class="mini-title">Inventory &amp; Serial Details</div>
+          <p class="subtle">Compact device identity, recipe inventory, and service actions.</p>
+        </div>
+        <span class="status-chip ${logsStatus === "Error" ? "danger" : ""}">${escapeHtml(logsStatus)}</span>
+      </div>
+      <div class="inventory-serial-grid">
+        <span>
+          <small>Recipes on device</small>
+          <strong>${escapeHtml(recipeCount)}</strong>
+        </span>
+        <span>
+          <small>Last sync</small>
+          <strong>${escapeHtml(getDeviceLastSyncLabel(device))}</strong>
+        </span>
+        <span>
+          <small>MAC ID</small>
+          <strong>${escapeHtml(getDeviceMacLabel(device))}</strong>
+        </span>
+        <span>
+          <small>Logs status</small>
+          <strong>${escapeHtml(logsStatus)}</strong>
+        </span>
+      </div>
+      <div class="inventory-serial-firmware">
+        <span>Firmware</span>
+        <strong>${escapeHtml(firmware)}</strong>
+      </div>
+      <div class="action-row">
+        <button class="secondary-button" type="button" data-action="open-device-metadata" data-slot="${device.slot}">Details</button>
+        <button class="secondary-button" type="button" data-action="request-firmware" data-slot="${device.slot}">Firmware</button>
+        <button class="secondary-button" type="button" data-action="open-stored-logs" data-slot="${device.slot}">Logs</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderDeviceMetadataModal(snapshot, device) {
+  const history = getDeviceConnectionHistory(device);
+  const metadata = [
+    ["Device number", `D${device.slot}`],
+    ["MAC ID", getDeviceMacLabel(device)],
+    ["Firmware", device.telemetry?.firmwareVersion || "Unknown"],
+    ["Hardware version", getDeviceHardwareLabel(device)],
+    ["Assigned user", getDeviceAssignedUserLabel(snapshot, device)],
+    ["Health status", getDeviceHealthLabel(device)]
+  ];
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card wide refined-mobile-screen device-detail-screen device-metadata-modal">
+        ${renderRefinedScreenTopBar(snapshot, "Device Metadata", `${device.displayName} | D${device.slot}`)}
+        <div class="refined-title-row">
+          <button class="icon-button refined-back-button" data-action="return-device-sheet" data-slot="${device.slot}" aria-label="Back">${renderUiIcon("chevronLeft")}</button>
+          <div>
+            <div class="eyebrow">Full metadata</div>
+            <h3>${escapeHtml(device.displayName)}</h3>
+          </div>
+          <button class="icon-button" type="button" data-action="request-status" data-slot="${device.slot}" aria-label="Refresh status">${renderUiIcon("refresh")}</button>
+        </div>
+        <div class="settings-card">
+          <div class="metadata-grid">
+            ${metadata
+              .map(
+                ([label, value]) => `
+                  <span>
+                    <small>${escapeHtml(label)}</small>
+                    <strong>${escapeHtml(value)}</strong>
+                  </span>
+                `
+              )
+              .join("")}
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="mini-title">Connection history</div>
+          <div class="connection-history-list">
+            ${
+              history.length
+                ? history
+                    .map(
+                      (item) => `
+                        <div class="connection-history-row">
+                          <span>${escapeHtml(item.text || "Device event")}</span>
+                          <small>${escapeHtml(formatTimestamp(item.at))}</small>
+                        </div>
+                      `
+                    )
+                    .join("")
+                : `<div class="empty-card">No connection history has been retained yet.</div>`
+            }
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="secondary-button" type="button" data-action="return-device-sheet" data-slot="${device.slot}">Back to Device Details</button>
+          <button class="secondary-button" type="button" data-action="request-firmware" data-slot="${device.slot}">Check Firmware</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderStoredLogsModal(snapshot, device) {
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card wide refined-mobile-screen device-detail-screen stored-logs-screen">
+        ${renderRefinedScreenTopBar(snapshot, "Historical Logs", `${device.displayName} | D${device.slot}`)}
+        <div class="refined-title-row">
+          <button class="icon-button refined-back-button" data-action="return-device-sheet" data-slot="${device.slot}" aria-label="Back">${renderUiIcon("chevronLeft")}</button>
+          <div>
+            <div class="eyebrow">Stored historical logs</div>
+            <h3>${escapeHtml(device.displayName)}</h3>
+          </div>
+          <button class="icon-button" type="button" data-action="list-logs" data-slot="${device.slot}" aria-label="Refresh logs">${renderUiIcon("refresh")}</button>
+        </div>
+        ${renderFirmwareLogPanel(device)}
+      </div>
     </div>
   `;
 }
@@ -7337,6 +7517,18 @@ function renderModal(snapshot) {
     return renderLiveLogsModal(snapshot, device);
   }
 
+  if (modal.type === "device-metadata") {
+    const device = getDevice(modal.payload.slot);
+    if (!device) return "";
+    return renderDeviceMetadataModal(snapshot, device);
+  }
+
+  if (modal.type === "stored-logs") {
+    const device = getDevice(modal.payload.slot);
+    if (!device) return "";
+    return renderStoredLogsModal(snapshot, device);
+  }
+
   if (modal.type === "device-sheet") {
     const device = getDevice(modal.payload.slot);
     if (!device) return "";
@@ -7355,7 +7547,6 @@ function renderModal(snapshot) {
         recipe.firmwareName.toLowerCase().includes(recipeFilter)
       )
       .slice(0, 40);
-    const inventoryPreview = (device.availableRecipeNames || []).slice(0, 12);
     return `
       <div class="modal-backdrop">
         <div class="modal-card wide refined-mobile-screen device-detail-screen">
@@ -7428,20 +7619,7 @@ function renderModal(snapshot) {
             <div class="settings-card refined-quick-assign-card">
               ${renderQuickAssignCard(snapshot, device)}
             </div>
-            <div class="settings-card refined-inventory-card">
-              <div class="mini-title">Device recipe inventory</div>
-              <div class="meta-grid">
-                <span>Known on device ${escapeHtml((device.availableRecipeNames || []).length)}</span>
-                <span>Inventory checked ${escapeHtml(formatTimestamp(device.recipeInventoryUpdatedAt))}</span>
-              </div>
-              ${
-                inventoryPreview.length
-                  ? `<div class="chip-row top-gap">${inventoryPreview
-                      .map((name) => `<span class="inventory-chip static-chip">${escapeHtml(name)}</span>`)
-                      .join("")}</div>`
-                  : `<div class="empty-card">No device recipe list has been read yet.</div>`
-              }
-            </div>
+            ${renderInventorySerialDetailsCard(snapshot, device)}
             <div class="settings-card refined-recipe-access-card">
               <div class="mini-title">Recipe finder and allowed recipes</div>
               <div class="action-row">
@@ -7494,7 +7672,6 @@ function renderModal(snapshot) {
                 <button class="danger-button" type="button" data-action="clear-device-binding" data-slot="${device.slot}">Clear pairing</button>
               </div>
             </div>
-            ${renderFirmwareLogPanel(device)}
             <div class="settings-card">
               <div class="row space">
                 <div class="mini-title">Saved device log</div>
@@ -8673,8 +8850,16 @@ async function handleClick(event) {
     await ble.requestStatus(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
+  if (action === "open-device-metadata") {
+    openModal("device-metadata", { slot: Number(button.dataset.slot) });
+    return;
+  }
   if (action === "request-firmware") {
     await ble.requestFirmwareVersion(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "open-stored-logs") {
+    await listDeviceLogs(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "open-live-logs") {
@@ -9351,6 +9536,8 @@ async function handleClick(event) {
       if (!device) return draft;
       device.browserDeviceId = "";
       device.bluetoothName = "";
+      device.macAddress = "";
+      device.hardwareVersion = "";
       device.connection = "disconnected";
       device.availableRecipeNames = [];
       device.recipeInventoryUpdatedAt = "";

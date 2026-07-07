@@ -2431,6 +2431,108 @@ textarea.field-input {
   border-bottom: 0;
 }
 
+.inventory-serial-card {
+  display: grid;
+  gap: 12px;
+}
+
+.inventory-serial-heading {
+  align-items: start;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(33, 122, 90, 0.2);
+  background: rgba(33, 122, 90, 0.1);
+  color: var(--success);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-chip.danger {
+  border-color: rgba(180, 59, 45, 0.22);
+  background: rgba(180, 59, 45, 0.1);
+  color: var(--danger);
+}
+
+.inventory-serial-grid,
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.inventory-serial-grid span,
+.metadata-grid span,
+.inventory-serial-firmware {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.inventory-serial-grid small,
+.metadata-grid small,
+.inventory-serial-firmware span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.inventory-serial-grid strong,
+.metadata-grid strong,
+.inventory-serial-firmware strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+}
+
+.connection-history-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.connection-history-row {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.connection-history-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.connection-history-row small {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.device-metadata-modal,
+.stored-logs-screen {
+  display: grid;
+  gap: 14px;
+}
+
 .customer-run-card {
   display: grid;
   gap: 10px;
@@ -5505,7 +5607,11 @@ textarea.field-input {
 
 .surface:not(.login-surface) .live-log-row,
 .surface:not(.login-surface) .stored-log-table-wrap,
-.surface:not(.login-surface) .live-log-grid span {
+.surface:not(.login-surface) .live-log-grid span,
+.surface:not(.login-surface) .inventory-serial-grid span,
+.surface:not(.login-surface) .metadata-grid span,
+.surface:not(.login-surface) .inventory-serial-firmware,
+.surface:not(.login-surface) .connection-history-row {
   color: #f8f5f1;
   border-color: rgba(255, 255, 255, 0.1);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.032));
@@ -5532,6 +5638,20 @@ textarea.field-input {
 .surface:not(.login-surface) .stored-log-table th,
 .surface:not(.login-surface) .stored-log-table td {
   border-color: rgba(255, 255, 255, 0.09);
+}
+
+.surface:not(.login-surface) .inventory-serial-grid small,
+.surface:not(.login-surface) .metadata-grid small,
+.surface:not(.login-surface) .inventory-serial-firmware span,
+.surface:not(.login-surface) .connection-history-row small {
+  color: #a9a39e;
+}
+
+.surface:not(.login-surface) .inventory-serial-grid strong,
+.surface:not(.login-surface) .metadata-grid strong,
+.surface:not(.login-surface) .inventory-serial-firmware strong,
+.surface:not(.login-surface) .connection-history-row span {
+  color: #fffaf5;
 }
 
 @media (min-width: 900px) {
