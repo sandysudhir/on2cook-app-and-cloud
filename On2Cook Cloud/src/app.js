@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707c";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707c";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707b";
+} from "./ncb-services.js?v=20260707c";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707b";
+} from "./data-store.js?v=20260707c";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -4158,8 +4158,8 @@ function renderControlTabs(snapshot) {
     ["orders", "Orders", "orders"],
     ["recipes", "Recipes", "recipes"],
     ["queue", "Queue", "queue"],
-    ["manual", "Manual Mode", "manual"],
-    perms.canSelectGlobalRecipes ? ["global", "Global Recipes", "global"] : null
+    ["manual", "Manual", "manual"],
+    perms.canSelectGlobalRecipes ? ["global", "Global R", "global"] : null
   ].filter(Boolean);
   return `
     <nav class="tab-strip dashboard-tabs">
@@ -5568,7 +5568,8 @@ function renderDevicePhone(snapshot, device) {
     <section class="phone-frame device-phone ${device.connection}" data-scroll-key="frame-device-${device.slot}">
       <div class="phone-shell">
         <header class="phone-head device-head">
-          <div>
+          <img class="device-head-logo" src="./assets/on2cook-logo.png" alt="On2Cook">
+          <div class="device-head-copy">
             <div class="eyebrow">Device ${device.slot}</div>
             <h2>${escapeHtml(device.displayName)}</h2>
             <p>${escapeHtml(device.bluetoothName || "Not paired yet")}</p>

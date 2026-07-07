@@ -4127,6 +4127,359 @@ textarea.field-input {
   box-shadow: none;
 }
 
+/* Premium dark device-management visual language */
+.surface:not(.login-surface) {
+  background:
+    linear-gradient(135deg, #050505 0%, #15100f 46%, #080808 100%);
+  color: #f8f5f1;
+}
+
+.surface:not(.login-surface) .screen-rail {
+  scrollbar-color: rgba(255, 72, 24, 0.58) rgba(255, 255, 255, 0.08);
+}
+
+.surface:not(.login-surface) .screen-rail::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #ed1b2f, #ff4a14);
+}
+
+.surface:not(.login-surface) .phone-shell {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(180deg, rgba(32, 31, 31, 0.98) 0%, rgba(16, 15, 15, 0.98) 58%, rgba(8, 8, 8, 0.98) 100%);
+  box-shadow:
+    0 34px 80px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.surface:not(.login-surface) .control-phone .phone-shell {
+  background:
+    linear-gradient(180deg, rgba(31, 30, 30, 0.98) 0%, rgba(14, 13, 13, 0.98) 100%);
+}
+
+.surface:not(.login-surface) .phone-head,
+.surface:not(.login-surface) .dashboard-hero-head {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.surface:not(.login-surface) .phone-head h2,
+.surface:not(.login-surface) .dashboard-title-block h2,
+.surface:not(.login-surface) .dashboard-title-block p,
+.surface:not(.login-surface) .order-id,
+.surface:not(.login-surface) .operator-current-step strong,
+.surface:not(.login-surface) .operator-step-card strong,
+.surface:not(.login-surface) .operator-prompt strong,
+.surface:not(.login-surface) .next-recipe-main strong,
+.surface:not(.login-surface) .last-cooked-main strong,
+.surface:not(.login-surface) .device-info-tab strong {
+  color: #fffaf5;
+}
+
+.surface:not(.login-surface) .phone-head p,
+.surface:not(.login-surface) .subtle,
+.surface:not(.login-surface) .operator-current-step small,
+.surface:not(.login-surface) .operator-live-summary small,
+.surface:not(.login-surface) .operator-step-card small,
+.surface:not(.login-surface) .operator-prompt small,
+.surface:not(.login-surface) .next-prep-prompt small,
+.surface:not(.login-surface) .next-recipe-main small,
+.surface:not(.login-surface) .last-cooked-main small,
+.surface:not(.login-surface) .device-info-tab small,
+.surface:not(.login-surface) .next-recipe-timing span,
+.surface:not(.login-surface) .queue-prep-list .muted {
+  color: #a9a39e;
+}
+
+.surface:not(.login-surface) .eyebrow,
+.surface:not(.login-surface) .mini-title,
+.surface:not(.login-surface) .available-device-title,
+.surface:not(.login-surface) .operator-current-step span,
+.surface:not(.login-surface) .operator-live-summary span,
+.surface:not(.login-surface) .operator-step-card span,
+.surface:not(.login-surface) .operator-prompt span,
+.surface:not(.login-surface) .next-prep-prompt span,
+.surface:not(.login-surface) .next-recipe-main span,
+.surface:not(.login-surface) .last-run-metrics span {
+  color: #ff5a24;
+}
+
+.device-head {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+}
+
+.device-head-logo {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  padding: 6px;
+  border: 1px solid rgba(255, 74, 20, 0.22);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+}
+
+.device-head-copy {
+  min-width: 0;
+}
+
+.surface:not(.login-surface) .linked-device-label {
+  color: #ffc8b8;
+  border-color: rgba(255, 74, 20, 0.24);
+  background: rgba(255, 74, 20, 0.12);
+}
+
+.surface:not(.login-surface) .linked-device-label.locked {
+  color: #8ff0c2;
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.14);
+}
+
+.surface:not(.login-surface) .dashboard-brand-logo,
+.surface:not(.login-surface) .brand-logo {
+  background: #fff;
+  border-color: rgba(255, 74, 20, 0.24);
+}
+
+.surface:not(.login-surface) .dashboard-counter-card {
+  color: #fffaf5;
+  background: linear-gradient(180deg, rgba(255, 74, 20, 0.16), rgba(255, 255, 255, 0.06));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surface:not(.login-surface) .dashboard-counter-card strong,
+.surface:not(.login-surface) .dashboard-counter-card small {
+  color: #ff5a24;
+}
+
+.surface:not(.login-surface) .dashboard-bell-button,
+.surface:not(.login-surface) .dashboard-more-button,
+.surface:not(.login-surface) .tab-edge-icon {
+  color: #f8f5f1;
+}
+
+.surface:not(.login-surface) .dashboard-bell-button .bluetooth-count {
+  background: linear-gradient(135deg, #ed1b2f, #ff4a14);
+}
+
+.surface:not(.login-surface) .dashboard-tabs {
+  align-items: center;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button {
+  color: #ddd6cf;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button span:last-child {
+  white-space: nowrap;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button.active {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(237, 27, 47, 0.28), rgba(255, 74, 20, 0.2));
+  box-shadow: 0 14px 34px rgba(255, 74, 20, 0.18);
+}
+
+.surface:not(.login-surface) .dashboard-device-card,
+.surface:not(.login-surface) .empty-card,
+.surface:not(.login-surface) .order-card,
+.surface:not(.login-surface) .recipe-card,
+.surface:not(.login-surface) .queue-device-card,
+.surface:not(.login-surface) .settings-card,
+.surface:not(.login-surface) .device-info-tab,
+.surface:not(.login-surface) .operator-cook-card,
+.surface:not(.login-surface) .operator-current-step,
+.surface:not(.login-surface) .operator-live-summary span,
+.surface:not(.login-surface) .operator-step-card,
+.surface:not(.login-surface) .operator-prompt,
+.surface:not(.login-surface) .last-cooked-card,
+.surface:not(.login-surface) .last-run-metrics > div,
+.surface:not(.login-surface) .next-prep-prompt,
+.surface:not(.login-surface) .next-recipe-card,
+.surface:not(.login-surface) .next-recipe-timing > div,
+.surface:not(.login-surface) .compact-timeline-preview,
+.surface:not(.login-surface) .timeline-step,
+.surface:not(.login-surface) .last-recipe-tab {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.035));
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.surface:not(.login-surface) .operator-cook-card,
+.surface:not(.login-surface) .next-recipe-card.primary-next {
+  border-color: rgba(255, 74, 20, 0.34);
+  background: linear-gradient(180deg, rgba(255, 74, 20, 0.16), rgba(255, 255, 255, 0.045));
+}
+
+.surface:not(.login-surface) .operator-prompt.water {
+  border-color: rgba(70, 150, 255, 0.28);
+  background: rgba(70, 150, 255, 0.1);
+}
+
+.surface:not(.login-surface) .operator-prompt.quiet {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.surface:not(.login-surface) .operator-prompt.urgent,
+.surface:not(.login-surface) .operator-next-popup {
+  border-color: rgba(255, 74, 20, 0.52);
+  background: linear-gradient(135deg, rgba(237, 27, 47, 0.24), rgba(255, 74, 20, 0.18));
+  box-shadow: 0 20px 42px rgba(255, 74, 20, 0.24);
+}
+
+.surface:not(.login-surface) .dashboard-device-card.offline {
+  opacity: 0.55;
+}
+
+.surface:not(.login-surface) .dashboard-device-card span i {
+  background: #25d17f;
+}
+
+.surface:not(.login-surface) .dashboard-device-card.offline span i {
+  background: #77716b;
+}
+
+.surface:not(.login-surface) .status-pill {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.surface:not(.login-surface) .status-pill.pending,
+.surface:not(.login-surface) .status-pill.starting {
+  color: #ffc19a;
+  background: rgba(255, 74, 20, 0.16);
+}
+
+.surface:not(.login-surface) .status-pill.cooking,
+.surface:not(.login-surface) .status-pill.complete {
+  color: #8ff0c2;
+  background: rgba(34, 197, 94, 0.14);
+}
+
+.surface:not(.login-surface) .status-pill.failed {
+  color: #ffb2b9;
+  background: rgba(237, 27, 47, 0.18);
+}
+
+.surface:not(.login-surface) .status-pill.queued {
+  color: #9fc4ff;
+  background: rgba(70, 150, 255, 0.14);
+}
+
+.surface:not(.login-surface) .primary-button {
+  color: #fff;
+  border-color: rgba(255, 74, 20, 0.5);
+  background: linear-gradient(135deg, #ed1b2f, #ff4a14);
+  box-shadow: 0 14px 32px rgba(255, 74, 20, 0.22);
+}
+
+.surface:not(.login-surface) .secondary-button,
+.surface:not(.login-surface) .chip-button {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.surface:not(.login-surface) .danger-button {
+  color: #fff;
+  border-color: rgba(237, 27, 47, 0.4);
+  background: linear-gradient(135deg, #b91c1c, #ed1b2f);
+}
+
+.surface:not(.login-surface) .operator-live-summary b,
+.surface:not(.login-surface) .next-recipe-timing strong,
+.surface:not(.login-surface) .last-run-metrics strong {
+  color: #ff5a24;
+}
+
+.surface:not(.login-surface) .queue-prep-list span,
+.surface:not(.login-surface) .inventory-chip {
+  color: #fffaf5;
+  background: rgba(255, 255, 255, 0.075);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.surface:not(.login-surface) .queue-prep-list span strong,
+.surface:not(.login-surface) .status-dot.complete {
+  color: #8ff0c2;
+}
+
+.surface:not(.login-surface) .field-input,
+.surface:not(.login-surface) select.field-input,
+.surface:not(.login-surface) input {
+  color: #fffaf5;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.surface:not(.login-surface) .segment-row.dashboard-segments,
+.surface:not(.login-surface) .order-device-access.dashboard-device-access,
+.surface:not(.login-surface) .order-notice {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.035));
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.surface:not(.login-surface) .segment-row.dashboard-segments .segment {
+  color: #bfb6ad;
+}
+
+.surface:not(.login-surface) .segment-row.dashboard-segments .segment.active {
+  color: #fff;
+  background: linear-gradient(135deg, #ed1b2f, #ff4a14);
+  box-shadow: 0 12px 28px rgba(255, 74, 20, 0.2);
+}
+
+.surface:not(.login-surface) .dashboard-device-card.offline {
+  opacity: 0.72;
+}
+
+.surface:not(.login-surface) .dashboard-device-card.offline strong,
+.surface:not(.login-surface) .dashboard-device-card.offline span,
+.surface:not(.login-surface) .dashboard-device-card.offline small {
+  color: #d9d1ca;
+}
+
+.surface:not(.login-surface) .order-notice-main,
+.surface:not(.login-surface) .order-notice-close {
+  color: #fffaf5;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.surface:not(.login-surface) .order-notice-kicker,
+.surface:not(.login-surface) .order-source-pill,
+.surface:not(.login-surface) .order-type-pill {
+  color: #ff7a45;
+}
+
+.surface:not(.login-surface) .order-source-pill,
+.surface:not(.login-surface) .order-type-pill {
+  background: rgba(255, 74, 20, 0.14);
+  border-color: rgba(255, 74, 20, 0.18);
+}
+
+.surface:not(.login-surface) .order-stage-badge.success {
+  color: #8ff0c2;
+  background: rgba(34, 197, 94, 0.14);
+}
+
+.surface:not(.login-surface) .more-order-button {
+  color: #f8f5f1;
+}
+
 .modal-form {
   display: grid;
   gap: 12px;
@@ -4579,5 +4932,65 @@ textarea.field-input {
 
   .dashboard-order-actions .cook-now-button {
     grid-column: 1 / 3;
+  }
+}
+
+@media (max-width: 560px) {
+  .surface:not(.login-surface) .order-notice {
+    top: auto;
+    right: 18px;
+    bottom: 14px;
+    left: 18px;
+    width: auto;
+    max-width: none;
+    gap: 8px;
+    border-radius: 18px;
+    padding: 7px;
+  }
+
+  .surface:not(.login-surface) .order-notice-main {
+    min-height: 46px;
+    padding: 7px 10px;
+  }
+
+  .surface:not(.login-surface) .order-notice-main strong {
+    font-size: 0.78rem;
+    line-height: 1.15;
+  }
+
+  .surface:not(.login-surface) .order-notice-kicker,
+  .surface:not(.login-surface) .order-notice-main span:last-child {
+    font-size: 0.62rem;
+  }
+
+  .surface:not(.login-surface) .order-notice-close {
+    width: 38px;
+    min-width: 38px;
+    border-radius: 13px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-tabs {
+    grid-template-columns: 18px repeat(5, minmax(0, 1fr)) 18px;
+    gap: 3px;
+    margin-inline: 16px;
+    padding: 6px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-tabs .tab-button {
+    min-height: 58px;
+    gap: 3px;
+    border-radius: 14px;
+    font-size: 0.68rem;
+    line-height: 1.05;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-tabs .tab-icon svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .surface:not(.login-surface) .control-phone .tab-edge-icon {
+    width: 18px;
+    min-width: 18px;
   }
 }

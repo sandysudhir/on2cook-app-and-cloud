@@ -805,3 +805,13 @@ The Orders/Kitchen console now follows the supplied refined reference more close
 The order cards now show device assignment inline with the order details, matching the reference flow where the operator can see available D1/D2/D3 choices before assigning or cooking. The top header also includes the small More control beside the notification/connect icon.
 
 This was a visual/layout pass only. BLE transport, recipe upload behavior, order queue logic, and device execution commands were not changed.
+
+## 17. Premium Dark Device Management Pass - July 7, 2026
+
+The signed-in app surfaces now use a premium dark device-management visual language while keeping the existing workflows intact. The pass adds dark glass panels, stronger On2Cook orange/red accents, lighter typography, and a compact On2Cook logo in each device header.
+
+The top navigation labels were tightened so Manual and Global R sit cleanly in one horizontal row on constrained screens. Device, order, queue, recipe, and cooking status cards now share the same dark panel treatment for a cleaner production look.
+
+On narrow mobile screens the new-order notice now renders as a compact bottom toast so it does not cover the kitchen header or the primary navigation row.
+
+This was a visual/layout pass only. BLE transport, recipe upload timing, order queue logic, and firmware command strings were not changed.
