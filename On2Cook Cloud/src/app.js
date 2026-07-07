@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707a";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707a";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707b";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707b";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707a";
+} from "./ncb-services.js?v=20260707b";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707a";
+} from "./data-store.js?v=20260707b";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -4364,6 +4364,18 @@ function renderOrderCard(snapshot, order, perms) {
       }
     )
     .join("");
+  const assignmentPanel =
+    allowManualRouting
+      ? `
+        <div class="available-device-panel dashboard-inline-device-panel">
+          <span class="available-device-title">Assign to device</span>
+          <div class="available-device-row">
+            ${deviceButtons || `<span class="subtle">${connectedDevices.length ? "No connected device is enabled for this recipe" : "No connected devices"}</span>`}
+          </div>
+          ${blockedConnectedDevices.length ? `<div class="subtle">Blocked here: ${blockedConnectedDevices.map((device) => `D${device.slot}`).join(", ")} not enabled for this recipe.</div>` : ""}
+        </div>
+      `
+      : "";
   const assigned = order.assignedSlot ? `Device ${order.assignedSlot}` : "Auto";
   const orderType = getOrderType(order);
   const thumbUrl = getOrderThumbUrl(order);
@@ -4384,6 +4396,7 @@ function renderOrderCard(snapshot, order, perms) {
           <div class="order-stat-line"><span>Customer</span><strong>${escapeHtml(getOrderCustomerName(order))}</strong></div>
           <div class="order-stat-line"><span>Items</span><strong>${escapeHtml(getOrderItemCount(order))}</strong></div>
           <div class="order-stat-line"><span>Total</span><strong>${escapeHtml(formatCurrency(getOrderTotal(order)))}</strong></div>
+          ${assignmentPanel}
         </div>
         <div class="order-card-side">
           ${
@@ -4406,19 +4419,6 @@ function renderOrderCard(snapshot, order, perms) {
         ${canCook ? `<button class="primary-button small cook-now-button" data-action="auto-assign-order" data-order-id="${order.id}">Cook Now</button>` : ""}
         <button class="icon-button more-order-button" data-action="open-order-details" data-order-id="${order.id}" aria-label="More order details">${renderUiIcon("more")}</button>
       </div>
-      ${
-        allowManualRouting
-          ? `
-            <div class="available-device-panel">
-              <div class="available-device-title">Available devices</div>
-              <div class="available-device-row">
-                ${deviceButtons || `<span class="subtle">${connectedDevices.length ? "No connected device is enabled for this recipe" : "No connected devices"}</span>`}
-              </div>
-              ${blockedConnectedDevices.length ? `<div class="subtle">Blocked here: ${blockedConnectedDevices.map((device) => `D${device.slot}`).join(", ")} not enabled for this recipe.</div>` : ""}
-            </div>
-          `
-          : ""
-      }
     </article>
   `;
 }
@@ -5009,6 +5009,16 @@ function renderControlPhone(snapshot) {
           >
             <span class="bell-glyph">${renderUiIcon("bell")}</span>
             <span class="bluetooth-count">${connectingCount > 0 ? "..." : noticeCount}</span>
+          </button>
+          <button
+            class="icon-button dashboard-more-button"
+            type="button"
+            data-action="switch-tab"
+            data-tab="more"
+            title="More"
+            aria-label="More"
+          >
+            ${renderUiIcon("more")}
           </button>
         </header>
         ${renderControlTabs(snapshot)}

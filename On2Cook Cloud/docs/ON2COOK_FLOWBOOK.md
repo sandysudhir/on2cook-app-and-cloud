@@ -797,3 +797,11 @@ New-order alerts are fixed overlays instead of sticky blocks, so they no longer 
 Each device window remains locked to its saved cooker by `browserDeviceId`. If Chrome can still see the saved Bluetooth permission, reconnect uses that exact saved cooker.
 
 If Chrome loses the saved permission for a locked cooker, pressing Connect on that individual device window now opens the Bluetooth chooser so the operator can select the same cooker again and refresh the saved browser binding. Connect All does not open multiple chooser prompts; it only reconnects saved cookers that Chrome can currently see and marks missing slots as needing reauthorization.
+
+## 16. Refined Orders Console Visual Pass - July 7, 2026
+
+The Orders/Kitchen console now follows the supplied refined reference more closely while preserving the existing interface and workflows. The update keeps the same top kitchen header, tab row, current/previous controls, device access row, order summaries, and order actions, but scales them into a calmer desktop proportion.
+
+The order cards now show device assignment inline with the order details, matching the reference flow where the operator can see available D1/D2/D3 choices before assigning or cooking. The top header also includes the small More control beside the notification/connect icon.
+
+This was a visual/layout pass only. BLE transport, recipe upload behavior, order queue logic, and device execution commands were not changed.
