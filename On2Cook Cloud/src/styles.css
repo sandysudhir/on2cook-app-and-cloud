@@ -4841,6 +4841,332 @@ textarea.field-input {
   margin-bottom: 0;
 }
 
+/* Premium dark mode final device-management pass */
+.surface:not(.login-surface) {
+  background:
+    linear-gradient(128deg, #090807 0%, #14100f 42%, #080706 100%);
+}
+
+.surface:not(.login-surface) .screen-rail {
+  align-items: flex-start;
+  gap: 20px;
+}
+
+@media (min-width: 900px) {
+  .surface:not(.login-surface) .control-phone {
+    flex-basis: min(804px, calc(100vw - 420px));
+    width: min(804px, calc(100vw - 420px));
+    min-width: min(804px, calc(100vw - 420px));
+    max-width: min(804px, calc(100vw - 420px));
+  }
+
+  .surface:not(.login-surface) .device-phone {
+    flex-basis: 376px;
+    width: 376px;
+    min-width: 376px;
+    max-width: 376px;
+  }
+}
+
+.surface:not(.login-surface) .control-phone .phone-shell,
+.surface:not(.login-surface) .device-phone .phone-shell {
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(41, 39, 37, 0.98) 0%, rgba(20, 19, 18, 0.99) 46%, rgba(9, 8, 8, 1) 100%);
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.54),
+    0 0 0 1px rgba(255, 78, 32, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+
+.surface:not(.login-surface) .dashboard-hero-head,
+.surface:not(.login-surface) .device-head {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.018));
+}
+
+.surface:not(.login-surface) .dashboard-title-block h2,
+.surface:not(.login-surface) .device-head h2 {
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+
+.surface:not(.login-surface) .dashboard-title-block p,
+.surface:not(.login-surface) .device-head p {
+  color: #cfc7bf;
+}
+
+.surface:not(.login-surface) .dashboard-counter-card {
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 82, 34, 0.19), rgba(255, 255, 255, 0.06));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 14px 28px rgba(0, 0, 0, 0.22);
+}
+
+.surface:not(.login-surface) .dashboard-bell-button,
+.surface:not(.login-surface) .dashboard-more-button,
+.surface:not(.login-surface) .tab-edge-icon {
+  color: #f7f2ee;
+  opacity: 0.92;
+}
+
+.surface:not(.login-surface) .dashboard-tabs {
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.04));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 16px 34px rgba(0, 0, 0, 0.22);
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button {
+  color: #d9d1ca;
+  letter-spacing: -0.01em;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button span:last-child {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button.active {
+  color: #fffaf5;
+  background:
+    linear-gradient(145deg, rgba(237, 27, 47, 0.54), rgba(255, 74, 20, 0.34));
+  box-shadow:
+    0 16px 34px rgba(255, 74, 20, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button.active .tab-icon {
+  color: #fffaf5;
+}
+
+.surface:not(.login-surface) .dashboard-section-title .mini-title,
+.surface:not(.login-surface) .mini-title {
+  color: #ff6b32;
+  letter-spacing: 0.16em;
+}
+
+.surface:not(.login-surface) .dashboard-device-access,
+.surface:not(.login-surface) .segment-row.dashboard-segments,
+.surface:not(.login-surface) .dashboard-order-card,
+.surface:not(.login-surface) .device-info-tab,
+.surface:not(.login-surface) .last-cooked-card,
+.surface:not(.login-surface) .next-recipe-card,
+.surface:not(.login-surface) .operator-cook-card,
+.surface:not(.login-surface) .empty-card,
+.surface:not(.login-surface) .settings-card {
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.038));
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.surface:not(.login-surface) .dashboard-device-card {
+  border-color: rgba(255, 255, 255, 0.13);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.04));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 14px 30px rgba(0, 0, 0, 0.22);
+}
+
+.surface:not(.login-surface) .dashboard-device-card.active,
+.surface:not(.login-surface) .dashboard-device-card.selected {
+  border-color: rgba(255, 92, 38, 0.72);
+  background:
+    linear-gradient(145deg, rgba(237, 27, 47, 0.32), rgba(255, 74, 20, 0.16)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.04));
+}
+
+.surface:not(.login-surface) .summary-chip,
+.surface:not(.login-surface) .dashboard-order-status-chip {
+  min-height: 44px;
+  border-color: rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.surface:not(.login-surface) .summary-chip.pending-tone,
+.surface:not(.login-surface) .summary-chip.feed-tone,
+.surface:not(.login-surface) .summary-chip.queued-tone {
+  color: #fffaf5;
+}
+
+.surface:not(.login-surface) .dashboard-order-card {
+  overflow: hidden;
+}
+
+.surface:not(.login-surface) .dashboard-order-card .order-id,
+.surface:not(.login-surface) .order-notice-kicker {
+  color: #ff6b32;
+}
+
+.surface:not(.login-surface) .dashboard-order-card h3 {
+  font-weight: 950;
+  letter-spacing: 0.045em;
+}
+
+.surface:not(.login-surface) .order-stage-badge,
+.surface:not(.login-surface) .order-type-pill,
+.surface:not(.login-surface) .order-source-pill {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.surface:not(.login-surface) .primary-button {
+  background:
+    linear-gradient(135deg, #ed1b2f 0%, #ff4a14 100%);
+}
+
+.surface:not(.login-surface) .secondary-button,
+.surface:not(.login-surface) .chip-button {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.095), rgba(255, 255, 255, 0.045));
+}
+
+.surface:not(.login-surface) .device-info-tab strong,
+.surface:not(.login-surface) .last-cooked-card strong,
+.surface:not(.login-surface) .next-recipe-card strong,
+.surface:not(.login-surface) .operator-cook-card strong {
+  color: #fffaf5;
+}
+
+@media (min-width: 900px) {
+  .surface:not(.login-surface) .control-phone .dashboard-tabs {
+    gap: 8px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-tabs .tab-button {
+    min-height: 64px;
+    font-size: 0.82rem;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-tabs .tab-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-order-head {
+    grid-template-columns: minmax(0, 360px) minmax(190px, 230px);
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-device-strip {
+    grid-template-columns: 18px repeat(5, minmax(142px, 1fr)) 18px;
+    gap: 12px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-device-card {
+    min-height: 116px;
+    padding: 18px 18px 16px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-order-card .order-card-main {
+    grid-template-columns: minmax(0, 1fr) 150px;
+    gap: 22px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-order-card .order-thumb {
+    width: 126px;
+    height: 126px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-order-actions {
+    grid-template-columns: 118px 154px 136px 30px;
+    gap: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .surface:not(.login-surface) .control-phone .dashboard-hero-head {
+    grid-template-columns: 42px minmax(0, 1fr) 38px 38px 28px 18px;
+    gap: 5px;
+    padding: 28px 14px 12px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-brand-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-title-block h2 {
+    font-size: 0.88rem;
+    line-height: 1.05;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-title-block p {
+    margin-top: 3px;
+    font-size: 0.72rem;
+    line-height: 1.08;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-counter-card {
+    width: 38px;
+    min-height: 44px;
+    border-radius: 12px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-counter-card strong {
+    font-size: 0.58rem;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-counter-card span {
+    font-size: 1rem;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-counter-card small {
+    font-size: 0.46rem;
+    letter-spacing: -0.02em;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-bell-button {
+    width: 28px;
+    height: 32px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-bell-button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-more-button {
+    width: 18px;
+    height: 32px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-more-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-tabs {
+    gap: 4px;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-tabs .tab-button {
+    font-size: 0.64rem;
+    letter-spacing: -0.02em;
+  }
+
+  .surface:not(.login-surface) .control-phone .dashboard-tabs .tab-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .modal-form {
   display: grid;
   gap: 12px;

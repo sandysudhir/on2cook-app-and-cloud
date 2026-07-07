@@ -820,4 +820,6 @@ The latest pass extends that same premium dark language to the Device Details ma
 
 The final dashboard polish pass tightened the main On2Cook Cloud device-management surface with stronger panel hierarchy, clearer hover/selected states, richer On2Cook red/orange accents, and more balanced spacing across device cards, order cards, counters, and navigation icons.
 
+The follow-up dark mode pass further consolidated the Onto Cloud device-management screen into a single premium dark visual system. The shell, header, navigation, device access strip, order cards, summary chips, and device panels now use one refined black/charcoal palette with On2Cook red-orange accents, tighter icon alignment, and one-line Manual/Global R navigation labels.
+
 This was a visual/layout pass only. BLE transport, recipe upload timing, order queue logic, and firmware command strings were not changed.
