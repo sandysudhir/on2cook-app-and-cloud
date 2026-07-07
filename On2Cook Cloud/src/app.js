@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707k";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707k";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707l";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707l";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707k";
+} from "./ncb-services.js?v=20260707l";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707k";
+} from "./data-store.js?v=20260707l";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -130,6 +130,10 @@ function takeSavedScrollState() {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+function waitMs(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, Math.max(0, Number(ms) || 0)));
 }
 
 function safeRandomId(prefix = "id") {
@@ -3465,11 +3469,15 @@ async function startOrderFlow(orderId, preferredSlot = null, options = {}) {
   const order = snapshot.orders.current.find((item) => item.id === orderId);
   if (!order) return "missing-order";
   const recipe = getEffectiveRecipe(snapshot, order);
+  const device = preferredSlot ? snapshot.devices.find((item) => item.slot === Number(preferredSlot)) : pickBestDevice(snapshot, order);
+  const deviceOnlyRecipeName = getDeviceOnlyOrderRecipeName(order);
+  if (!recipe && preferredSlot && deviceOnlyRecipeName) {
+    return startDeviceOnlyOrderFlow(orderId, Number(preferredSlot), deviceOnlyRecipeName, options);
+  }
   if (!recipe) {
     showToast(`No selected recipe matches ${order.itemName}`, "error");
     return "missing-recipe";
   }
-  const device = preferredSlot ? snapshot.devices.find((item) => item.slot === Number(preferredSlot)) : pickBestDevice(snapshot, order);
   if (!device) {
     showToast("No connected device is ready for this recipe", "warning");
     return "no-device";
@@ -3835,7 +3843,7 @@ async function resolveAssignableRecipe(payload) {
 
 async function executeDeviceRecipeAssignment(payload) {
   const slot = Number(payload.slot);
-  const action = payload.action === "cook" ? "cook" : "queue";
+  const action = payload.action === "cook" ? "cook" : payload.action === "upload" ? "upload" : "queue";
   const device = getDevice(slot);
   if (!device) return;
   if (device.connection !== "connected") {
@@ -3860,6 +3868,11 @@ async function executeDeviceRecipeAssignment(payload) {
     overwriteExisting: false,
     inventoryTimeoutMs: 4500
   });
+  if (action === "upload") {
+    showToast(`${recipe.displayName} is available on Device ${slot}`, "success");
+    openModal("device-recipes", { slot, query: "", filter: "all", selectedNames: [] });
+    return;
+  }
   if (action === "cook") {
     const order = createDeviceQueuedRecipeOrder(state(), recipe, slot, payload.source || "Quick Assign");
     order.status = "pending";
@@ -4650,10 +4663,10 @@ function renderInventorySerialDetailsCard(snapshot, device) {
         <span class="status-chip ${logsStatus === "Error" ? "danger" : ""}">${escapeHtml(logsStatus)}</span>
       </div>
       <div class="inventory-serial-grid">
-        <span>
+        <button class="inventory-metric-button" type="button" data-action="open-device-recipes" data-slot="${device.slot}">
           <small>Recipes on device</small>
           <strong>${escapeHtml(recipeCount)}</strong>
-        </span>
+        </button>
         <span>
           <small>Last sync</small>
           <strong>${escapeHtml(getDeviceLastSyncLabel(device))}</strong>
@@ -4737,6 +4750,7 @@ function renderDeviceMetadataModal(snapshot, device) {
         </div>
         <div class="action-row">
           <button class="secondary-button" type="button" data-action="return-device-sheet" data-slot="${device.slot}">Back to Device Details</button>
+          <button class="secondary-button" type="button" data-action="open-device-recipes" data-slot="${device.slot}">Recipes</button>
           <button class="secondary-button" type="button" data-action="request-firmware" data-slot="${device.slot}">Check Firmware</button>
         </div>
       </div>
@@ -4758,6 +4772,591 @@ function renderStoredLogsModal(snapshot, device) {
           <button class="icon-button" type="button" data-action="list-logs" data-slot="${device.slot}" aria-label="Refresh logs">${renderUiIcon("refresh")}</button>
         </div>
         ${renderFirmwareLogPanel(device)}
+      </div>
+    </div>
+  `;
+}
+
+function getRecipeVersionLabel(recipe) {
+  return (
+    recipe?.version ||
+    recipe?.recipeJson?.version ||
+    recipe?.recipeJson?.Version ||
+    recipe?.recipeJson?.recipe_version ||
+    recipe?.recipeJson?.recipeVersion ||
+    "Unknown"
+  );
+}
+
+function getRecipeAliasLabel(recipe, fallbackName = "") {
+  if (!recipe) return "Device memory";
+  const fallbackKey = normalizeRecipeNameKey(fallbackName || recipe.firmwareName || recipe.displayName);
+  const alias =
+    (recipe.aliases || []).find((item) => normalizeRecipeNameKey(item) && normalizeRecipeNameKey(item) !== fallbackKey) ||
+    recipe.zipName ||
+    recipe.firmwareName ||
+    "";
+  return alias || "No alias";
+}
+
+function recipeNameMatches(value, recipeName, recipe = null) {
+  const key = normalizeRecipeNameKey(value);
+  if (!key) return false;
+  const candidates = [
+    recipeName,
+    recipe?.firmwareName,
+    recipe?.displayName,
+    recipe?.zipName,
+    ...(recipe?.aliases || [])
+  ].map((item) => normalizeRecipeNameKey(item));
+  return candidates.includes(key);
+}
+
+function getDeviceRecipeLastCookedAt(snapshot, device, recipeName, recipe = null) {
+  const matchesRun = (run) =>
+    run && (
+      recipeNameMatches(run.firmwareName, recipeName, recipe) ||
+      recipeNameMatches(run.displayName, recipeName, recipe)
+    );
+  if (matchesRun(device.lastRun) && device.lastRun.finishedAt) return device.lastRun.finishedAt;
+  const order = (snapshot.orders.previous || []).find((item) => {
+    if (!(item.assignedSlot === device.slot || item.targetSlot === device.slot || device.historyOrderIds.includes(item.id))) {
+      return false;
+    }
+    return (
+      recipeNameMatches(item.currentRunFirmwareName, recipeName, recipe) ||
+      recipeNameMatches(item.recipeLookup, recipeName, recipe) ||
+      recipeNameMatches(item.itemName, recipeName, recipe)
+    );
+  });
+  return order?.finishedAt || order?.createdAt || "";
+}
+
+function getDeviceRecipeStorageTags(recipe) {
+  if (!recipe) {
+    return [
+      { label: "On device", tone: "device" },
+      { label: "Device only", tone: "warning" }
+    ];
+  }
+  if (recipe.cloudRecordId || recipe.cloudUserId) {
+    return [
+      { label: "On device", tone: "device" },
+      { label: "Synced", tone: "success" }
+    ];
+  }
+  return [
+    { label: "On device", tone: "device" },
+    { label: "Missing cloud copy", tone: "danger" }
+  ];
+}
+
+function getDeviceRecipeStorageKind(recipe) {
+  if (!recipe) return "device-only";
+  if (recipe.cloudRecordId || recipe.cloudUserId) return "cloud-synced";
+  return "missing-cloud";
+}
+
+function getDeviceRecipeRows(snapshot, device) {
+  const names = new Map();
+  [...(device.availableRecipeNames || []), ...(device.syncedRecipeNames || [])].forEach((name) => addKnownRecipeName(names, name));
+  return [...names.values()]
+    .sort((left, right) => left.localeCompare(right))
+    .map((recipeName) => {
+      const recipe = findRecipeByFirmwareName(snapshot, recipeName);
+      const lastCookedAt = getDeviceRecipeLastCookedAt(snapshot, device, recipeName, recipe);
+      const storageKind = getDeviceRecipeStorageKind(recipe);
+      return {
+        id: normalizeRecipeNameKey(recipeName).replace(/[^a-z0-9_-]+/g, "-") || safeRandomId("device-recipe"),
+        recipeName,
+        recipe,
+        alias: getRecipeAliasLabel(recipe, recipeName),
+        version: getRecipeVersionLabel(recipe),
+        lastCookedAt,
+        storageKind,
+        tags: getDeviceRecipeStorageTags(recipe)
+      };
+    });
+}
+
+function filterDeviceRecipeRows(rows, modal) {
+  const query = String(modal.payload?.query || "").trim().toLowerCase();
+  const filter = String(modal.payload?.filter || "all");
+  return rows.filter((row) => {
+    if (query) {
+      const haystack = [row.recipeName, row.recipe?.displayName, row.recipe?.firmwareName, row.alias, row.version]
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(query)) return false;
+    }
+    if (filter === "recent") return Boolean(row.lastCookedAt);
+    if (filter === "missing-cloud") return row.storageKind === "missing-cloud" || row.storageKind === "device-only";
+    if (filter === "cloud-synced") return row.storageKind === "cloud-synced";
+    if (filter === "device-only") return row.storageKind === "device-only";
+    return true;
+  });
+}
+
+function getDeviceOnlyOrderRecipeName(order) {
+  return String(order?.deviceOnlyRecipeName || order?.currentRunFirmwareName || order?.recipeLookup || order?.itemName || "").trim();
+}
+
+function createDeviceMemoryOrder(snapshot, recipeName, slot, status = "queued", recipe = null) {
+  const displayName = recipe?.displayName || recipeName;
+  return decorateOrderRecord(
+    {
+      id: safeRandomId("device-memory"),
+      orderId: `#D${Date.now().toString().slice(-5)}`,
+      itemName: displayName,
+      recipeLookup: displayName,
+      quantity: "1 batch",
+      source: "Device Memory",
+      specialInstructions: recipe ? "Queued from Recipes on Device" : "Device-only recipe queued from cooker memory",
+      accentColor: "#f47b20",
+      createdAt: nowIso(),
+      status,
+      assignedSlot: Number(slot),
+      assignedMode: "device",
+      activeRecipeId: recipe?.id || "",
+      currentRunRecipeName: displayName,
+      currentRunFirmwareName: recipe?.firmwareName || recipeName,
+      deviceOnlyRecipeName: recipe?.id ? "" : recipeName,
+      targetSlot: Number(slot),
+      manual: true,
+      historyNote: recipe ? "Queued from Recipes on Device" : "Queued as device-only recipe"
+    },
+    recipe,
+    snapshot.orders.current.length
+  );
+}
+
+function isDeviceRecipeCurrentlyRunning(device, recipeName) {
+  return [
+    device.telemetry?.currentRecipe,
+    device.activeRun?.firmwareName,
+    device.activeRun?.displayName
+  ].some((item) => recipeNameMatches(item, recipeName));
+}
+
+function getQueuedOrdersForDeviceRecipe(snapshot, device, recipeName, recipe = null) {
+  return getQueueOrders(snapshot, device).filter(
+    (order) =>
+      recipeNameMatches(order.currentRunFirmwareName, recipeName, recipe) ||
+      recipeNameMatches(order.recipeLookup, recipeName, recipe) ||
+      recipeNameMatches(order.itemName, recipeName, recipe) ||
+      recipeNameMatches(order.deviceOnlyRecipeName, recipeName, recipe)
+  );
+}
+
+async function startDeviceOnlyOrderFlow(orderId, preferredSlot, recipeName, options = {}) {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(preferredSlot));
+  const order = snapshot.orders.current.find((item) => item.id === orderId);
+  const safeName = String(recipeName || getDeviceOnlyOrderRecipeName(order)).trim();
+  if (!device || !order || !safeName) return "missing-device-recipe";
+  if (device.connection !== "connected") {
+    showToast(`Device ${preferredSlot} is offline. Connect it before starting ${safeName}.`, "warning");
+    return "no-device";
+  }
+  const liveSession = ble.getSession(device.slot);
+  if (liveSession?.transfer) {
+    showToast(`Device ${device.slot} is still syncing recipes. Try again in a moment.`, "warning");
+    return "transfer-busy";
+  }
+  const busy =
+    device.currentJobId ||
+    (!options.ignoreQueuedWork && device.queueOrderIds.length > 0) ||
+    device.completionConfirmationPending ||
+    hasLiveRuntime(device);
+  if (busy) {
+    mutate((draft) => {
+      const draftOrder = draft.orders.current.find((item) => item.id === orderId);
+      const draftDevice = draft.devices.find((item) => item.slot === device.slot);
+      if (!draftOrder || !draftDevice) return draft;
+      clearOrderFromDeviceAssignments(draft, orderId, device.slot);
+      if (!draftDevice.queueOrderIds.includes(orderId)) {
+        draftDevice.queueOrderIds.push(orderId);
+      }
+      draftOrder.status = "queued";
+      draftOrder.assignedSlot = device.slot;
+      draftOrder.assignedMode = "device";
+      draftOrder.targetSlot = device.slot;
+      draftOrder.currentRunFirmwareName = safeName;
+      draftOrder.deviceOnlyRecipeName = safeName;
+      appendActivity(draftDevice, `${safeName} queued from device memory`, "info");
+    });
+    showToast(`${safeName} queued on Device ${device.slot}`, "info");
+    return "queued";
+  }
+
+  const runStartedAt = nowIso();
+  mutate((draft) => {
+    const draftOrder = draft.orders.current.find((item) => item.id === orderId);
+    const draftDevice = draft.devices.find((item) => item.slot === device.slot);
+    if (!draftOrder || !draftDevice) return draft;
+    clearOrderFromDeviceAssignments(draft, orderId, device.slot);
+    draftOrder.status = "starting";
+    draftOrder.assignedSlot = device.slot;
+    draftOrder.assignedMode = "device";
+    draftOrder.targetSlot = device.slot;
+    draftOrder.currentRunRecipeName = safeName;
+    draftOrder.currentRunFirmwareName = safeName;
+    draftOrder.deviceOnlyRecipeName = safeName;
+    draftDevice.currentJobId = orderId;
+    draftDevice.activeRun = {
+      orderId,
+      recipeId: "",
+      displayName: safeName,
+      firmwareName: safeName,
+      startedAt: runStartedAt,
+      durationSeconds: 0
+    };
+    draftDevice.startupGuardUntil = new Date(Date.now() + 8000).toISOString();
+    draftDevice.telemetry.currentRecipe = safeName;
+    appendActivity(draftDevice, `Preparing device-only recipe ${safeName}`, "info");
+  });
+
+  try {
+    const idleBeforeStart = await ble.waitForIdleStatus(device.slot, {
+      timeoutMs: 3200,
+      pollEveryMs: 650,
+      forceFresh: true,
+      description: "idle status before device-only recipe start"
+    });
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === device.slot);
+      if (!draftDevice) return draft;
+      appendFlowActivity(draftDevice, "Idle confirmed before device-only recipe start", "info", idleBeforeStart.at);
+    });
+    await ble.runRecipe(device.slot, safeName, {
+      autoStartAfterIngredient: false,
+      statusDelayMs: 650,
+      fallbackMs: 1800
+    });
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === device.slot);
+      const draftOrder = draft.orders.current.find((item) => item.id === orderId);
+      if (!draftDevice || !draftOrder) return draft;
+      draftOrder.status = "starting";
+      draftDevice.telemetry.workStatus = "starting";
+      draftDevice.telemetry.currentRecipe = safeName;
+      draftDevice.lastMessage = `recipe=${safeName}`;
+      draftDevice.lastUpdatedAt = nowIso();
+      appendFlowActivity(draftDevice, `Device-only run command sent for ${safeName}`, "success");
+    });
+    return "started";
+  } catch (error) {
+    mutate((draft) => {
+      const draftOrder = draft.orders.current.find((item) => item.id === orderId);
+      const draftDevice = resetDeviceRuntimeState(draft, device.slot, { releaseOrders: false });
+      if (draftOrder) {
+        draftOrder.status = "pending";
+        draftOrder.assignedSlot = null;
+        draftOrder.assignedMode = "device";
+      }
+      if (draftDevice) {
+        appendActivity(draftDevice, `Device-only start failed: ${error.message}`, "error");
+      }
+    });
+    showToast(error.message, "error");
+    return "failed";
+  }
+}
+
+async function runDeviceStoredRecipe(slot, recipeName) {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(slot));
+  const recipe = findRecipeByFirmwareName(snapshot, recipeName);
+  if (!device || device.connection !== "connected") {
+    showToast(`Device ${slot} is offline. Connect it before running ${recipeName}.`, "warning");
+    return;
+  }
+  if (isDeviceActivelyCooking(device)) {
+    showToast(`Device ${slot} is cooking. Use Queue for ${recipeName}, or stop the current recipe first.`, "warning");
+    return;
+  }
+  if (recipe) {
+    mutate((draft) => {
+      allowRecipeOnDevice(draft, slot, recipe.id);
+    });
+    await runDeviceRecipe(slot, recipe.id);
+    return;
+  }
+  const order = createDeviceMemoryOrder(snapshot, recipeName, slot, "pending", null);
+  mutate((draft) => {
+    draft.orders.current.unshift(order);
+  });
+  await startDeviceOnlyOrderFlow(order.id, Number(slot), recipeName, { ignoreQueuedWork: true });
+}
+
+function queueDeviceStoredRecipe(slot, recipeName) {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(slot));
+  if (!device) return;
+  const recipe = findRecipeByFirmwareName(snapshot, recipeName);
+  const order = createDeviceMemoryOrder(snapshot, recipeName, slot, "queued", recipe);
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    if (recipe) {
+      allowRecipeOnDevice(draft, slot, recipe.id);
+    }
+    draft.orders.current.push(order);
+    draftDevice.queueOrderIds = [...getDeviceQueuedOrderIds(draft, draftDevice), order.id];
+    appendActivity(draftDevice, `${order.itemName} queued from Recipes on Device`, "info");
+  });
+  showToast(`${order.itemName} queued on Device ${slot}`, "success");
+  queueIdleWork();
+}
+
+async function uploadSingleRecipeToDevice(slot, recipe, options = {}) {
+  if (!recipe) throw new Error("Recipe record is required.");
+  const device = getDevice(slot);
+  if (!device || device.connection !== "connected") {
+    throw new Error(`Device ${slot} is not connected.`);
+  }
+  if (isDeviceRecipeCurrentlyRunning(device, recipe.firmwareName)) {
+    throw new Error(`Cannot replace ${recipe.firmwareName} while it is cooking.`);
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    setUploadPlan(draftDevice, [recipe], []);
+  });
+  await ble.syncRecipes(Number(slot), [recipe], (progress) => {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      draftDevice.lastMessage = `Uploading ${progress.recipeName} (${progress.current}/${progress.total})`;
+      draftDevice.lastUpdatedAt = nowIso();
+    });
+  }, {
+    overwriteExisting: options.overwriteExisting === true
+  });
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    mergeRecipeNames(draftDevice, [recipe.firmwareName]);
+    draftDevice.syncedRecipeNames = Array.from(new Set([...(draftDevice.syncedRecipeNames || []), recipe.firmwareName]));
+    draftDevice.syncedRecipeSignatures[normalizeRecipeNameKey(recipe.firmwareName)] = getRecipeSignature(recipe);
+    completeUploadPlan(draftDevice, [recipe.firmwareName]);
+    appendActivity(draftDevice, `${recipe.firmwareName} uploaded to device`, "success");
+  });
+  await refreshDeviceRecipeInventory(slot, { force: true, timeoutMs: 4500 }).catch(() => []);
+}
+
+async function updateDeviceRecipe(slot, recipeName) {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(slot));
+  const recipe = findRecipeByFirmwareName(snapshot, recipeName);
+  if (!recipe) {
+    showToast(`${recipeName} has no local/cloud recipe JSON to upload.`, "warning");
+    return;
+  }
+  if (!device || device.connection !== "connected") {
+    showToast(`Connect Device ${slot} before updating ${recipe.displayName}.`, "warning");
+    return;
+  }
+  if (isDeviceRecipeCurrentlyRunning(device, recipeName)) {
+    showToast(`Cannot update ${recipe.displayName} while it is cooking.`, "warning");
+    return;
+  }
+  const queued = getQueuedOrdersForDeviceRecipe(snapshot, device, recipeName, recipe);
+  if (queued.length) {
+    showToast(`${recipe.displayName} is queued. Updating will replace the file used by that queued job.`, "warning");
+  }
+  await uploadSingleRecipeToDevice(slot, recipe, { overwriteExisting: true });
+  showToast(`${recipe.displayName} replaced on Device ${slot}`, "success");
+  openModal("device-recipes", { slot: Number(slot), query: "", filter: "all", selectedNames: [] });
+}
+
+async function deleteDeviceRecipes(slot, recipeNames) {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(slot));
+  const names = Array.from(new Set((recipeNames || []).map((name) => String(name || "").trim()).filter(Boolean)));
+  if (!device || device.connection !== "connected") {
+    showToast(`Connect Device ${slot} before deleting recipes.`, "warning");
+    return;
+  }
+  const running = names.find((name) => isDeviceRecipeCurrentlyRunning(device, name));
+  if (running) {
+    showToast(`Cannot delete ${running} while it is cooking.`, "warning");
+    openModal("device-recipes", { slot: Number(slot), query: "", filter: "all", selectedNames: [] });
+    return;
+  }
+  for (const name of names) {
+    await ble.deleteRecipe(Number(slot), name);
+    await waitMs(350);
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      const key = normalizeRecipeNameKey(name);
+      draftDevice.availableRecipeNames = (draftDevice.availableRecipeNames || []).filter((item) => normalizeRecipeNameKey(item) !== key);
+      draftDevice.syncedRecipeNames = (draftDevice.syncedRecipeNames || []).filter((item) => normalizeRecipeNameKey(item) !== key);
+      delete draftDevice.syncedRecipeSignatures[key];
+      draftDevice.lastUpdatedAt = nowIso();
+      draftDevice.lastMessage = `DELETE=${name}`;
+      appendActivity(draftDevice, `${name} delete command sent`, "warning");
+    });
+  }
+  await refreshDeviceRecipeInventory(slot, { force: true, timeoutMs: 4500 }).catch(() => []);
+  showToast(`${names.length} recipe${names.length === 1 ? "" : "s"} deleted from Device ${slot}`, "success");
+  openModal("device-recipes", { slot: Number(slot), query: "", filter: "all", selectedNames: [] });
+}
+
+function requestDeviceRecipeDelete(slot, recipeNames) {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(slot));
+  const names = Array.from(new Set((recipeNames || []).map((name) => String(name || "").trim()).filter(Boolean)));
+  if (!device || names.length === 0) {
+    showToast("Select at least one device recipe to delete.", "warning");
+    return;
+  }
+  const running = names.find((name) => isDeviceRecipeCurrentlyRunning(device, name));
+  if (running) {
+    showToast(`Cannot delete ${running} while it is cooking.`, "warning");
+    return;
+  }
+  const queuedNames = names.filter((name) => getQueuedOrdersForDeviceRecipe(snapshot, device, name, findRecipeByFirmwareName(snapshot, name)).length);
+  openModal("delete-device-recipes-confirm", {
+    slot: Number(slot),
+    names,
+    queuedNames
+  });
+}
+
+function renderDeviceRecipeRow(row, device, selected) {
+  const hasCloudRecipe = Boolean(row.recipe);
+  const isRunning = isDeviceRecipeCurrentlyRunning(device, row.recipeName);
+  const connected = device.connection === "connected";
+  const busy = isDeviceActivelyCooking(device);
+  return `
+    <article class="device-recipe-row ${selected ? "selected" : ""} ${isRunning ? "running" : ""}">
+      <button class="device-recipe-select" type="button" data-action="toggle-device-recipe-selected" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" aria-label="Select ${escapeHtml(row.recipeName)}">
+        ${selected ? "&#10003;" : ""}
+      </button>
+      <div class="device-recipe-main">
+        <div class="row space">
+          <div>
+            <strong>${escapeHtml(row.recipe?.displayName || row.recipeName)}</strong>
+            <small>${escapeHtml(row.recipeName)}</small>
+          </div>
+          ${isRunning ? `<span class="queue-tag live">Cooking</span>` : ""}
+        </div>
+        <div class="device-recipe-meta">
+          <span>Alias/code <b>${escapeHtml(row.alias)}</b></span>
+          <span>Version <b>${escapeHtml(row.version)}</b></span>
+          <span>Last cooked <b>${escapeHtml(row.lastCookedAt ? formatTimestamp(row.lastCookedAt) : "Not known")}</b></span>
+        </div>
+        <div class="device-recipe-tags">
+          ${row.tags.map((tag) => `<span class="device-recipe-status ${escapeHtml(tag.tone)}">${escapeHtml(tag.label)}</span>`).join("")}
+        </div>
+      </div>
+      <div class="device-recipe-actions">
+        <button class="primary-button micro" type="button" data-action="device-recipe-run" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" ${connected && !busy ? "" : "disabled"}>Run</button>
+        <button class="secondary-button micro" type="button" data-action="device-recipe-queue" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" ${isRunning ? "disabled" : ""}>Queue</button>
+        <button class="secondary-button micro" type="button" data-action="device-recipe-update" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" ${connected && hasCloudRecipe && !isRunning ? "" : "disabled"}>Update/Replace</button>
+        <button class="danger-button micro" type="button" data-action="device-recipe-delete-request" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" ${connected && !isRunning ? "" : "disabled"}>Delete</button>
+      </div>
+    </article>
+  `;
+}
+
+function renderDeviceRecipesModal(snapshot, device, modal) {
+  const rows = getDeviceRecipeRows(snapshot, device);
+  const filteredRows = filterDeviceRecipeRows(rows, modal);
+  const selectedNames = Array.isArray(modal.payload?.selectedNames) ? modal.payload.selectedNames : [];
+  const selectedSet = new Set(selectedNames.map((name) => normalizeRecipeNameKey(name)));
+  const activeFilter = modal.payload?.filter || "all";
+  const filters = [
+    ["all", "All"],
+    ["recent", "Recently used"],
+    ["missing-cloud", "Missing from cloud"],
+    ["cloud-synced", "Cloud synced"],
+    ["device-only", "Device only"]
+  ];
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card wide refined-mobile-screen device-detail-screen device-recipes-screen">
+        ${renderRefinedScreenTopBar(snapshot, "Recipes on Device", `${rows.length} recipe${rows.length === 1 ? "" : "s"}`)}
+        <div class="refined-title-row">
+          <button class="icon-button refined-back-button" data-action="return-device-sheet" data-slot="${device.slot}" aria-label="Back">${renderUiIcon("chevronLeft")}</button>
+          <div>
+            <div class="eyebrow">Device recipe memory</div>
+            <h3>Recipes on D${device.slot} &middot; ${escapeHtml(device.displayName)}</h3>
+            <p class="subtle">${escapeHtml(device.bluetoothName || "Not paired yet")} | ${escapeHtml(device.connection)}</p>
+          </div>
+          <span class="status-chip">${rows.length} stored</span>
+        </div>
+        <div class="settings-card device-recipes-toolbar">
+          <div class="action-row">
+            <button class="secondary-button" type="button" data-action="device-recipes-refresh" data-slot="${device.slot}" ${device.connection === "connected" ? "" : "disabled"}>Refresh from device</button>
+            <button class="primary-button" type="button" data-action="device-recipes-add" data-slot="${device.slot}" ${device.connection === "connected" ? "" : "disabled"}>Add recipe</button>
+            <button class="danger-button" type="button" data-action="delete-selected-device-recipes" data-slot="${device.slot}" ${selectedNames.length ? "" : "disabled"}>Delete selected</button>
+          </div>
+          <label class="field-label">
+            Search recipes on this device
+            <input class="field-input" type="search" data-input="device-recipes-search" data-slot="${device.slot}" value="${escapeHtml(modal.payload?.query || "")}" placeholder="Search recipe name, alias, code, or version">
+          </label>
+          <div class="chip-row device-recipes-filters">
+            ${filters
+              .map(
+                ([id, label]) => `
+                  <button class="chip-button ${activeFilter === id ? "selected" : ""}" type="button" data-action="device-recipes-filter" data-slot="${device.slot}" data-filter="${id}">
+                    ${escapeHtml(label)}
+                  </button>
+                `
+              )
+              .join("")}
+          </div>
+        </div>
+        <div class="device-recipes-summary">
+          <span>Showing ${filteredRows.length} of ${rows.length}</span>
+          <span>${selectedNames.length} selected</span>
+          <span>Last sync ${escapeHtml(getDeviceLastSyncLabel(device))}</span>
+        </div>
+        <div class="device-recipes-list">
+          ${
+            filteredRows.length
+              ? filteredRows
+                  .map((row) => renderDeviceRecipeRow(row, device, selectedSet.has(normalizeRecipeNameKey(row.recipeName))))
+                  .join("")
+              : `<div class="empty-card">No recipe files match this search or filter. Refresh from device to read memory again.</div>`
+          }
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDeleteDeviceRecipesConfirmModal(snapshot, modal) {
+  const slot = Number(modal.payload?.slot || 0);
+  const device = snapshot.devices.find((item) => item.slot === slot);
+  const names = Array.isArray(modal.payload?.names) ? modal.payload.names : [];
+  const queuedNames = Array.isArray(modal.payload?.queuedNames) ? modal.payload.queuedNames : [];
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card delete-device-recipes-modal">
+        <div class="row space">
+          <div>
+            <div class="eyebrow">Confirm delete</div>
+            <h3>Delete ${names.length} recipe${names.length === 1 ? "" : "s"} from D${slot}</h3>
+          </div>
+          <button class="icon-button" data-action="return-device-recipes" data-slot="${slot}">x</button>
+        </div>
+        <p class="subtle">This sends <code>DELETE=&lt;recipeName&gt;</code> to ${escapeHtml(device?.displayName || `Device ${slot}`)} and then refreshes the device recipe list.</p>
+        ${
+          queuedNames.length
+            ? `<div class="log-status-line error">Warning: ${escapeHtml(queuedNames.join(", "))} ${queuedNames.length === 1 ? "is" : "are"} currently in this device queue. Delete only if you are sure the queued job should not use that file.</div>`
+            : ""
+        }
+        <div class="delete-recipe-name-list">
+          ${names.map((name) => `<span>${escapeHtml(name)}</span>`).join("")}
+        </div>
+        <div class="action-row">
+          <button class="secondary-button" type="button" data-action="return-device-recipes" data-slot="${slot}">Cancel</button>
+          <button class="danger-button" type="button" data-action="confirm-device-recipes-delete" data-slot="${slot}" data-recipe-names="${escapeHtml(JSON.stringify(names))}">Delete from device</button>
+        </div>
       </div>
     </div>
   `;
@@ -6623,6 +7222,7 @@ function renderAssignRecipeModal(snapshot, modal) {
   const slot = Number(modal.payload?.slot || 0);
   const device = snapshot.devices.find((item) => item.slot === slot);
   const busy = device ? isDeviceActivelyCooking(device) : false;
+  const uploadOnly = modal.payload?.mode === "upload";
   const results = getAssignRecipeSearchResults(snapshot, modal);
   return `
     <div class="modal-backdrop">
@@ -6632,7 +7232,7 @@ function renderAssignRecipeModal(snapshot, modal) {
             <div class="eyebrow">Assign recipe</div>
             <h3>Device ${slot} ${device ? `- ${escapeHtml(device.displayName)}` : ""}</h3>
           </div>
-          <button class="icon-button" data-action="return-device-sheet" data-slot="${slot}">x</button>
+          <button class="icon-button" data-action="${uploadOnly ? "return-device-recipes" : "return-device-sheet"}" data-slot="${slot}">x</button>
         </div>
         <label class="field-label">
           Search local and global recipes
@@ -6656,11 +7256,13 @@ function renderAssignRecipeModal(snapshot, modal) {
                         </div>
                         <div class="action-row">
                           ${
-                            !busy
+                            uploadOnly
+                              ? `<button class="primary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="upload" data-slot="${slot}" ${idAttrs}>Upload/Add</button>`
+                              : !busy
                               ? `<button class="primary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="cook" data-slot="${slot}" ${idAttrs}>Cook Now</button>`
                               : ""
                           }
-                          <button class="secondary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="queue" data-slot="${slot}" ${idAttrs}>Add to Queue</button>
+                          ${uploadOnly ? "" : `<button class="secondary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="queue" data-slot="${slot}" ${idAttrs}>Add to Queue</button>`}
                         </div>
                       </article>
                     `;
@@ -7529,6 +8131,16 @@ function renderModal(snapshot) {
     return renderStoredLogsModal(snapshot, device);
   }
 
+  if (modal.type === "device-recipes") {
+    const device = getDevice(modal.payload.slot);
+    if (!device) return "";
+    return renderDeviceRecipesModal(snapshot, device, modal);
+  }
+
+  if (modal.type === "delete-device-recipes-confirm") {
+    return renderDeleteDeviceRecipesConfirmModal(snapshot, modal);
+  }
+
   if (modal.type === "device-sheet") {
     const device = getDevice(modal.payload.slot);
     if (!device) return "";
@@ -7577,7 +8189,7 @@ function renderModal(snapshot) {
                   <span><small>Status</small><b>${escapeHtml(device.telemetry.workStatus || device.connection)}</b></span>
                   <span><small>Mode</small><b>${escapeHtml(device.telemetry.mode || "Auto")}</b></span>
                   <span><small>Firmware</small><b>${escapeHtml(device.telemetry.firmwareVersion || "Unknown")}</b></span>
-                  <span><small>Recipes</small><b>${escapeHtml((device.availableRecipeNames || []).length)}</b></span>
+                  <button class="info-grid-button" type="button" data-action="open-device-recipes" data-slot="${device.slot}"><small>Recipes</small><b>${escapeHtml((device.availableRecipeNames || []).length)}</b></button>
                 </div>
               </div>
             </div>
@@ -8822,6 +9434,10 @@ async function handleClick(event) {
     openModal("device-sheet", { slot: Number(button.dataset.slot) });
     return;
   }
+  if (action === "return-device-recipes") {
+    openModal("device-recipes", { slot: Number(button.dataset.slot), query: "", filter: "all", selectedNames: [] });
+    return;
+  }
   if (action === "pro-studio-back") {
     handleProStudioBack();
     return;
@@ -8852,6 +9468,79 @@ async function handleClick(event) {
   }
   if (action === "open-device-metadata") {
     openModal("device-metadata", { slot: Number(button.dataset.slot) });
+    return;
+  }
+  if (action === "open-device-recipes") {
+    openModal("device-recipes", { slot: Number(button.dataset.slot), query: "", filter: "all", selectedNames: [] });
+    return;
+  }
+  if (action === "device-recipes-refresh") {
+    const slot = Number(button.dataset.slot);
+    try {
+      const names = await refreshDeviceRecipeInventory(slot, { force: true, timeoutMs: 4500 });
+      showToast(`Device ${slot} recipe list refreshed: ${names.length} found`, "success");
+    } catch (error) {
+      showToast(error.message, "error");
+    }
+    openModal("device-recipes", { slot, query: "", filter: "all", selectedNames: [] });
+    return;
+  }
+  if (action === "device-recipes-add") {
+    openModal("assign-recipe", { slot: Number(button.dataset.slot), query: "", mode: "upload" });
+    return;
+  }
+  if (action === "device-recipes-filter") {
+    const slot = Number(button.dataset.slot);
+    mutate((draft) => {
+      if (draft.ui.activeModal?.type !== "device-recipes" || Number(draft.ui.activeModal.payload?.slot) !== slot) return draft;
+      draft.ui.activeModal.payload.filter = button.dataset.filter || "all";
+    });
+    return;
+  }
+  if (action === "toggle-device-recipe-selected") {
+    const slot = Number(button.dataset.slot);
+    const recipeName = button.dataset.recipeName || "";
+    mutate((draft) => {
+      if (draft.ui.activeModal?.type !== "device-recipes" || Number(draft.ui.activeModal.payload?.slot) !== slot) return draft;
+      const selected = new Map((draft.ui.activeModal.payload.selectedNames || []).map((name) => [normalizeRecipeNameKey(name), name]));
+      const key = normalizeRecipeNameKey(recipeName);
+      if (selected.has(key)) selected.delete(key);
+      else selected.set(key, recipeName);
+      draft.ui.activeModal.payload.selectedNames = [...selected.values()];
+    });
+    return;
+  }
+  if (action === "delete-selected-device-recipes") {
+    const slot = Number(button.dataset.slot);
+    const modal = state().ui.activeModal;
+    const selectedNames = modal?.type === "device-recipes" && Number(modal.payload?.slot) === slot ? modal.payload.selectedNames || [] : [];
+    requestDeviceRecipeDelete(slot, selectedNames);
+    return;
+  }
+  if (action === "device-recipe-delete-request") {
+    requestDeviceRecipeDelete(Number(button.dataset.slot), [button.dataset.recipeName || ""]);
+    return;
+  }
+  if (action === "confirm-device-recipes-delete") {
+    let names = [];
+    try {
+      names = JSON.parse(button.dataset.recipeNames || "[]");
+    } catch {
+      names = [];
+    }
+    await deleteDeviceRecipes(Number(button.dataset.slot), names).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "device-recipe-run") {
+    await runDeviceStoredRecipe(Number(button.dataset.slot), button.dataset.recipeName || "").catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "device-recipe-queue") {
+    queueDeviceStoredRecipe(Number(button.dataset.slot), button.dataset.recipeName || "");
+    return;
+  }
+  if (action === "device-recipe-update") {
+    await updateDeviceRecipe(Number(button.dataset.slot), button.dataset.recipeName || "").catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "request-firmware") {
@@ -8943,6 +9632,16 @@ async function handleClick(event) {
     return;
   }
   if (action === "assign-recipe-action") {
+    if (button.dataset.assignAction === "upload") {
+      await executeDeviceRecipeAssignment({
+        slot: Number(button.dataset.slot),
+        recipeId: button.dataset.recipeId || "",
+        catalogId: button.dataset.catalogId || "",
+        action: "upload",
+        source: button.dataset.catalogId ? "Global Recipes" : "Recipes on Device"
+      }).catch((error) => showToast(error.message || "Unable to upload recipe.", "error"));
+      return;
+    }
     openModal("quick-assign-confirm", {
       slot: Number(button.dataset.slot),
       recipeId: button.dataset.recipeId || "",
@@ -9327,17 +10026,19 @@ async function handleClick(event) {
     return;
   }
   if (action === "read-device-recipes") {
+    const slot = Number(button.dataset.slot);
     try {
-      const names = await refreshDeviceRecipeInventory(Number(button.dataset.slot), {
+      const names = await refreshDeviceRecipeInventory(slot, {
         force: true,
         timeoutMs: 4500
       });
       showToast(
         names.length > 0
-          ? `Found ${names.length} recipe${names.length === 1 ? "" : "s"} on Device ${button.dataset.slot}`
-          : `Device ${button.dataset.slot} did not return recipe names over BLE`,
+          ? `Found ${names.length} recipe${names.length === 1 ? "" : "s"} on Device ${slot}`
+          : `Device ${slot} did not return recipe names over BLE`,
         names.length > 0 ? "success" : "warning"
       );
+      openModal("device-recipes", { slot, query: "", filter: "all", selectedNames: [] });
     } catch (error) {
       showToast(error.message || "Unable to read device recipes.", "error");
     }
@@ -9646,6 +10347,15 @@ async function handleChange(event) {
     const slot = Number(input.dataset.slot);
     mutate((draft) => {
       if (draft.ui.activeModal?.type !== "assign-recipe" || Number(draft.ui.activeModal.payload?.slot) !== slot) return draft;
+      draft.ui.activeModal.payload.query = input.value;
+    });
+    return;
+  }
+
+  if (input.dataset.input === "device-recipes-search") {
+    const slot = Number(input.dataset.slot);
+    mutate((draft) => {
+      if (draft.ui.activeModal?.type !== "device-recipes" || Number(draft.ui.activeModal.payload?.slot) !== slot) return draft;
       draft.ui.activeModal.payload.query = input.value;
     });
     return;

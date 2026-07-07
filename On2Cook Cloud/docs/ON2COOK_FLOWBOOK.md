@@ -874,3 +874,24 @@ The three card actions are separated by purpose:
 - Logs opens the stored historical log download screen. It runs `LOGSTATUS=?` first, blocks downloads while the cooker is busy, then uses `LISTLOGS` and `READLOG=<filename>` for historical files. This remains separate from Live Logs, which only streams real-time diagnostics with `livelog=ON/OFF`.
 
 Native APK BLE connections now preserve the `macAddress` supplied by the native bridge. Web Bluetooth still falls back to Chrome's browser device ID because Chrome does not expose the real BLE MAC address.
+
+## 21. Recipes on Device Page - July 7, 2026
+
+A separate Recipes on Device screen is now available from every device-inventory recipe count, the Device Details recipe count, and the Details > Recipes action. The screen title follows the device context, for example `Recipes on D1 · On2Cook-01`.
+
+The page is the device-memory view. It shows recipe files known to be stored on that cooker, with search and filters for All, Recently used, Missing from cloud, Cloud synced, and Device only. Each row shows the recipe name, alias/code, version, last cooked date when known, and storage status.
+
+Implemented actions:
+
+- Refresh from device sends `LISTRECIPES` and updates only the inventory list. It does not bulk-upload recipes.
+- Add recipe opens the local/global recipe picker scoped to the selected device. Upload/Add uses the existing BLE recipe JSON file-transfer path and refreshes inventory afterward.
+- Run starts the selected stored recipe when the device is connected and idle. If the recipe exists only on the device and has no local/cloud JSON, the app starts it by name without trying to upload a file.
+- Queue adds the selected stored recipe to that device queue. Device-only recipes are represented as device-memory queue jobs.
+- Delete requires confirmation and sends `DELETE=<recipeName>` for each selected recipe, then refreshes inventory.
+- Update/Replace is available only when the app has a local/cloud copy of that recipe JSON. It overwrites by deleting the old device file first, then uploading the replacement through the normal BLE transfer path.
+
+Safety rules:
+
+- The app blocks deletion or replacement of the recipe currently cooking on that device.
+- If a recipe is in that device queue, delete confirmation shows a warning before sending `DELETE=<recipeName>`.
+- After add, replace, or delete, the app refreshes the device recipe list.

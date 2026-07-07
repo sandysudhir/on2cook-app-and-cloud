@@ -2469,6 +2469,7 @@ textarea.field-input {
 }
 
 .inventory-serial-grid span,
+.inventory-serial-grid button,
 .metadata-grid span,
 .inventory-serial-firmware {
   min-width: 0;
@@ -2496,6 +2497,40 @@ textarea.field-input {
   display: block;
   overflow-wrap: anywhere;
   font-size: 0.9rem;
+}
+
+.inventory-metric-button,
+.info-grid-button {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inventory-metric-button:hover,
+.info-grid-button:hover {
+  border-color: rgba(244, 123, 32, 0.36);
+  box-shadow: 0 10px 22px rgba(244, 123, 32, 0.12);
+}
+
+.info-grid-button {
+  display: grid;
+  gap: 4px;
+  padding: 10px 8px 0 0;
+  border: 0;
+  border-top: 1px solid transparent;
+  background: transparent;
+}
+
+.info-grid-button small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.info-grid-button b {
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
 }
 
 .connection-history-list {
@@ -2531,6 +2566,185 @@ textarea.field-input {
 .stored-logs-screen {
   display: grid;
   gap: 14px;
+}
+
+.device-recipes-screen {
+  display: grid;
+  gap: 14px;
+}
+
+.device-recipes-toolbar {
+  display: grid;
+  gap: 12px;
+}
+
+.device-recipes-filters {
+  gap: 8px;
+}
+
+.device-recipes-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.device-recipes-summary span {
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.device-recipes-list {
+  display: grid;
+  gap: 10px;
+}
+
+.device-recipe-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.device-recipe-row.selected {
+  border-color: rgba(45, 108, 223, 0.34);
+  background: rgba(45, 108, 223, 0.08);
+}
+
+.device-recipe-row.running {
+  border-color: rgba(244, 123, 32, 0.32);
+}
+
+.device-recipe-select {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--blue);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.device-recipe-main {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.device-recipe-main strong {
+  display: block;
+  font-size: 0.98rem;
+}
+
+.device-recipe-main small {
+  display: block;
+  color: var(--muted);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.device-recipe-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.device-recipe-meta span {
+  min-width: 0;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(21, 21, 21, 0.035);
+}
+
+.device-recipe-meta b {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.device-recipe-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.device-recipe-status {
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.device-recipe-status.device {
+  color: var(--blue);
+  background: rgba(45, 108, 223, 0.1);
+}
+
+.device-recipe-status.success {
+  color: var(--success);
+  background: rgba(33, 122, 90, 0.1);
+}
+
+.device-recipe-status.warning {
+  color: #b96b00;
+  background: rgba(185, 107, 0, 0.1);
+}
+
+.device-recipe-status.danger {
+  color: var(--danger);
+  background: rgba(180, 59, 45, 0.1);
+}
+
+.device-recipe-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, auto));
+  gap: 6px;
+  justify-content: end;
+}
+
+.delete-recipe-name-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.delete-recipe-name-list span {
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(180, 59, 45, 0.1);
+  color: var(--danger);
+  font-weight: 900;
+}
+
+@media (max-width: 760px) {
+  .device-recipe-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .device-recipe-actions {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+
+  .device-recipe-meta {
+    grid-template-columns: 1fr;
+  }
 }
 
 .customer-run-card {
@@ -5609,9 +5823,14 @@ textarea.field-input {
 .surface:not(.login-surface) .stored-log-table-wrap,
 .surface:not(.login-surface) .live-log-grid span,
 .surface:not(.login-surface) .inventory-serial-grid span,
+.surface:not(.login-surface) .inventory-serial-grid button,
 .surface:not(.login-surface) .metadata-grid span,
 .surface:not(.login-surface) .inventory-serial-firmware,
-.surface:not(.login-surface) .connection-history-row {
+.surface:not(.login-surface) .connection-history-row,
+.surface:not(.login-surface) .device-recipes-summary span,
+.surface:not(.login-surface) .device-recipe-row,
+.surface:not(.login-surface) .device-recipe-meta span,
+.surface:not(.login-surface) .device-recipe-select {
   color: #f8f5f1;
   border-color: rgba(255, 255, 255, 0.1);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.032));
@@ -5652,6 +5871,47 @@ textarea.field-input {
 .surface:not(.login-surface) .inventory-serial-firmware strong,
 .surface:not(.login-surface) .connection-history-row span {
   color: #fffaf5;
+}
+
+.surface:not(.login-surface) .device-recipe-main strong,
+.surface:not(.login-surface) .device-recipe-meta b {
+  color: #fffaf5;
+}
+
+.surface:not(.login-surface) .device-recipe-main small,
+.surface:not(.login-surface) .device-recipes-summary,
+.surface:not(.login-surface) .device-recipe-meta {
+  color: #a9a39e;
+}
+
+.surface:not(.login-surface) .device-recipe-row.selected {
+  border-color: rgba(45, 108, 223, 0.42);
+  background: linear-gradient(135deg, rgba(45, 108, 223, 0.18), rgba(255, 255, 255, 0.035));
+}
+
+.surface:not(.login-surface) .device-recipe-row.running {
+  border-color: rgba(255, 74, 20, 0.38);
+}
+
+.surface:not(.login-surface) .device-recipe-status.device {
+  color: #9fc1ff;
+  background: rgba(45, 108, 223, 0.18);
+}
+
+.surface:not(.login-surface) .device-recipe-status.success {
+  color: #9fe0c2;
+  background: rgba(33, 122, 90, 0.2);
+}
+
+.surface:not(.login-surface) .device-recipe-status.warning {
+  color: #ffd199;
+  background: rgba(185, 107, 0, 0.2);
+}
+
+.surface:not(.login-surface) .device-recipe-status.danger,
+.surface:not(.login-surface) .delete-recipe-name-list span {
+  color: #ffb0a4;
+  background: rgba(180, 59, 45, 0.22);
 }
 
 @media (min-width: 900px) {

@@ -1084,6 +1084,12 @@ export class BleTransport extends EventTarget {
     });
   }
 
+  async deleteRecipe(slot, recipeName) {
+    const safeName = String(recipeName || "").trim();
+    if (!safeName) throw new Error("Recipe name is required for delete.");
+    await this.sendCommand(slot, `DELETE=${safeName}`);
+  }
+
   async listLogs(slot) {
     await this.sendCommand(slot, "LISTLOGS");
   }
