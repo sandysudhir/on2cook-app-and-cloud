@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707i";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707i";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707j";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707j";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707i";
+} from "./ncb-services.js?v=20260707j";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707i";
+} from "./data-store.js?v=20260707j";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -627,6 +627,70 @@ function getQueueTimelineModel(snapshot, device) {
       };
     })
   };
+}
+
+function getQuickAssignRecipes(snapshot, device, limit = 3) {
+  const candidates = [];
+  const addRecipe = (recipe) => {
+    if (!recipe || candidates.some((item) => item.id === recipe.id)) return;
+    if (recipe.selected === false) return;
+    candidates.push(recipe);
+  };
+
+  getDeviceCookedHistoryRows(snapshot, device, 8).forEach((row) => {
+    addRecipe(
+      (row.recipeId ? findRecipeById(snapshot, row.recipeId) : null) ||
+        findRecipeByFirmwareName(snapshot, row.firmwareName) ||
+        findEffectiveRecipeForOrder(snapshot, row.displayName)
+    );
+  });
+  getQueueOrders(snapshot, device).forEach((order) => addRecipe(getEffectiveRecipe(snapshot, order)));
+  snapshot.orders.current
+    .filter((order) => order.assignedSlot === device.slot || order.targetSlot === device.slot)
+    .forEach((order) => addRecipe(getEffectiveRecipe(snapshot, order)));
+  snapshot.recipes.forEach((recipe) => addRecipe(recipe));
+  return candidates.slice(0, limit);
+}
+
+function getAssignRecipeSearchResults(snapshot, modal) {
+  const query = String(modal?.payload?.query || "").trim().toLowerCase();
+  const localRows = snapshot.recipes
+    .filter((recipe) => recipe.selected !== false)
+    .filter(
+      (recipe) =>
+        !query ||
+        recipe.displayName.toLowerCase().includes(query) ||
+        recipe.firmwareName.toLowerCase().includes(query) ||
+        recipe.aliases.some((alias) => alias.toLowerCase().includes(query))
+    )
+    .slice(0, 30)
+    .map((recipe) => ({
+      kind: "local",
+      id: recipe.id,
+      title: recipe.displayName,
+      subtitle: `${recipe.firmwareName} | ${recipe.source || "local"}`,
+      recipe
+    }));
+
+  const localNames = new Set(localRows.map((row) => normalizeRecipeNameKey(row.title)));
+  const catalogRows = getRecipeCatalog(snapshot)
+    .filter(
+      (entry) =>
+        !query ||
+        String(entry.name || entry.recipeName || "").toLowerCase().includes(query) ||
+        String(entry.id || "").toLowerCase().includes(query)
+    )
+    .filter((entry) => !localNames.has(normalizeRecipeNameKey(entry.name || entry.recipeName || entry.id)))
+    .slice(0, Math.max(0, 30 - localRows.length))
+    .map((entry) => ({
+      kind: "global",
+      id: entry.id,
+      title: entry.name || entry.recipeName || entry.id || "Global recipe",
+      subtitle: entry.sourceName || entry.zipName || "Global Recipes",
+      entry
+    }));
+
+  return [...localRows, ...catalogRows].slice(0, 30);
 }
 
 function getSelectedRecipes(snapshot) {
@@ -3718,6 +3782,111 @@ function queueCookAgainFromHistory(slot, historyKey) {
   showToast(`${queueOrder.itemName} added to Device ${slot} queue as Re-cook`, "success");
 }
 
+function allowRecipeOnDevice(draft, slot, recipeId) {
+  const device = draft.devices.find((item) => item.slot === Number(slot));
+  if (!device || !recipeId) return;
+  seedAllowedRecipeIdsIfNeeded(device, draft);
+  device.allowedRecipeIdsConfigured = true;
+  if (!device.allowedRecipeIds.includes(recipeId)) {
+    device.allowedRecipeIds.push(recipeId);
+  }
+}
+
+function createDeviceQueuedRecipeOrder(snapshot, recipe, slot, source = "Quick Assign") {
+  return decorateOrderRecord(
+    {
+      id: safeRandomId("quick"),
+      orderId: `#Q${Date.now().toString().slice(-5)}`,
+      itemName: recipe.displayName,
+      recipeLookup: recipe.displayName,
+      quantity: "1 batch",
+      source,
+      specialInstructions: "",
+      accentColor: "#f47b20",
+      createdAt: nowIso(),
+      status: "queued",
+      assignedSlot: Number(slot),
+      assignedMode: "device",
+      activeRecipeId: recipe.id,
+      currentRunRecipeName: recipe.displayName,
+      currentRunFirmwareName: recipe.firmwareName,
+      targetSlot: Number(slot),
+      manual: true,
+      historyNote: ""
+    },
+    recipe,
+    snapshot.orders.current.length
+  );
+}
+
+async function resolveAssignableRecipe(payload) {
+  const snapshot = state();
+  if (payload.recipeId) {
+    return findRecipeById(snapshot, payload.recipeId);
+  }
+  if (payload.catalogId) {
+    const entry = getRecipeCatalog(snapshot).find((item) => item.id === payload.catalogId);
+    if (!entry) return null;
+    return ensureGlobalCatalogRecipeImported(entry, { ensureSelected: true });
+  }
+  return null;
+}
+
+async function executeDeviceRecipeAssignment(payload) {
+  const slot = Number(payload.slot);
+  const action = payload.action === "cook" ? "cook" : "queue";
+  const device = getDevice(slot);
+  if (!device) return;
+  if (device.connection !== "connected") {
+    showToast(`Device ${slot} is offline. Connect it before assigning a recipe.`, "warning");
+    return;
+  }
+  if (action === "cook" && isDeviceActivelyCooking(device)) {
+    showToast(`Device ${slot} is cooking now. Add this recipe to the queue instead.`, "warning");
+    return;
+  }
+  const recipe = await resolveAssignableRecipe(payload);
+  if (!recipe) {
+    showToast("Recipe not found.", "error");
+    return;
+  }
+  mutate((draft) => {
+    allowRecipeOnDevice(draft, slot, recipe.id);
+  });
+  await ensureRecipesAvailableOnDevice(slot, [recipe], {
+    silent: false,
+    forceInventory: true,
+    overwriteExisting: false,
+    inventoryTimeoutMs: 4500
+  });
+  if (action === "cook") {
+    const order = createDeviceQueuedRecipeOrder(state(), recipe, slot, payload.source || "Quick Assign");
+    order.status = "pending";
+    order.assignedSlot = null;
+    order.currentRunRecipeName = recipe.displayName;
+    order.currentRunFirmwareName = recipe.firmwareName;
+    mutate((draft) => {
+      draft.orders.current.unshift(order);
+    });
+    const result = await startOrderFlow(order.id, slot, { ignoreQueuedWork: true });
+    if (result === "started") {
+      showToast(`${recipe.displayName} starting on Device ${slot}`, "success");
+    }
+    openModal("device-sheet", { slot });
+    return;
+  }
+  const order = createDeviceQueuedRecipeOrder(state(), recipe, slot, payload.source || "Quick Assign");
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === slot);
+    if (!draftDevice) return draft;
+    draft.orders.current.push(order);
+    draftDevice.queueOrderIds = [...getDeviceQueuedOrderIds(draft, draftDevice), order.id];
+    appendActivity(draftDevice, `${recipe.displayName} added from Quick Assign`, "info");
+  });
+  showToast(`${recipe.displayName} added to Device ${slot} queue`, "success");
+  openModal("device-sheet", { slot });
+}
+
 async function completeIngredientStage(slot) {
   const snapshot = state();
   const device = snapshot.devices.find((item) => item.slot === Number(slot));
@@ -6192,6 +6361,139 @@ function renderQueueTimelineCard(snapshot, device) {
   `;
 }
 
+function renderQuickAssignCard(snapshot, device) {
+  const recipes = getQuickAssignRecipes(snapshot, device, 3);
+  const busy = isDeviceActivelyCooking(device);
+  return `
+    <div class="quick-assign-card">
+      <div class="queue-timeline-header">
+        <div>
+          <div class="mini-title">Quick assign recipe</div>
+          <p>Add a frequent recipe to Device ${device.slot} without leaving Device Details.</p>
+        </div>
+        <button class="primary-button micro" type="button" data-action="open-assign-recipe" data-slot="${device.slot}">Add Recipe</button>
+      </div>
+      <div class="quick-recipe-chip-row">
+        ${
+          recipes.length
+            ? recipes
+                .map(
+                  (recipe) => `
+                    <button class="quick-recipe-chip" type="button" data-action="quick-assign-chip" data-slot="${device.slot}" data-recipe-id="${recipe.id}">
+                      <span>${escapeHtml(recipe.displayName)}</span>
+                      <small>${escapeHtml(busy ? "Add to Queue" : "Cook / Queue")}</small>
+                    </button>
+                  `
+                )
+                .join("")
+            : `<div class="empty-card compact-empty">No recent or allowed recipes are available for this device yet.</div>`
+        }
+      </div>
+    </div>
+  `;
+}
+
+function renderQuickAssignConfirmModal(snapshot, modal) {
+  const slot = Number(modal.payload?.slot || 0);
+  const device = snapshot.devices.find((item) => item.slot === slot);
+  const recipe =
+    (modal.payload?.recipeId ? findRecipeById(snapshot, modal.payload.recipeId) : null) ||
+    (modal.payload?.catalogId ? getRecipeCatalog(snapshot).find((entry) => entry.id === modal.payload.catalogId) : null);
+  const title = recipe?.displayName || recipe?.name || recipe?.recipeName || "Selected recipe";
+  const busy = device ? isDeviceActivelyCooking(device) : false;
+  const forcedAction = modal.payload?.action === "cook" || modal.payload?.action === "queue" ? modal.payload.action : "";
+  const canCookNow = device?.connection === "connected" && !busy;
+  const baseAttrs = `data-slot="${slot}" data-recipe-id="${escapeHtml(modal.payload?.recipeId || "")}" data-catalog-id="${escapeHtml(modal.payload?.catalogId || "")}"`;
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card quick-assign-confirm-modal">
+        <div class="row space">
+          <div>
+            <div class="eyebrow">Confirm recipe assignment</div>
+            <h3>${escapeHtml(title)}</h3>
+          </div>
+          <button class="icon-button" data-action="return-device-sheet" data-slot="${slot}">x</button>
+        </div>
+        <div class="settings-card compact-note">
+          <strong>Device ${slot}: ${escapeHtml(device?.displayName || "Unknown device")}</strong>
+          <p class="subtle">${escapeHtml(device?.connection === "connected" ? "The app will check the device recipe list and upload this recipe only if it is missing." : "Connect this device before assigning a recipe.")}</p>
+        </div>
+        ${
+          forcedAction
+            ? `<p class="subtle">${escapeHtml(forcedAction === "cook" ? "Ready to check/upload the recipe and start cooking now." : "Ready to check/upload the recipe and add it to this device queue.")}</p>
+               <div class="action-row">
+                 <button class="secondary-button" type="button" data-action="return-device-sheet" data-slot="${slot}">Cancel</button>
+                 <button class="${forcedAction === "cook" ? "primary-button" : "secondary-button"}" type="button" data-action="confirm-quick-assignment" data-assign-action="${forcedAction}" ${baseAttrs} ${device?.connection === "connected" ? "" : "disabled"}>
+                   ${forcedAction === "cook" ? "Confirm Cook Now" : "Confirm Add to Queue"}
+                 </button>
+               </div>`
+            : `<p class="subtle">Choose what to do after the device recipe check is complete.</p>
+               <div class="action-row">
+                 <button class="primary-button" type="button" data-action="confirm-quick-assignment" data-assign-action="cook" ${baseAttrs} ${canCookNow ? "" : "disabled"}>Cook Now</button>
+                 <button class="secondary-button" type="button" data-action="confirm-quick-assignment" data-assign-action="queue" ${baseAttrs} ${device?.connection === "connected" ? "" : "disabled"}>Add to Queue</button>
+                 <button class="secondary-button" type="button" data-action="return-device-sheet" data-slot="${slot}">Cancel</button>
+               </div>`
+        }
+      </div>
+    </div>
+  `;
+}
+
+function renderAssignRecipeModal(snapshot, modal) {
+  const slot = Number(modal.payload?.slot || 0);
+  const device = snapshot.devices.find((item) => item.slot === slot);
+  const busy = device ? isDeviceActivelyCooking(device) : false;
+  const results = getAssignRecipeSearchResults(snapshot, modal);
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card wide assign-recipe-modal">
+        <div class="row space">
+          <div>
+            <div class="eyebrow">Assign recipe</div>
+            <h3>Device ${slot} ${device ? `- ${escapeHtml(device.displayName)}` : ""}</h3>
+          </div>
+          <button class="icon-button" data-action="return-device-sheet" data-slot="${slot}">x</button>
+        </div>
+        <label class="field-label">
+          Search local and global recipes
+          <input class="field-input" type="search" data-input="assign-recipe-search" data-slot="${slot}" value="${escapeHtml(modal.payload?.query || "")}" placeholder="Search recipe name, firmware name, or alias">
+        </label>
+        <div class="assign-recipe-list">
+          ${
+            results.length
+              ? results
+                  .map((row) => {
+                    const idAttrs =
+                      row.kind === "local"
+                        ? `data-recipe-id="${escapeHtml(row.id)}"`
+                        : `data-catalog-id="${escapeHtml(row.id)}"`;
+                    return `
+                      <article class="assign-recipe-row">
+                        <div>
+                          <span class="queue-tag ${row.kind === "global" ? "recook" : ""}">${row.kind === "global" ? "Global" : "Local"}</span>
+                          <strong>${escapeHtml(row.title)}</strong>
+                          <small>${escapeHtml(row.subtitle)}</small>
+                        </div>
+                        <div class="action-row">
+                          ${
+                            !busy
+                              ? `<button class="primary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="cook" data-slot="${slot}" ${idAttrs}>Cook Now</button>`
+                              : ""
+                          }
+                          <button class="secondary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="queue" data-slot="${slot}" ${idAttrs}>Add to Queue</button>
+                        </div>
+                      </article>
+                    `;
+                  })
+                  .join("")
+              : `<div class="empty-card">No recipe matches that search.</div>`
+          }
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderLastRunMetrics(run) {
   if (!run?.finishedAt) return "";
   const actualSeconds = getRunActualSeconds(run);
@@ -7021,6 +7323,14 @@ function renderModal(snapshot) {
     `;
   }
 
+  if (modal.type === "quick-assign-confirm") {
+    return renderQuickAssignConfirmModal(snapshot, modal);
+  }
+
+  if (modal.type === "assign-recipe") {
+    return renderAssignRecipeModal(snapshot, modal);
+  }
+
   if (modal.type === "live-logs") {
     const device = getDevice(modal.payload.slot);
     if (!device) return "";
@@ -7114,6 +7424,9 @@ function renderModal(snapshot) {
                     </div>`
                   : ""
               }
+            </div>
+            <div class="settings-card refined-quick-assign-card">
+              ${renderQuickAssignCard(snapshot, device)}
             </div>
             <div class="settings-card refined-inventory-card">
               <div class="mini-title">Device recipe inventory</div>
@@ -8328,6 +8641,10 @@ async function handleClick(event) {
     closeModal();
     return;
   }
+  if (action === "return-device-sheet") {
+    openModal("device-sheet", { slot: Number(button.dataset.slot) });
+    return;
+  }
   if (action === "pro-studio-back") {
     handleProStudioBack();
     return;
@@ -8424,6 +8741,40 @@ async function handleClick(event) {
   }
   if (action === "queue-cook-again") {
     queueCookAgainFromHistory(Number(button.dataset.slot), button.dataset.historyKey || "");
+    return;
+  }
+  if (action === "quick-assign-chip") {
+    const slot = Number(button.dataset.slot);
+    const device = state().devices.find((item) => item.slot === slot);
+    openModal("quick-assign-confirm", {
+      slot,
+      recipeId: button.dataset.recipeId || "",
+      action: device && isDeviceActivelyCooking(device) ? "queue" : ""
+    });
+    return;
+  }
+  if (action === "open-assign-recipe") {
+    openModal("assign-recipe", { slot: Number(button.dataset.slot), query: "" });
+    return;
+  }
+  if (action === "assign-recipe-action") {
+    openModal("quick-assign-confirm", {
+      slot: Number(button.dataset.slot),
+      recipeId: button.dataset.recipeId || "",
+      catalogId: button.dataset.catalogId || "",
+      action: button.dataset.assignAction || "queue",
+      source: button.dataset.catalogId ? "Global Recipes" : "Quick Assign"
+    });
+    return;
+  }
+  if (action === "confirm-quick-assignment") {
+    await executeDeviceRecipeAssignment({
+      slot: Number(button.dataset.slot),
+      recipeId: button.dataset.recipeId || "",
+      catalogId: button.dataset.catalogId || "",
+      action: button.dataset.assignAction || "queue",
+      source: button.dataset.catalogId ? "Global Recipes" : "Quick Assign"
+    }).catch((error) => showToast(error.message || "Unable to assign recipe.", "error"));
     return;
   }
   if (action === "run-recipe-on-device") {
@@ -9100,6 +9451,15 @@ async function handleChange(event) {
     mutate((draft) => {
       if (draft.ui.activeModal?.type !== "device-sheet" || Number(draft.ui.activeModal.payload?.slot) !== slot) return draft;
       draft.ui.activeModal.payload.recipeFilter = input.value;
+    });
+    return;
+  }
+
+  if (input.dataset.input === "assign-recipe-search") {
+    const slot = Number(input.dataset.slot);
+    mutate((draft) => {
+      if (draft.ui.activeModal?.type !== "assign-recipe" || Number(draft.ui.activeModal.payload?.slot) !== slot) return draft;
+      draft.ui.activeModal.payload.query = input.value;
     });
     return;
   }

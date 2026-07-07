@@ -843,3 +843,22 @@ Queue editing rules implemented:
 - If the device is already cooking, Stop Current & Start Selected moves the selected job to next position and sends the normal abort command for the active recipe. The selected job starts only after the device acknowledges the abort and the scheduler sees the device idle.
 - Cook Again creates a fresh queued order with `recook: true`; it does not edit or delete the old cooked-history entry.
 - Repeated jobs show the Re-cook tag in the upcoming queue.
+
+## 19. Quick Assign Recipe Card - July 7, 2026
+
+Device Details now includes a Quick Assign Recipe card directly under the Queue Timeline. It shows up to three recent/frequent kitchen recipes as chips and an Add Recipe button.
+
+Quick chip behavior:
+
+- If the selected device is idle and connected, tapping a recipe chip opens a confirmation dialog with Cook Now and Add to Queue.
+- If the selected device is already cooking, tapping a chip opens an Add to Queue confirmation by default.
+- Confirmation happens before any device recipe check, upload, queueing, or cooking start.
+
+Add Recipe behavior:
+
+- Add Recipe opens a recipe assignment screen scoped to the selected device.
+- The search list includes imported/local recipes first and then matching Global Recipes entries that are not yet imported.
+- Choosing a Global Recipe imports it into the local kitchen recipe list before assignment.
+- The selected recipe is enabled for the target device, then the app checks the device inventory and uploads the firmware JSON only if the recipe is missing.
+- Cook Now starts the normal run flow when the device is idle.
+- Add to Queue creates a queued job for that device after the recipe availability check/upload completes.

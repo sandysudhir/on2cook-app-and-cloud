@@ -2878,6 +2878,75 @@ textarea.field-input {
   font-size: 0.8rem;
 }
 
+.quick-assign-card {
+  display: grid;
+  gap: 12px;
+}
+
+.quick-recipe-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-recipe-chip {
+  min-height: 48px;
+  display: grid;
+  gap: 3px;
+  align-content: center;
+  padding: 8px 12px;
+  border: 1px solid rgba(244, 123, 32, 0.2);
+  border-radius: 14px;
+  background: rgba(255, 248, 241, 0.9);
+  color: var(--accent-strong);
+  text-align: left;
+  font-weight: 900;
+}
+
+.quick-recipe-chip small {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.assign-recipe-modal,
+.quick-assign-confirm-modal {
+  max-width: min(720px, calc(100vw - 24px));
+}
+
+.assign-recipe-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.assign-recipe-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid rgba(111, 92, 71, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.assign-recipe-row > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.assign-recipe-row strong {
+  color: var(--ink);
+}
+
+.assign-recipe-row small {
+  color: var(--muted);
+}
+
 .next-recipe-card {
   display: grid;
   gap: 9px;
@@ -5074,6 +5143,37 @@ textarea.field-input {
 .surface:not(.login-surface) .device-detail-screen .queue-tag.recook {
   color: #9fc1ff;
   background: rgba(45, 108, 223, 0.18);
+}
+
+.surface:not(.login-surface) .device-detail-screen .quick-recipe-chip,
+.surface:not(.login-surface) .assign-recipe-row {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.032));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.surface:not(.login-surface) .device-detail-screen .quick-recipe-chip span,
+.surface:not(.login-surface) .assign-recipe-row strong {
+  color: #fffaf5;
+}
+
+.surface:not(.login-surface) .device-detail-screen .quick-recipe-chip small,
+.surface:not(.login-surface) .assign-recipe-row small {
+  color: #a9a39e;
+}
+
+.surface:not(.login-surface) .quick-assign-confirm-modal,
+.surface:not(.login-surface) .assign-recipe-modal {
+  color: #f8f5f1;
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(170deg, rgba(35, 34, 34, 0.98) 0%, rgba(18, 18, 18, 0.99) 48%, rgba(7, 7, 7, 1) 100%);
+}
+
+.surface:not(.login-surface) .quick-assign-confirm-modal h3,
+.surface:not(.login-surface) .assign-recipe-modal h3 {
+  color: #fffaf5;
 }
 
 /* Premium dark dashboard polish */
