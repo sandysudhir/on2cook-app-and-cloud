@@ -4725,6 +4725,122 @@ textarea.field-input {
   background: rgba(255, 255, 255, 0.075);
 }
 
+/* Premium dark dashboard polish */
+.surface:not(.login-surface) .screen-rail {
+  gap: 24px;
+  padding-top: 24px;
+  padding-bottom: 28px;
+}
+
+.surface:not(.login-surface) .phone-frame {
+  filter: drop-shadow(0 26px 46px rgba(0, 0, 0, 0.32));
+}
+
+.surface:not(.login-surface) .control-phone .phone-shell,
+.surface:not(.login-surface) .device-phone .phone-shell {
+  outline: 1px solid rgba(255, 255, 255, 0.04);
+  outline-offset: -2px;
+}
+
+.surface:not(.login-surface) .dashboard-brand-logo,
+.surface:not(.login-surface) .device-head-logo,
+.surface:not(.login-surface) .refined-brand-lockup img {
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 74, 20, 0.18);
+}
+
+.surface:not(.login-surface) .dashboard-title-block h2 {
+  font-size: 1.04rem;
+}
+
+.surface:not(.login-surface) .dashboard-title-block p {
+  color: #d8d0c8;
+  font-size: 0.9rem;
+}
+
+.surface:not(.login-surface) .dashboard-counter-card strong {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.surface:not(.login-surface) .dashboard-counter-card span {
+  color: #fffaf5;
+  font-weight: 950;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button:not(.active):hover,
+.surface:not(.login-surface) .dashboard-device-card:hover,
+.surface:not(.login-surface) .order-card:hover,
+.surface:not(.login-surface) .device-info-tab:hover {
+  border-color: rgba(255, 74, 20, 0.28);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.115), rgba(255, 255, 255, 0.045));
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button.active .tab-icon {
+  color: #ff7a45;
+}
+
+.surface:not(.login-surface) .dashboard-device-access {
+  border-radius: 22px;
+  padding: 14px 16px;
+}
+
+.surface:not(.login-surface) .dashboard-device-card {
+  border-radius: 18px;
+  min-height: 128px;
+  align-content: center;
+}
+
+.surface:not(.login-surface) .dashboard-device-card.selected,
+.surface:not(.login-surface) .dashboard-device-card.active {
+  border-color: rgba(255, 74, 20, 0.46);
+  background:
+    linear-gradient(145deg, rgba(237, 27, 47, 0.24), rgba(255, 74, 20, 0.12)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035));
+  box-shadow: 0 22px 46px rgba(255, 74, 20, 0.14);
+}
+
+.surface:not(.login-surface) .summary-chip,
+.surface:not(.login-surface) .dashboard-order-status-chip {
+  color: #fffaf5;
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.surface:not(.login-surface) .summary-chip strong,
+.surface:not(.login-surface) .dashboard-order-status-chip strong {
+  color: #ff5a24;
+}
+
+.surface:not(.login-surface) .order-card {
+  border-radius: 22px;
+}
+
+.surface:not(.login-surface) .order-card h3 {
+  color: #fffaf5;
+  letter-spacing: 0.02em;
+}
+
+.surface:not(.login-surface) .order-card .order-stat-line,
+.surface:not(.login-surface) .dashboard-order-meta {
+  color: #c9c0b8;
+}
+
+.surface:not(.login-surface) .order-thumb {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.28);
+}
+
+.surface:not(.login-surface) .device-phone .mini-title,
+.surface:not(.login-surface) .control-phone .mini-title {
+  color: #ff6b32;
+}
+
+.surface:not(.login-surface) .device-phone .queue-stack {
+  margin-bottom: 0;
+}
+
 .modal-form {
   display: grid;
   gap: 12px;

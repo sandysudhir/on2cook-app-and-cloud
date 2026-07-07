@@ -818,4 +818,6 @@ The second refinement pass tightened the device-management layout specifically: 
 
 The latest pass extends that same premium dark language to the Device Details management sheet, including pairing, firmware, inventory, allowed recipes, device actions, and saved logs.
 
+The final dashboard polish pass tightened the main On2Cook Cloud device-management surface with stronger panel hierarchy, clearer hover/selected states, richer On2Cook red/orange accents, and more balanced spacing across device cards, order cards, counters, and navigation icons.
+
 This was a visual/layout pass only. BLE transport, recipe upload timing, order queue logic, and firmware command strings were not changed.
