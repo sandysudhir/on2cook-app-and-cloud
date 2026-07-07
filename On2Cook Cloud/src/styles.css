@@ -1168,6 +1168,7 @@ button {
   width: min(980px, 100%);
   display: grid;
   gap: 18px;
+  min-width: 0;
 }
 
 .login-brand-card,
@@ -1185,6 +1186,11 @@ button {
   align-items: center;
   padding: 24px;
   border-radius: 24px;
+}
+
+.login-brand-card > div,
+.login-card {
+  min-width: 0;
 }
 
 .login-brand-card img {
@@ -1210,6 +1216,7 @@ button {
   color: var(--muted);
   font-size: 1.05rem;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .login-card-grid {
@@ -6525,13 +6532,29 @@ textarea.field-input {
     padding: 16px;
   }
 
+  .login-shell {
+    width: 100%;
+    max-width: calc(100vw - 32px);
+  }
+
   .login-brand-card,
   .login-card-grid {
     grid-template-columns: 1fr;
   }
 
   .login-brand-card {
-    padding: 18px;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .login-brand-card h1 {
+    font-size: clamp(1.7rem, 10vw, 2.45rem);
+    line-height: 1.02;
+  }
+
+  .login-brand-card p {
+    font-size: 0.95rem;
+    line-height: 1.38;
   }
 
   .hero-head img,
@@ -6861,5 +6884,37 @@ textarea.field-input {
   .surface:not(.login-surface) .control-phone .tab-edge-icon {
     width: 18px;
     min-width: 18px;
+  }
+}
+
+@media (max-width: 560px) {
+  .login-surface {
+    width: 100%;
+    overflow-x: hidden;
+    padding: 16px !important;
+  }
+
+  .login-shell,
+  .login-brand-card,
+  .login-card-grid,
+  .login-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .login-brand-card p,
+  .login-card p {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: break-word;
+  }
+
+  .login-card .primary-button,
+  .login-card .secondary-button {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 }

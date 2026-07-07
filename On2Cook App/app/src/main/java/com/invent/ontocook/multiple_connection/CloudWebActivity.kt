@@ -606,6 +606,6 @@ class CloudWebActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "CloudWebActivity"
-        private const val CLOUD_URL = "https://www.on2cook.net/?apk=1"
+        private const val CLOUD_URL = "https://www.on2cook.net/?apk=1&build=20260708b"
     }
 }

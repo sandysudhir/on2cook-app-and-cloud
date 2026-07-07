@@ -1,5 +1,13 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-07-08
+
+- Refreshed the Android APK WebView entry so the Orders cloud workspace opens the latest APK-specific mobile surface with native BLE bridge support.
+- Preserved the native home screen flow: Cook, Orders, and Fry remain on the app home screen, and the cloud order/device workspace opens only from Orders.
+- Prepared a new APK build for phone testing with the current responsive/mobile-optimized On2Cook Cloud UI.
+- Tightened phone-width login and APK surface CSS so 390px mobile WebView renders without horizontal overflow.
+- Deployed the refreshed web bundle to `on2cook.net` with cache version `20260708b` / service-worker cache `v80`.
+
 ## 2026-07-06
 
 - Added four-channel step visibility across device timelines, live cooking summaries, and recipe sheets: Water, Slurry, Induction, and Microwave now appear for each recipe step.

@@ -23,6 +23,11 @@ local.properties
 *.apk
 *.aab
 
+# Local QA screenshots / phone captures
+artifacts/
+**/artifacts/
+WhatsApp Image*.jpeg
+
 # Node / web local outputs
 node_modules/
 dist/
