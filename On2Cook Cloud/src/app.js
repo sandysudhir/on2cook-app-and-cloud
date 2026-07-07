@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707o";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707o";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707p";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707p";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707o";
+} from "./ncb-services.js?v=20260707p";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707o";
+} from "./data-store.js?v=20260707p";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -2290,9 +2290,12 @@ function stopLiveLogForModal(modal = state().ui.activeModal) {
   if (!modal || modal.type !== "live-logs") return;
   const slot = Number(modal.payload?.slot);
   if (!slot) return;
-  ble.setLiveLog(slot, false).catch((error) => {
-    console.warn("[On2Cook] Unable to stop live log stream.", error);
-  });
+  const deviceSnapshot = state().devices.find((item) => item.slot === slot);
+  if (deviceSnapshot?.connection === "connected" && deviceSnapshot?.liveLog?.active) {
+    ble.setLiveLog(slot, false).catch((error) => {
+      console.warn("[On2Cook] Unable to stop live log stream.", error);
+    });
+  }
   mutate((draft) => {
     const device = draft.devices.find((item) => item.slot === slot);
     if (!device) return draft;
@@ -3424,7 +3427,7 @@ async function retryOrderRunAfterUpload(slot, orderId, recipe) {
   });
 
   await ble.runRecipe(Number(slot), recipe.firmwareName, {
-    autoStartAfterIngredient: true,
+    autoStartAfterIngredient: false,
     statusDelayMs: 650,
     fallbackMs: 1800
   });
@@ -3441,7 +3444,7 @@ async function retryOrderRunAfterUpload(slot, orderId, recipe) {
     draftDevice.telemetry.currentRecipe = recipe.firmwareName;
     draftDevice.telemetry.workStatus = "starting";
     draftDevice.telemetry.mode = "Starting";
-    draftDevice.lastMessage = `recipe=${recipe.firmwareName} re-sent after upload`;
+    draftDevice.lastMessage = `recipe=${recipe.firmwareName} re-sent after upload, waiting for ingredient stage`;
     draftDevice.lastUpdatedAt = nowIso();
     appendFlowActivity(draftDevice, `Run retried for ${recipe.firmwareName}`, "success");
   });
@@ -5022,7 +5025,23 @@ function renderLiveLogsModal(snapshot, device) {
                     `
                   )
                   .join("")
-              : `<div class="empty-card">No live values received yet. Keep this open while the device is connected and cooking.</div>`
+              : `<div class="empty-card live-log-empty">
+                  <strong>No live values received yet.</strong>
+                  <span>Keep this open while the device is connected and cooking.</span>
+                  <div class="live-log-grid">
+                    <span><small>Timestamp</small><strong>-</strong></span>
+                    <span><small>Recipe</small><strong>-</strong></span>
+                    <span><small>Step</small><strong>-</strong></span>
+                    <span><small>Induction</small><strong>-</strong></span>
+                    <span><small>Microwave</small><strong>-</strong></span>
+                    <span><small>Stirrer</small><strong>-</strong></span>
+                    <span><small>Water/Pump</small><strong>-</strong></span>
+                    <span><small>Temperature</small><strong>-</strong></span>
+                    <span><small>Voltage/Current</small><strong>-</strong></span>
+                    <span><small>Errors</small><strong>-</strong></span>
+                    <span><small>BLE message</small><strong>-</strong></span>
+                  </div>
+                </div>`
           }
         </div>
       </div>
@@ -6288,18 +6307,9 @@ function openProfessionalEditor(recipeId) {
     return;
   }
   const draft = recipeToProDraft(recipe);
-  try {
-    localStorage.setItem("on2cook-pro-studio-recipe", JSON.stringify(proDraftToStudioPayload(recipe, draft)));
-  } catch (error) {
-    console.warn("Unable to seed Figma Pro Studio recipe payload", error);
-    showToast("Opening Pro Studio without local recipe seed; browser storage is full.", "warning");
-  }
-  proStudioShellOrientation = "portrait";
-  proStudioRoutePath = "#/preset-setup";
-  openModal("figma-pro-studio", {
+  openModal("professional-editor", {
     recipeId,
-    title: recipe.displayName,
-    src: "./pro-studio/index.html#/preset-setup"
+    draft
   });
 }
 
@@ -6835,6 +6845,7 @@ function renderManualModeTab(snapshot) {
   const magnetronStatus = getManualStatus(device?.telemetry.magnetronStatus || "IDLE");
   const stirrerLabel = formatStirrerDisplay(device?.telemetry.stirrer || DEFAULT_STIRRER_LEVEL);
   const pumpLabel = device?.telemetry.pumpOn ? "ON" : "OFF";
+  const manualCommandDisabled = device?.connection === "connected" ? "" : "disabled";
   return `
     <section class="stack-section">
       <div class="mini-title">Manual Mode</div>
@@ -6878,7 +6889,7 @@ function renderManualModeTab(snapshot) {
           </button>
           ${
             device
-              ? `<button class="secondary-button" data-action="sync-selected-recipes" data-slot="${device.slot}">Check Device ${device.slot} recipes</button>`
+              ? `<button class="secondary-button" data-action="sync-selected-recipes" data-slot="${device.slot}" ${manualCommandDisabled}>Check Device ${device.slot} recipes</button>`
               : ""
           }
         </div>
@@ -6919,12 +6930,12 @@ function renderManualModeTab(snapshot) {
             <div class="mini-title">Induction control</div>
             <div class="settings-card">
               <div class="action-row">
-                <button class="primary-button" data-action="manual-induction-start" data-slot="${device.slot}">Start induction</button>
-                <button class="danger-button" data-action="manual-induction-stop" data-slot="${device.slot}">Stop induction</button>
+                <button class="primary-button" data-action="manual-induction-start" data-slot="${device.slot}" ${manualCommandDisabled}>Start induction</button>
+                <button class="danger-button" data-action="manual-induction-stop" data-slot="${device.slot}" ${manualCommandDisabled}>Stop induction</button>
               </div>
               <div class="action-row">
-                <button class="secondary-button" data-action="manual-induction-power" data-slot="${device.slot}" data-delta="-10">-10 Power</button>
-                <button class="secondary-button" data-action="manual-induction-power" data-slot="${device.slot}" data-delta="10">+10 Power</button>
+                <button class="secondary-button" data-action="manual-induction-power" data-slot="${device.slot}" data-delta="-10" ${manualCommandDisabled}>-10 Power</button>
+                <button class="secondary-button" data-action="manual-induction-power" data-slot="${device.slot}" data-delta="10" ${manualCommandDisabled}>+10 Power</button>
               </div>
               <p class="subtle">Firmware accepts induction power changes in 10% steps while quick-start induction is running.</p>
             </div>
@@ -6933,8 +6944,8 @@ function renderManualModeTab(snapshot) {
             <div class="mini-title">Microwave control</div>
             <div class="settings-card">
               <div class="action-row">
-                <button class="primary-button" data-action="manual-magnetron-start" data-slot="${device.slot}">Start microwave</button>
-                <button class="danger-button" data-action="manual-magnetron-stop" data-slot="${device.slot}">Stop microwave</button>
+                <button class="primary-button" data-action="manual-magnetron-start" data-slot="${device.slot}" ${manualCommandDisabled}>Start microwave</button>
+                <button class="danger-button" data-action="manual-magnetron-stop" data-slot="${device.slot}" ${manualCommandDisabled}>Stop microwave</button>
               </div>
               <p class="subtle">This uses the firmware quick-start microwave commands over BLE.</p>
             </div>
@@ -6943,11 +6954,11 @@ function renderManualModeTab(snapshot) {
             <div class="mini-title">Stirrer control</div>
             <div class="settings-card">
               <div class="action-row">
-                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="LOW">Speed 1</button>
-                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="MED">Speed 2</button>
-                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="HIGH">Speed 3</button>
-                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="VERY_HIGH">Speed 4</button>
-                <button class="danger-button" data-action="manual-stirrer-stop" data-slot="${device.slot}">Stop stirrer</button>
+                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="LOW" ${manualCommandDisabled}>Speed 1</button>
+                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="MED" ${manualCommandDisabled}>Speed 2</button>
+                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="HIGH" ${manualCommandDisabled}>Speed 3</button>
+                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="VERY_HIGH" ${manualCommandDisabled}>Speed 4</button>
+                <button class="danger-button" data-action="manual-stirrer-stop" data-slot="${device.slot}" ${manualCommandDisabled}>Stop stirrer</button>
               </div>
               <p class="subtle">Normal mode keeps the stirrer ON at speed 2 by default. Manual Mode sends temporary overrides only: speed 1-4 maps to LOW, MED, HIGH, and VERY_HIGH, and Stop stirrer sends OFF.</p>
             </div>
@@ -6960,8 +6971,8 @@ function renderManualModeTab(snapshot) {
                 <input class="field-input" type="number" min="1" step="1" value="${pumpUnits}" data-input="manual-pump-units">
               </label>
               <div class="action-row">
-                <button class="primary-button" data-action="manual-pump-start" data-slot="${device.slot}">Start pump</button>
-                <button class="danger-button" data-action="manual-pump-stop" data-slot="${device.slot}">Stop pump</button>
+                <button class="primary-button" data-action="manual-pump-start" data-slot="${device.slot}" ${manualCommandDisabled}>Start pump</button>
+                <button class="danger-button" data-action="manual-pump-stop" data-slot="${device.slot}" ${manualCommandDisabled}>Stop pump</button>
               </div>
               <p class="subtle"><code>PUMP=ON,n</code> uses the firmware's 10 ml tick units. For example, <code>10</code> sends roughly 100 ml.</p>
             </div>
@@ -8823,6 +8834,7 @@ function renderModal(snapshot) {
     const telemetryMode = getTelemetryMode(device);
     const currentIngredient = getCurrentIngredient(device, runtimeRecipe);
     const currentInstruction = getCurrentInstruction(device, runtimeRecipe);
+    const deviceCommandDisabled = device.connection === "connected" ? "" : "disabled";
     const recipeFilter = String(modal.payload.recipeFilter || "").trim().toLowerCase();
     const filteredRecipes = snapshot.recipes
       .filter((recipe) => recipe.selected)
@@ -8951,8 +8963,8 @@ function renderModal(snapshot) {
                     ? `<button class="secondary-button" type="button" data-action="disconnect-device" data-slot="${device.slot}">Disconnect</button>`
                     : `<button class="primary-button" type="button" data-action="connect-device" data-slot="${device.slot}">Connect</button>`
                 }
-                <button class="secondary-button" type="button" data-action="sync-selected-recipes" data-slot="${device.slot}">Check device recipes</button>
-                <button class="secondary-button" type="button" data-action="read-device-recipes" data-slot="${device.slot}">Read recipes</button>
+                <button class="secondary-button" type="button" data-action="sync-selected-recipes" data-slot="${device.slot}" ${deviceCommandDisabled}>Check device recipes</button>
+                <button class="secondary-button" type="button" data-action="read-device-recipes" data-slot="${device.slot}" ${deviceCommandDisabled}>Read recipes</button>
                 <button class="secondary-button" type="button" data-action="request-status" data-slot="${device.slot}">Refresh status</button>
                 <button class="secondary-button" type="button" data-action="open-live-logs" data-slot="${device.slot}">Live Logs</button>
                 <button class="danger-button" type="button" data-action="clear-device-binding" data-slot="${device.slot}">Clear pairing</button>
