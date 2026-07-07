@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707l";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707l";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707m";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707m";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707l";
+} from "./ncb-services.js?v=20260707m";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707l";
+} from "./data-store.js?v=20260707m";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -43,6 +43,7 @@ const recipeMissingRetryCounts = new Map();
 const RECIPE_ARCHIVE_VERSION = "20260612q";
 const KOT_BRIDGE_URL = "./api/orders/bridge";
 const KOT_BRIDGE_POLL_MS = 10000;
+const MAX_NOTIFICATIONS = 80;
 const cloudRuntime = {
   ready: false,
   instance: "",
@@ -1340,6 +1341,11 @@ function renderUiIcon(name) {
     manual: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="8" width="16" height="8" rx="4"/><circle cx="9" cy="12" r="2"/></svg>`,
     global: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>`,
     bell: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 17h12l-1.4-2.4V10a4.6 4.6 0 0 0-9.2 0v4.6z"/><path d="M10 20h4"/></svg>`,
+    device: `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M10 18h4"/></svg>`,
+    cooking: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21c3.3 0 6-2.4 6-5.8 0-2.5-1.5-4.4-3.6-6.3-.7 2-1.8 3-3.2 3.7.4-3-1.1-5.2-3-7C7.6 8.5 6 10.6 6 15.2 6 18.6 8.7 21 12 21z"/></svg>`,
+    error: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 16H3z"/><path d="M12 9v4M12 17h.01"/></svg>`,
+    logs: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H7z"/><path d="M15 3v5h5M9 13h6M9 17h6"/></svg>`,
+    order: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h11v16H5V7z"/><path d="M8 4v3H5M9 11h6M9 15h6"/></svg>`,
     plus: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
     more: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5h.01M12 12h.01M12 19h.01"/></svg>`,
     chevronLeft: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>`,
@@ -1403,6 +1409,7 @@ function renderOrderDeviceAccess(snapshot) {
 function renderRefinedScreenTopBar(snapshot, title, subtitle = "") {
   const connectedCount = snapshot.devices.filter((device) => device.connection === "connected").length;
   const busyCount = snapshot.orders.current.filter((order) => ["starting", "cooking", "awaiting_confirmation"].includes(order.status)).length;
+  const unreadCount = getUnreadNotificationCount(snapshot);
   return `
     <div class="refined-screen-topbar">
       <div class="refined-brand-lockup">
@@ -1415,7 +1422,10 @@ function renderRefinedScreenTopBar(snapshot, title, subtitle = "") {
       <div class="refined-stat-stack">
         <span><b>D</b>${escapeHtml(connectedCount)}</span>
         <span><b>B</b>${escapeHtml(busyCount)}</span>
-        <i>${renderUiIcon("bell")}</i>
+        <button class="refined-notification-button" type="button" data-action="open-notification-drawer" aria-label="Open notifications">
+          ${renderUiIcon("bell")}
+          ${unreadCount ? `<em>${escapeHtml(Math.min(unreadCount, 99))}</em>` : ""}
+        </button>
       </div>
     </div>
   `;
@@ -2060,6 +2070,182 @@ function showToast(message, tone = "info") {
   }, 3200);
 }
 
+function getNotificationTypeLabel(type) {
+  const labels = {
+    order: "Order",
+    device: "Device",
+    cooking: "Cooking",
+    error: "Error",
+    logs: "Logs/Sync"
+  };
+  return labels[type] || "Notification";
+}
+
+function getNotificationIconName(type) {
+  const icons = {
+    order: "order",
+    device: "device",
+    cooking: "cooking",
+    error: "error",
+    logs: "logs"
+  };
+  return icons[type] || "bell";
+}
+
+function pushDraftNotification(draft, payload = {}) {
+  if (!draft.ui) return;
+  const type = ["order", "device", "cooking", "error", "logs"].includes(payload.type) ? payload.type : "device";
+  const timestamp = payload.timestamp || nowIso();
+  const notification = {
+    id: payload.id || safeRandomId("note"),
+    type,
+    title: String(payload.title || getNotificationTypeLabel(type)).trim(),
+    message: String(payload.message || "").trim(),
+    deviceSlot: payload.deviceSlot ? Number(payload.deviceSlot) : null,
+    recipeName: String(payload.recipeName || "").trim(),
+    orderId: String(payload.orderId || "").trim(),
+    timestamp,
+    read: Boolean(payload.read),
+    action: payload.action || null
+  };
+  const current = Array.isArray(draft.ui.notifications) ? draft.ui.notifications : [];
+  const dedupeKey = [
+    notification.type,
+    notification.title,
+    notification.deviceSlot || "",
+    notification.recipeName || "",
+    notification.orderId || ""
+  ].join("|").toLowerCase();
+  const withoutDuplicate = current.filter((item) => {
+    const itemKey = [item.type, item.title, item.deviceSlot || "", item.recipeName || "", item.orderId || ""]
+      .join("|")
+      .toLowerCase();
+    const closeInTime = Math.abs(new Date(notification.timestamp).getTime() - new Date(item.timestamp || 0).getTime()) < 60000;
+    return !(itemKey === dedupeKey && closeInTime);
+  });
+  draft.ui.notifications = [notification, ...withoutDuplicate].slice(0, MAX_NOTIFICATIONS);
+}
+
+function addNotification(payload = {}) {
+  mutate((draft) => {
+    pushDraftNotification(draft, payload);
+  });
+}
+
+function getUnreadNotificationCount(snapshot) {
+  return (snapshot.ui.notifications || []).filter((item) => !item.read).length;
+}
+
+function renderNotificationMeta(notification) {
+  const parts = [];
+  if (notification.deviceSlot) parts.push(`D${notification.deviceSlot}`);
+  if (notification.orderId) parts.push(notification.orderId);
+  if (notification.recipeName) parts.push(notification.recipeName);
+  return parts.join(" · ");
+}
+
+function renderNotificationAction(notification) {
+  const action = notification.action;
+  if (!action?.type || !action.label) return "";
+  return `
+    <button
+      class="secondary-button micro notification-action-button"
+      type="button"
+      data-action="notification-action"
+      data-notification-id="${escapeHtml(notification.id)}"
+    >
+      ${escapeHtml(action.label)}
+    </button>
+  `;
+}
+
+function renderNotificationDrawer(snapshot) {
+  if (!snapshot.ui.notificationDrawerOpen) return "";
+  const notifications = Array.isArray(snapshot.ui.notifications) ? snapshot.ui.notifications : [];
+  return `
+    <aside class="notification-drawer-backdrop" role="dialog" aria-label="Notifications">
+      <section class="notification-drawer">
+        <header class="notification-drawer-head">
+          <div>
+            <div class="eyebrow">On2Cook alerts</div>
+            <h3>Notifications</h3>
+            <p class="subtle">${notifications.length} recent event${notifications.length === 1 ? "" : "s"}</p>
+          </div>
+          <div class="notification-head-actions">
+            <button class="secondary-button micro" type="button" data-action="mark-notifications-read">Mark read</button>
+            <button class="icon-button" type="button" data-action="close-notification-drawer" aria-label="Close notifications">x</button>
+          </div>
+        </header>
+        <div class="notification-type-legend">
+          ${["order", "device", "cooking", "error", "logs"].map((type) => `<span class="${type}">${renderUiIcon(getNotificationIconName(type))}${escapeHtml(getNotificationTypeLabel(type))}</span>`).join("")}
+        </div>
+        <div class="notification-list">
+          ${
+            notifications.length
+              ? notifications
+                  .map((notification) => {
+                    const meta = renderNotificationMeta(notification);
+                    return `
+                      <article class="notification-row ${escapeHtml(notification.type)} ${notification.read ? "read" : "unread"}">
+                        <span class="notification-icon">${renderUiIcon(getNotificationIconName(notification.type))}</span>
+                        <div class="notification-copy">
+                          <div class="row space">
+                            <strong>${escapeHtml(notification.title)}</strong>
+                            <time>${escapeHtml(formatAgo(notification.timestamp))}</time>
+                          </div>
+                          ${meta ? `<small>${escapeHtml(meta)}</small>` : ""}
+                          ${notification.message ? `<p>${escapeHtml(notification.message)}</p>` : ""}
+                          ${renderNotificationAction(notification)}
+                        </div>
+                      </article>
+                    `;
+                  })
+                  .join("")
+              : `<div class="empty-card">No notifications yet. Device, order, cooking, error, and logs/sync events will appear here.</div>`
+          }
+        </div>
+      </section>
+    </aside>
+  `;
+}
+
+async function runNotificationAction(notificationId) {
+  const notification = (state().ui.notifications || []).find((item) => item.id === notificationId);
+  if (!notification?.action) return;
+  mutate((draft) => {
+    const item = (draft.ui.notifications || []).find((entry) => entry.id === notificationId);
+    if (item) item.read = true;
+    draft.ui.notificationDrawerOpen = false;
+  });
+  const action = notification.action;
+  if (action.type === "order" && action.orderId) {
+    openModal("order-details", { orderId: action.orderId });
+    return;
+  }
+  if (action.type === "device" && action.slot) {
+    openModal("device-sheet", { slot: Number(action.slot) });
+    return;
+  }
+  if (action.type === "live-logs" && action.slot) {
+    await openLiveLogs(Number(action.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action.type === "stored-logs" && action.slot) {
+    await listDeviceLogs(Number(action.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action.type === "device-recipes" && action.slot) {
+    openModal("device-recipes", { slot: Number(action.slot), query: "", filter: "all", selectedNames: [] });
+    return;
+  }
+  if (action.type === "queue") {
+    mutate((draft) => {
+      draft.ui.activeTab = "queue";
+      draft.ui.orderMode = "current";
+    });
+  }
+}
+
 function showOrderNotice(order) {
   if (!order) return;
   mutate((draft) => {
@@ -2069,6 +2255,14 @@ function showOrderNotice(order) {
       itemName: order.itemName || "New order",
       createdAt: nowIso()
     };
+    pushDraftNotification(draft, {
+      type: "order",
+      title: "New order received",
+      orderId: order.orderId || "",
+      recipeName: order.itemName || "",
+      message: "New order is waiting in Pending Orders.",
+      action: { type: "order", label: "Open order", orderId: order.id }
+    });
   });
 }
 
@@ -2599,7 +2793,23 @@ function ensureKotBridgePolling() {
   kotBridgeTimer = window.setInterval(fetchKotBridgeOrders, KOT_BRIDGE_POLL_MS);
 }
 
-function applyTelemetry(device, parsed, message, at) {
+function getDeviceErrorNotification(message, parsed = {}) {
+  const upper = String(message || "").toUpperCase();
+  const errorText = String(parsed.ERROR || parsed.ERR || parsed.FAULT || "").toUpperCase();
+  const combined = `${upper} ${errorText}`;
+  if (/NO[_\s-]?PAN/.test(combined)) return "No pan";
+  if (/LID[_\s-]?OPEN/.test(combined)) return "Lid open";
+  if (/VOLT(?:AGE)?[_\s-]?HIGH/.test(combined)) return "Voltage high";
+  if (/VOLT(?:AGE)?[_\s-]?LOW/.test(combined)) return "Voltage low";
+  if (/MAGNETRON|MAG[_\s-]?ERROR/.test(combined)) return "Magnetron error";
+  if (/INDUCTION|IND[_\s-]?ERROR/.test(combined)) return "Induction error";
+  return "";
+}
+
+function applyTelemetry(device, parsed, message, at, draft = null) {
+  const previousStepNo = Number(device.telemetry.stepNo) || 0;
+  const previousWorkStatus = String(device.telemetry.workStatus || "").toLowerCase();
+  const previousPaused = Boolean(device.telemetry.paused);
   const readNumeric = (...values) => {
     for (const value of values) {
       if (value === undefined || value === null || value === "") continue;
@@ -2694,6 +2904,93 @@ function applyTelemetry(device, parsed, message, at) {
   }
   device.lastUpdatedAt = at;
   device.lastMessage = message;
+  if (!draft) return;
+  const activeOrder = draft.orders.current.find((item) => item.id === device.currentJobId) || null;
+  const activeRecipeName = device.telemetry.currentRecipe || device.activeRun?.displayName || activeOrder?.itemName || "";
+  const currentStepNo = Number(device.telemetry.stepNo) || 0;
+  if (currentStepNo > 0 && currentStepNo !== previousStepNo) {
+    pushDraftNotification(draft, {
+      type: "cooking",
+      title: `Step changed to ${currentStepNo}`,
+      deviceSlot: device.slot,
+      recipeName: activeRecipeName,
+      orderId: activeOrder?.orderId || "",
+      message: `Device ${device.slot} is now on recipe step ${currentStepNo}.`,
+      timestamp: at,
+      action: { type: "device", label: "Open device", slot: device.slot }
+    });
+  }
+  if (!previousPaused && device.telemetry.paused) {
+    pushDraftNotification(draft, {
+      type: "cooking",
+      title: "Recipe paused",
+      deviceSlot: device.slot,
+      recipeName: activeRecipeName,
+      orderId: activeOrder?.orderId || "",
+      message: "The connected cooker reported a paused state.",
+      timestamp: at,
+      action: { type: "device", label: "Open device", slot: device.slot }
+    });
+  }
+  if (previousWorkStatus !== device.telemetry.workStatus) {
+    if (device.telemetry.workStatus === "idle") {
+      pushDraftNotification(draft, {
+        type: "device",
+        title: "Device idle",
+        deviceSlot: device.slot,
+        message: `Device ${device.slot} is ready for the next task.`,
+        timestamp: at,
+        action: { type: "device", label: "Open device", slot: device.slot }
+      });
+    } else if (["cooking", "starting", "ingredient", "manual"].includes(device.telemetry.workStatus)) {
+      pushDraftNotification(draft, {
+        type: "device",
+        title: "Device busy",
+        deviceSlot: device.slot,
+        recipeName: activeRecipeName,
+        message: `Device ${device.slot} is ${device.telemetry.workStatus}.`,
+        timestamp: at,
+        action: { type: "device", label: "Open device", slot: device.slot }
+      });
+    }
+  }
+  const lowerMode = String(mode || "").toLowerCase();
+  const upperMessage = String(message || "").toUpperCase();
+  const actionRequired =
+    lowerMode.includes("ingredient")
+      ? "Add ingredient"
+      : upperMessage.includes("OPENLID") || upperMessage.includes("OPEN LID")
+        ? "Open lid"
+        : upperMessage.includes("CLOSELID") || upperMessage.includes("CLOSE LID")
+          ? "Close lid"
+          : upperMessage.includes("PLACE PAN") || upperMessage.includes("PAN REQUIRED")
+            ? "Place pan"
+            : "";
+  if (actionRequired) {
+    pushDraftNotification(draft, {
+      type: "cooking",
+      title: `User action required: ${actionRequired}`,
+      deviceSlot: device.slot,
+      recipeName: activeRecipeName,
+      orderId: activeOrder?.orderId || "",
+      message: `${actionRequired} is required before the recipe can continue.`,
+      timestamp: at,
+      action: { type: "device", label: "Open device", slot: device.slot }
+    });
+  }
+  const errorTitle = getDeviceErrorNotification(message, parsed);
+  if (errorTitle) {
+    pushDraftNotification(draft, {
+      type: "error",
+      title: errorTitle,
+      deviceSlot: device.slot,
+      recipeName: activeRecipeName,
+      orderId: activeOrder?.orderId || "",
+      message: message || errorTitle,
+      timestamp: at,
+      action: { type: "device", label: "Open device", slot: device.slot }
+    });
+  }
 }
 
 function markSelectionAcknowledged(slot, recipeName) {
@@ -2725,11 +3022,22 @@ function markSelectionAcknowledged(slot, recipeName) {
     if (!String(device.lastMessage || "").includes(`recipe=${recipeName}`)) {
       appendActivity(device, `Recipe selection acknowledged: ${recipeName}`, "success");
     }
+    pushDraftNotification(draft, {
+      type: "cooking",
+      title: "Recipe started",
+      deviceSlot: device.slot,
+      recipeName: order.itemName || recipeName,
+      orderId: order.orderId || "",
+      message: `${order.itemName || recipeName} started on Device ${device.slot}.`,
+      action: { type: "device", label: "Open device", slot: device.slot }
+    });
   });
 }
 
 function markRecipeComplete(slot, message, at = nowIso()) {
   let shouldQueue = false;
+  let completedNotification = null;
+  let nextQueuedNotification = null;
   mutate((draft) => {
     const device = draft.devices.find((item) => item.slot === Number(slot));
     if (!device) return draft;
@@ -2780,11 +3088,46 @@ function markRecipeComplete(slot, message, at = nowIso()) {
     device.telemetry.stepNo = 0;
     device.telemetry.ingredientsIndex = 0;
     appendActivity(device, `${displayName} completed on device`, "success", at);
+    completedNotification = {
+      type: "cooking",
+      title: "Recipe completed",
+      deviceSlot: device.slot,
+      recipeName: displayName,
+      orderId: order?.orderId || "",
+      message: `${displayName} completed on Device ${device.slot}.`,
+      timestamp: at,
+      action: { type: "device", label: "Open device", slot: device.slot }
+    };
     if (fallbackIndex >= 0) {
       const [completedOrder] = draft.orders.current.splice(fallbackIndex, 1);
       draft.orders.previous.unshift(moveOrderToHistory(completedOrder, "completed", "Completed on device"));
       device.historyOrderIds.unshift(completedOrder.id);
       clearRecipeRetryTracking(device.slot, completedOrder.id);
+      pushDraftNotification(draft, {
+        type: "order",
+        title: "Order item completed",
+        deviceSlot: device.slot,
+        recipeName: completedOrder.itemName,
+        orderId: completedOrder.orderId || "",
+        message: "Order item moved to previous orders.",
+        timestamp: at,
+        action: { type: "order", label: "Open order", orderId: completedOrder.id }
+      });
+    }
+    pushDraftNotification(draft, completedNotification);
+    const nextOrder = draft.orders.current.find((item) => item.id === device.queueOrderIds[0]) || null;
+    if (nextOrder) {
+      nextQueuedNotification = {
+        type: "cooking",
+        title: "Next queued recipe ready",
+        deviceSlot: device.slot,
+        recipeName: nextOrder.itemName,
+        orderId: nextOrder.orderId || "",
+        message: `${nextOrder.itemName} is next on Device ${device.slot}.`,
+        timestamp: at,
+        action: { type: "device", label: "Open device", slot: device.slot }
+      };
+      pushDraftNotification(draft, nextQueuedNotification);
     }
     shouldQueue = device.connection === "connected";
   });
@@ -2844,11 +3187,31 @@ function markRecipeAborted(slot, message, at = nowIso()) {
     device.telemetry.status = "";
     device.telemetry.ingredientsIndex = 0;
     appendActivity(device, `${displayName} aborted on device`, "warning", at);
+    pushDraftNotification(draft, {
+      type: "cooking",
+      title: "Recipe aborted",
+      deviceSlot: device.slot,
+      recipeName: displayName,
+      orderId: order?.orderId || "",
+      message: `${displayName} was aborted on Device ${device.slot}.`,
+      timestamp: at,
+      action: { type: "device", label: "Open device", slot: device.slot }
+    });
     if (fallbackIndex >= 0) {
       const [abortedOrder] = draft.orders.current.splice(fallbackIndex, 1);
       draft.orders.previous.unshift(moveOrderToHistory(abortedOrder, "aborted", "Aborted on device"));
       device.historyOrderIds.unshift(abortedOrder.id);
       clearRecipeRetryTracking(device.slot, abortedOrder.id);
+      pushDraftNotification(draft, {
+        type: "order",
+        title: "Order item failed/aborted",
+        deviceSlot: device.slot,
+        recipeName: abortedOrder.itemName,
+        orderId: abortedOrder.orderId || "",
+        message: "Order item moved to previous orders as aborted.",
+        timestamp: at,
+        action: { type: "order", label: "Open order", orderId: abortedOrder.id }
+      });
     }
     shouldQueue = device.connection === "connected";
   });
@@ -3088,6 +3451,13 @@ function handleTransportEvents() {
       device.uploadState = emptyUploadState();
       device.telemetry.workStatus = "idle";
       appendActivity(device, `Connected to ${bluetoothName || browserDeviceId}. Recipe upload is disabled until a recipe is run.`, "success");
+      pushDraftNotification(draft, {
+        type: "device",
+        title: "Device connected",
+        deviceSlot: device.slot,
+        message: `${device.displayName} connected to ${bluetoothName || browserDeviceId || "On2Cook cooker"}.`,
+        action: { type: "device", label: "Open device", slot: device.slot }
+      });
     });
     ble.sendDateTime(slot).catch(() => {});
     window.setTimeout(() => {
@@ -3113,6 +3483,13 @@ function handleTransportEvents() {
       device.telemetry.disconnectedAt = nowIso();
       failLiveLogState(device, "Device disconnected. Live log stream stopped.", nowIso());
       appendActivity(device, "Device disconnected. Active work returned to pending.", "warning");
+      pushDraftNotification(draft, {
+        type: "device",
+        title: "Device disconnected",
+        deviceSlot: device.slot,
+        message: "Active work was returned to pending if needed.",
+        action: { type: "device", label: "Open device", slot: device.slot }
+      });
     });
   });
 
@@ -3169,6 +3546,25 @@ function handleTransportEvents() {
       if (!device) return draft;
       handleDeviceLogControlMessage(device, message, at);
       appendTransportActivity(device, "rx", "log", message, at);
+      if (message === "LISTLOGS=COMPLETE") {
+        pushDraftNotification(draft, {
+          type: "logs",
+          title: "Log file ready",
+          deviceSlot: device.slot,
+          message: "Stored device log list is ready.",
+          timestamp: at,
+          action: { type: "stored-logs", label: "View logs", slot: device.slot }
+        });
+      } else if (message === "LISTLOGS=ERROR" || String(message || "").startsWith("READLOG=ERROR")) {
+        pushDraftNotification(draft, {
+          type: "logs",
+          title: "Log download failed",
+          deviceSlot: device.slot,
+          message,
+          timestamp: at,
+          action: { type: "stored-logs", label: "Retry logs", slot: device.slot }
+        });
+      }
     });
   });
 
@@ -3177,7 +3573,7 @@ function handleTransportEvents() {
     mutate((draft) => {
       const device = draft.devices.find((item) => item.slot === Number(slot));
       if (!device) return draft;
-      applyTelemetry(device, parsed, message, at);
+      applyTelemetry(device, parsed, message, at, draft);
     });
   });
 
@@ -3188,6 +3584,14 @@ function handleTransportEvents() {
       if (!device) return draft;
       device.telemetry.firmwareVersion = firmwareVersion;
       appendActivity(device, `Firmware ${firmwareVersion}`, "info", at);
+      pushDraftNotification(draft, {
+        type: "device",
+        title: "Firmware version received",
+        deviceSlot: device.slot,
+        message: `Firmware ${firmwareVersion}`,
+        timestamp: at,
+        action: { type: "device", label: "Open device", slot: device.slot }
+      });
     });
   });
 
@@ -3200,6 +3604,15 @@ function handleTransportEvents() {
       const device = draft.devices.find((item) => item.slot === Number(event.detail.slot));
       if (!device) return draft;
       appendActivity(device, `Instruction step ${device.telemetry.stepNo || "?"} completed`, "info", event.detail.at);
+      pushDraftNotification(draft, {
+        type: "cooking",
+        title: "Step changed",
+        deviceSlot: device.slot,
+        recipeName: device.telemetry.currentRecipe || device.activeRun?.displayName || "",
+        message: `Instruction step ${device.telemetry.stepNo || "?"} completed.`,
+        timestamp: event.detail.at,
+        action: { type: "device", label: "Open device", slot: device.slot }
+      });
     });
   });
 
@@ -3216,6 +3629,15 @@ function handleTransportEvents() {
       const device = draft.devices.find((item) => item.slot === Number(event.detail.slot));
       if (!device) return draft;
       appendFlowActivity(device, `Ingredient stage completed for ${event.detail.recipeName}`, "success", event.detail.at);
+      pushDraftNotification(draft, {
+        type: "cooking",
+        title: "User action acknowledged",
+        deviceSlot: device.slot,
+        recipeName: event.detail.recipeName || device.activeRun?.displayName || "",
+        message: "Initial ingredients were confirmed.",
+        timestamp: event.detail.at,
+        action: { type: "device", label: "Open device", slot: device.slot }
+      });
     });
   });
 
@@ -3250,6 +3672,15 @@ function handleTransportEvents() {
         const draftDevice = draft.devices.find((item) => item.slot === slot);
         if (!draftDevice) return draft;
         appendActivity(draftDevice, `${recipe.firmwareName} was missing. Uploading just this recipe and retrying.`, "warning");
+        pushDraftNotification(draft, {
+          type: "error",
+          title: "Recipe missing",
+          deviceSlot: slot,
+          recipeName: recipe.displayName,
+          orderId: order.orderId || "",
+          message: "The device reported the selected recipe was missing. Upload retry started.",
+          action: { type: "device", label: "Open device", slot }
+        });
       });
       try {
         await uploadRecipeForRunRetry(slot, recipe);
@@ -3272,6 +3703,15 @@ function handleTransportEvents() {
       const deviceAfterReset = resetDeviceRuntimeState(draft, slot);
       if (!deviceAfterReset) return draft;
       appendActivity(deviceAfterReset, "Device reported that the selected recipe is missing", "error");
+      pushDraftNotification(draft, {
+        type: "error",
+        title: "Recipe missing",
+        deviceSlot: slot,
+        recipeName: recipe?.displayName || order?.itemName || "",
+        orderId: order?.orderId || "",
+        message: "Device could not find the selected recipe.",
+        action: { type: "device", label: "Open device", slot }
+      });
     });
     showToast(`Device ${slot} does not have that recipe yet`, "error");
   });
@@ -3305,6 +3745,15 @@ function handleTransportEvents() {
         completedRecipeNames: [...completed]
       };
       device.lastUpdatedAt = nowIso();
+      pushDraftNotification(draft, {
+        type: "logs",
+        title: "Device recipe sync complete",
+        deviceSlot: device.slot,
+        recipeName,
+        message: `${recipeName} uploaded to device memory.`,
+        timestamp: event.detail.at,
+        action: { type: "device-recipes", label: "View recipes", slot: device.slot }
+      });
     });
   });
 
@@ -3513,6 +3962,15 @@ async function startOrderFlow(orderId, preferredSlot = null, options = {}) {
       draftOrder.currentRunRecipeName = recipe.displayName;
       draftOrder.currentRunFirmwareName = recipe.firmwareName;
       appendActivity(draftDevice, `${draftOrder.itemName} queued${hasLiveRuntime(device) ? " behind live device work" : ""}`, "info");
+      pushDraftNotification(draft, {
+        type: "order",
+        title: `Order assigned to D${draftDevice.slot}`,
+        deviceSlot: draftDevice.slot,
+        recipeName: draftOrder.itemName,
+        orderId: draftOrder.orderId || "",
+        message: "Order was added to this device queue.",
+        action: { type: "device", label: "Open device", slot: draftDevice.slot }
+      });
     });
     showToast(`${order.itemName} queued on Device ${device.slot}`, "info");
     return "queued";
@@ -3542,6 +4000,15 @@ async function startOrderFlow(orderId, preferredSlot = null, options = {}) {
     draftDevice.startupGuardUntil = new Date(Date.now() + 8000).toISOString();
     draftDevice.telemetry.currentRecipe = recipe.firmwareName;
     appendActivity(draftDevice, `Preparing ${recipe.firmwareName}`, "info");
+    pushDraftNotification(draft, {
+      type: "order",
+      title: `Order assigned to D${draftDevice.slot}`,
+      deviceSlot: draftDevice.slot,
+      recipeName: draftOrder.itemName,
+      orderId: draftOrder.orderId || "",
+      message: "Order is being prepared for cooking.",
+      action: { type: "device", label: "Open device", slot: draftDevice.slot }
+    });
   });
 
   try {
@@ -3602,6 +4069,15 @@ async function startOrderFlow(orderId, preferredSlot = null, options = {}) {
       }
       if (draftDevice) {
         appendActivity(draftDevice, `Start failed: ${error.message}`, "error");
+        pushDraftNotification(draft, {
+          type: "error",
+          title: "Recipe upload failed",
+          deviceSlot: draftDevice.slot,
+          recipeName: recipe.displayName,
+          orderId: draftOrder?.orderId || "",
+          message: error.message,
+          action: { type: "device", label: "Open device", slot: draftDevice.slot }
+        });
       }
     });
     showToast(error.message, "error");
@@ -3631,8 +4107,17 @@ async function syncSelectedRecipesToDevice(slot, options = {}) {
       draftDevice.startupGuardUntil = "";
       draftDevice.uploadState = {
         ...emptyUploadState(),
-        summary: `Inventory checked: ${inventoryNames.length} recipe${inventoryNames.length === 1 ? "" : "s"} on device`
+          summary: `Inventory checked: ${inventoryNames.length} recipe${inventoryNames.length === 1 ? "" : "s"} on device`
       };
+      if (!options.silent) {
+        pushDraftNotification(draft, {
+          type: "logs",
+          title: "Recipe list refreshed",
+          deviceSlot: draftDevice.slot,
+          message: `${inventoryNames.length} recipe${inventoryNames.length === 1 ? "" : "s"} found on device.`,
+          action: { type: "device-recipes", label: "View recipes", slot: draftDevice.slot }
+        });
+      }
     });
   } catch (error) {
     mutate((draft) => {
@@ -3640,6 +4125,15 @@ async function syncSelectedRecipesToDevice(slot, options = {}) {
       if (!draftDevice) return draft;
       failUploadPlan(draftDevice, `Inventory check failed: ${error.message}`);
       appendActivity(draftDevice, `Inventory check failed: ${error.message}`, "error");
+      if (!options.silent) {
+        pushDraftNotification(draft, {
+          type: "error",
+          title: "Recipe list refresh failed",
+          deviceSlot: draftDevice.slot,
+          message: error.message,
+          action: { type: "device-recipes", label: "Retry list", slot: draftDevice.slot }
+        });
+      }
     });
     if (!options.silent) showToast(error.message, "error");
     throw error;
@@ -4272,12 +4766,26 @@ async function openLiveLogs(slot) {
       const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
       if (!draftDevice) return draft;
       markLiveLogReady(draftDevice);
+      pushDraftNotification(draft, {
+        type: "logs",
+        title: "Live logs started",
+        deviceSlot: draftDevice.slot,
+        message: "Real-time device diagnostics are streaming.",
+        action: { type: "live-logs", label: "View live logs", slot: draftDevice.slot }
+      });
     });
   } catch (error) {
     mutate((draft) => {
       const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
       if (!draftDevice) return draft;
       failLiveLogState(draftDevice, error.message || "Unable to start live logs.");
+      pushDraftNotification(draft, {
+        type: "logs",
+        title: "Log download failed",
+        deviceSlot: draftDevice.slot,
+        message: error.message || "Unable to start live logs.",
+        action: { type: "live-logs", label: "Retry live logs", slot: draftDevice.slot }
+      });
     });
     throw error;
   }
@@ -4294,6 +4802,13 @@ async function stopLiveLogs(slot) {
     if (!draftDevice) return draft;
     stopLiveLogState(draftDevice);
     appendFlowActivity(draftDevice, "Live Logs closed: livelog=OFF sent", "info");
+    pushDraftNotification(draft, {
+      type: "logs",
+      title: "Live logs stopped",
+      deviceSlot: draftDevice.slot,
+      message: "Real-time diagnostic stream was stopped.",
+      action: { type: "device", label: "Open device", slot: draftDevice.slot }
+    });
   });
 }
 
@@ -4321,6 +4836,13 @@ async function listDeviceLogs(slot) {
       if (!draftDevice) return draft;
       handleDeviceLogControlMessage(draftDevice, "LOGSTATUS=BUSY");
       appendFlowActivity(draftDevice, "Stored log download blocked because device is busy", "warning");
+      pushDraftNotification(draft, {
+        type: "device",
+        title: "Device busy",
+        deviceSlot: draftDevice.slot,
+        message: "Logs can be downloaded after current cooking ends.",
+        action: { type: "device", label: "Open device", slot: draftDevice.slot }
+      });
     });
     showToast("Device is busy. Logs can be downloaded after current cooking ends.", "warning");
     return;
@@ -4330,6 +4852,13 @@ async function listDeviceLogs(slot) {
     if (!draftDevice) return draft;
     beginDeviceLogListing(draftDevice);
     appendFlowActivity(draftDevice, "Stored historical log list requested after LOGSTATUS=IDLE", "info");
+    pushDraftNotification(draft, {
+      type: "logs",
+      title: "Log file ready",
+      deviceSlot: draftDevice.slot,
+      message: "Stored log list request sent.",
+      action: { type: "stored-logs", label: "View logs", slot: draftDevice.slot }
+    });
   });
   await ble.listLogs(Number(slot));
 }
@@ -4984,6 +5513,15 @@ async function startDeviceOnlyOrderFlow(orderId, preferredSlot, recipeName, opti
       draftOrder.currentRunFirmwareName = safeName;
       draftOrder.deviceOnlyRecipeName = safeName;
       appendActivity(draftDevice, `${safeName} queued from device memory`, "info");
+      pushDraftNotification(draft, {
+        type: "order",
+        title: `Order assigned to D${draftDevice.slot}`,
+        deviceSlot: draftDevice.slot,
+        recipeName: safeName,
+        orderId: draftOrder.orderId || "",
+        message: "Device-memory recipe was queued.",
+        action: { type: "device", label: "Open device", slot: draftDevice.slot }
+      });
     });
     showToast(`${safeName} queued on Device ${device.slot}`, "info");
     return "queued";
@@ -5014,6 +5552,15 @@ async function startDeviceOnlyOrderFlow(orderId, preferredSlot, recipeName, opti
     draftDevice.startupGuardUntil = new Date(Date.now() + 8000).toISOString();
     draftDevice.telemetry.currentRecipe = safeName;
     appendActivity(draftDevice, `Preparing device-only recipe ${safeName}`, "info");
+    pushDraftNotification(draft, {
+      type: "cooking",
+      title: "Recipe started",
+      deviceSlot: draftDevice.slot,
+      recipeName: safeName,
+      orderId: draftOrder.orderId || "",
+      message: `${safeName} is being started from device memory.`,
+      action: { type: "device", label: "Open device", slot: draftDevice.slot }
+    });
   });
 
   try {
@@ -5056,6 +5603,15 @@ async function startDeviceOnlyOrderFlow(orderId, preferredSlot, recipeName, opti
       }
       if (draftDevice) {
         appendActivity(draftDevice, `Device-only start failed: ${error.message}`, "error");
+        pushDraftNotification(draft, {
+          type: "error",
+          title: "Recipe missing",
+          deviceSlot: draftDevice.slot,
+          recipeName: safeName,
+          orderId: draftOrder?.orderId || "",
+          message: error.message,
+          action: { type: "device", label: "Open device", slot: draftDevice.slot }
+        });
       }
     });
     showToast(error.message, "error");
@@ -6658,7 +7214,7 @@ function renderControlPhone(snapshot) {
   const busyOrderCount = snapshot.orders.current.filter((order) =>
     ["queued", "starting", "cooking", "awaiting_confirmation"].includes(order.status)
   ).length;
-  const noticeCount = snapshot.ui.orderNotice ? 1 : 0;
+  const unreadCount = getUnreadNotificationCount(snapshot);
   const body =
     snapshot.ui.activeTab === "orders"
       ? snapshot.ui.orderMode === "current"
@@ -6695,14 +7251,14 @@ function renderControlPhone(snapshot) {
             <small>Busy Orders</small>
           </div>
           <button
-            class="icon-button bluetooth-home-button dashboard-bell-button ${connectedCount > 0 ? "connected" : ""}"
+            class="icon-button dashboard-bell-button ${unreadCount > 0 ? "has-notifications" : ""}"
             type="button"
-            data-action="connect-all-devices"
-            title="Connect all On2Cook devices"
-            aria-label="Connect all On2Cook devices"
+            data-action="open-notification-drawer"
+            title="Open notifications"
+            aria-label="Open notifications"
           >
             <span class="bell-glyph">${renderUiIcon("bell")}</span>
-            <span class="bluetooth-count">${connectingCount > 0 ? "..." : noticeCount}</span>
+            <span class="bluetooth-count">${connectingCount > 0 ? "..." : unreadCount ? Math.min(unreadCount, 99) : ""}</span>
           </button>
           <button
             class="icon-button dashboard-more-button"
@@ -8640,6 +9196,7 @@ function render() {
     <div class="surface ${IS_APK_MODE ? "apk-surface" : ""}">
       ${snapshot.ui.toast ? `<div class="toast ${snapshot.ui.toastTone}">${escapeHtml(snapshot.ui.toast)}</div>` : ""}
       ${renderOrderNotice(snapshot)}
+      ${renderNotificationDrawer(snapshot)}
       ${renderApkScreenSwitcher(snapshot)}
       <main class="screen-rail ${IS_APK_MODE ? "apk-rail" : ""}" data-scroll-key="screen-rail">
         ${renderControlPhone(snapshot)}
@@ -9430,6 +9987,28 @@ async function handleClick(event) {
     closeModal();
     return;
   }
+  if (action === "open-notification-drawer") {
+    mutate((draft) => {
+      draft.ui.notificationDrawerOpen = true;
+    });
+    return;
+  }
+  if (action === "close-notification-drawer") {
+    mutate((draft) => {
+      draft.ui.notificationDrawerOpen = false;
+    });
+    return;
+  }
+  if (action === "mark-notifications-read") {
+    mutate((draft) => {
+      draft.ui.notifications = (draft.ui.notifications || []).map((item) => ({ ...item, read: true }));
+    });
+    return;
+  }
+  if (action === "notification-action") {
+    await runNotificationAction(button.dataset.notificationId || "");
+    return;
+  }
   if (action === "return-device-sheet") {
     openModal("device-sheet", { slot: Number(button.dataset.slot) });
     return;
@@ -9459,11 +10038,29 @@ async function handleClick(event) {
     return;
   }
   if (action === "request-status") {
-    await ble.requestStatus(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    const slot = Number(button.dataset.slot);
+    await ble.requestStatus(slot).then(() => {
+      addNotification({
+        type: "device",
+        title: "Device status refreshed",
+        deviceSlot: slot,
+        message: "Status request was sent to the cooker.",
+        action: { type: "device", label: "Open device", slot }
+      });
+    }).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "manual-request-status") {
-    await ble.requestStatus(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    const slot = Number(button.dataset.slot);
+    await ble.requestStatus(slot).then(() => {
+      addNotification({
+        type: "device",
+        title: "Device status refreshed",
+        deviceSlot: slot,
+        message: "Manual Mode status request was sent to the cooker.",
+        action: { type: "device", label: "Open device", slot }
+      });
+    }).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "open-device-metadata") {
@@ -9479,8 +10076,22 @@ async function handleClick(event) {
     try {
       const names = await refreshDeviceRecipeInventory(slot, { force: true, timeoutMs: 4500 });
       showToast(`Device ${slot} recipe list refreshed: ${names.length} found`, "success");
+      addNotification({
+        type: "logs",
+        title: "Recipe list refreshed",
+        deviceSlot: slot,
+        message: `${names.length} recipe${names.length === 1 ? "" : "s"} found on device.`,
+        action: { type: "device-recipes", label: "View recipes", slot }
+      });
     } catch (error) {
       showToast(error.message, "error");
+      addNotification({
+        type: "error",
+        title: "Recipe upload failed",
+        deviceSlot: slot,
+        message: error.message,
+        action: { type: "device-recipes", label: "Retry list", slot }
+      });
     }
     openModal("device-recipes", { slot, query: "", filter: "all", selectedNames: [] });
     return;

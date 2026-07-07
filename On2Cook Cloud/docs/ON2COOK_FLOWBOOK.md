@@ -895,3 +895,19 @@ Safety rules:
 - The app blocks deletion or replacement of the recipe currently cooking on that device.
 - If a recipe is in that device queue, delete confirmation shows a warning before sending `DELETE=<recipeName>`.
 - After add, replace, or delete, the app refreshes the device recipe list.
+
+## 22. Notification Drawer - July 7, 2026
+
+The bell in the On2Cook Cloud header now opens a notification drawer instead of being a passive decoration. Notifications are stored in the app UI state with an 80-item cap and unread/read state.
+
+Notification types:
+
+- Order: new order received, order assigned to a device, order item completed, order item failed or aborted.
+- Device: device connected, disconnected, busy, idle, firmware version received, and manual status refresh sent.
+- Cooking: recipe started, step changed, recipe paused, recipe completed, recipe aborted, next queued recipe ready, and user-action prompts such as add ingredient, open lid, close lid, or place pan when detected from telemetry.
+- Error: no pan, lid open, voltage high/low, magnetron/induction errors, upload failures, and missing recipes.
+- Logs/Sync: live logs started/stopped, stored log list ready, log download failed, recipe list refreshed, and device recipe sync complete.
+
+Each notification row shows an icon, title, device number when available, recipe or order context when available, timestamp, message, and an action button when there is a useful destination. Actions can open order details, device details, live logs, stored logs, or the Recipes on Device page.
+
+The drawer does not interrupt the current screen or device workflow. It can be opened over the dashboard or device details, and action buttons close the drawer before routing to the selected context.

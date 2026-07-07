@@ -666,6 +666,8 @@ function createUiState() {
     demoAuthBypass: false,
     activeModal: null,
     orderNotice: null,
+    notificationDrawerOpen: false,
+    notifications: [],
     toast: "",
     toastTone: "info"
   };
@@ -918,6 +920,8 @@ export function loadState(seedRecipes) {
     merged.ui = {
       ...createUiState(),
       ...(merged.ui || {}),
+      notifications: Array.isArray(merged.ui?.notifications) ? merged.ui.notifications.slice(0, 80) : [],
+      notificationDrawerOpen: false,
       manualMode: {
         ...createUiState().manualMode,
         ...(merged.ui?.manualMode || {})
@@ -1089,6 +1093,8 @@ export function importState(rawText, seedRecipes) {
   merged.ui = {
     ...createUiState(),
     ...(merged.ui || {}),
+    notifications: Array.isArray(merged.ui?.notifications) ? merged.ui.notifications.slice(0, 80) : [],
+    notificationDrawerOpen: false,
     manualMode: {
       ...createUiState().manualMode,
       ...(merged.ui?.manualMode || {})
