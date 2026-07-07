@@ -844,6 +844,14 @@ Queue editing rules implemented:
 - Cook Again creates a fresh queued order with `recook: true`; it does not edit or delete the old cooked-history entry.
 - Repeated jobs show the Re-cook tag in the upcoming queue.
 
+Acceptance checklist:
+
+- Tapping D1-D5 in Device Access opens Device Details, not a passive scroll-only view.
+- The Current Recipe card includes recipe name, step number, remaining time, progress, and the Induction, Microwave, Stirrer, and Water tiles.
+- View Queue opens the selected device's editable queue timeline.
+- Upcoming queue reorder affects only the selected device's future jobs.
+- Cook Again creates a new queue job while preserving cooked history.
+
 ## 19. Quick Assign Recipe Card - July 7, 2026
 
 Device Details now includes a Quick Assign Recipe card directly under the Queue Timeline. It shows up to three recent/frequent kitchen recipes as chips and an Add Recipe button.

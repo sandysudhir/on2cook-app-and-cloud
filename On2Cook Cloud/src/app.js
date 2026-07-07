@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707n";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707n";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707o";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707o";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707n";
+} from "./ncb-services.js?v=20260707o";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707n";
+} from "./data-store.js?v=20260707o";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -1355,6 +1355,22 @@ function renderUiIcon(name) {
   return icons[name] || "";
 }
 
+function scrollDeviceQueueTimelineIntoView(slot) {
+  const targetSlot = Number(slot) || 1;
+  const activeModal = state().ui.activeModal;
+  if (activeModal?.type !== "device-sheet" || Number(activeModal.payload?.slot) !== targetSlot) {
+    openModal("device-sheet", { slot: targetSlot });
+  }
+  const scroll = () => {
+    const target = app.querySelector(".device-detail-screen .queue-timeline-card");
+    if (target) {
+      target.scrollIntoView({ block: "start", behavior: "smooth" });
+    }
+  };
+  window.requestAnimationFrame(scroll);
+  window.setTimeout(scroll, 80);
+}
+
 function renderContextOrderAction(order, perms) {
   if (order.status === "awaiting_confirmation") {
     return `<button class="primary-button small" data-action="mark-order-completed" data-order-id="${order.id}">Mark Completed</button>`;
@@ -1388,7 +1404,7 @@ function renderOrderDeviceAccess(snapshot) {
               <button
                 class="dashboard-device-card ${online ? "online" : "offline"} ${active ? "active" : ""}"
                 type="button"
-                data-action="order-jump-device"
+                data-action="open-device-sheet"
                 data-slot="${device.slot}"
               >
                 <img src="./assets/on2cook-logo.png" alt="" aria-hidden="true">
@@ -7456,6 +7472,9 @@ function renderCurrentRecipeCard(snapshot, device, currentOrder, recipe) {
           )
           .join("")}
       </div>
+      <div class="action-row current-recipe-actions">
+        <button class="secondary-button small" type="button" data-action="view-device-queue" data-slot="${device.slot}">View Queue</button>
+      </div>
     </article>
   `;
 }
@@ -9994,11 +10013,11 @@ async function handleClick(event) {
   }
   if (action === "order-jump-device") {
     const slot = Number(button.dataset.slot) || 1;
-    if (IS_APK_MODE) {
-      scrollApkRailToIndex(slot);
-    } else {
-      openModal("device-sheet", { slot });
-    }
+    openModal("device-sheet", { slot });
+    return;
+  }
+  if (action === "view-device-queue") {
+    scrollDeviceQueueTimelineIntoView(Number(button.dataset.slot) || 1);
     return;
   }
   if (action === "toggle-global-recipe-pick") {
