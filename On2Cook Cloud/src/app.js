@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260706j";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260706j";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260706j";
+} from "./ncb-services.js?v=20260707a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260706j";
+} from "./data-store.js?v=20260707a";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -2867,13 +2867,14 @@ async function connectDevice(slot) {
     if (!device) return draft;
     device.connection = "connecting";
     device.lastMessage = rememberedId
-      ? `Reconnecting locked cooker ${device.bluetoothName || `Device ${slot}`}`
+      ? `Reconnecting saved cooker ${device.bluetoothName || `Device ${slot}`}. If Chrome asks, select the same cooker again.`
       : "Opening Bluetooth chooser to assign this window";
     appendActivity(device, device.lastMessage, "info");
   });
   try {
     await ble.connect(Number(slot), rememberedId, {
-      lockToRememberedDevice: Boolean(rememberedId)
+      lockToRememberedDevice: Boolean(rememberedId),
+      allowRememberedReauthorization: Boolean(rememberedId)
     });
     showToast(`Device ${slot} connected`, "success");
   } catch (error) {
@@ -2923,7 +2924,8 @@ async function connectAllDevices() {
         });
         try {
           await ble.connect(Number(slot), current.browserDeviceId, {
-            lockToRememberedDevice: true
+            lockToRememberedDevice: true,
+            allowRememberedReauthorization: false
           });
         } catch (error) {
           failedSlots.push({ slot, error });

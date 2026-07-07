@@ -791,3 +791,9 @@ The outer web-only "On2Cook Cloud orchestration" hero was removed from the signe
 The control phone header now uses fixed grid tracks for the On2Cook logo, kitchen name, device count, busy order count, and notification/connect button. This prevents the kitchen title and counters from squeezing each other and keeps the screen closer to the supplied reference layout.
 
 New-order alerts are fixed overlays instead of sticky blocks, so they no longer push the phone screens down or resize the visible cooking/order area.
+
+## 15. Bluetooth Slot Lock Reauthorization - July 7, 2026
+
+Each device window remains locked to its saved cooker by `browserDeviceId`. If Chrome can still see the saved Bluetooth permission, reconnect uses that exact saved cooker.
+
+If Chrome loses the saved permission for a locked cooker, pressing Connect on that individual device window now opens the Bluetooth chooser so the operator can select the same cooker again and refresh the saved browser binding. Connect All does not open multiple chooser prompts; it only reconnects saved cookers that Chrome can currently see and marks missing slots as needing reauthorization.

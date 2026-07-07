@@ -172,6 +172,9 @@ export class BleTransport extends EventTarget {
   }
 
   formatWebBluetoothError(error, context = "") {
+    if (error?.code === "remembered-device-missing") {
+      return error;
+    }
     if (this.isChooserCancel(error)) {
       return new Error("Bluetooth pairing was cancelled before a device was selected.");
     }
@@ -326,6 +329,7 @@ export class BleTransport extends EventTarget {
     const numericSlot = Number(slot);
     const rememberedId = String(rememberedBrowserDeviceId || "").trim();
     const lockToRememberedDevice = options.lockToRememberedDevice === true && Boolean(rememberedId);
+    const allowRememberedReauthorization = options.allowRememberedReauthorization === true;
     if (!this.supported) {
       throw new Error("Web Bluetooth is not available in this browser.");
     }
@@ -348,7 +352,12 @@ export class BleTransport extends EventTarget {
       let rememberedFailed = false;
       const rememberedDevice = await this.findRememberedDevice(rememberedId);
       if (lockToRememberedDevice && !rememberedDevice) {
-        throw new Error(`Device ${numericSlot} is locked to a previously assigned cooker, but Chrome cannot currently see that paired device. Switch that cooker on and try again, or use Clear pairing before assigning a different cooker to this window.`);
+        if (!allowRememberedReauthorization) {
+          const error = new Error(`Device ${numericSlot} needs Bluetooth permission again. Tap Device ${numericSlot} Connect and select the saved cooker, or use Clear pairing to assign a different cooker.`);
+          error.code = "remembered-device-missing";
+          throw error;
+        }
+        rememberedFailed = true;
       }
       if (rememberedDevice) {
         try {
@@ -372,7 +381,7 @@ export class BleTransport extends EventTarget {
         if (rememberedFailed) {
           throw this.formatWebBluetoothError(
             error,
-            "Saved Bluetooth pairing failed and a fresh device was not selected"
+            "Saved cooker permission was missing and the cooker was not selected again"
           );
         }
         throw this.formatWebBluetoothError(error);
