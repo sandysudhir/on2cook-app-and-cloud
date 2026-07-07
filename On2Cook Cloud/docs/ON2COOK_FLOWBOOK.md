@@ -814,4 +814,6 @@ The top navigation labels were tightened so Manual and Global R sit cleanly in o
 
 On narrow mobile screens the new-order notice now renders as a compact bottom toast so it does not cover the kitchen header or the primary navigation row.
 
+The second refinement pass tightened the device-management layout specifically: tab icons now sit in fixed centered slots, device headers use compact aligned logo/status geometry, and device action buttons use a predictable grid so the screen feels cleaner on both desktop and phone widths.
+
 This was a visual/layout pass only. BLE transport, recipe upload timing, order queue logic, and firmware command strings were not changed.

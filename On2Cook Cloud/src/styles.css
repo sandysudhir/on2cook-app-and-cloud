@@ -4480,6 +4480,152 @@ textarea.field-input {
   color: #f8f5f1;
 }
 
+/* Premium dark device-management refinement */
+.surface:not(.login-surface) .control-phone .phone-shell,
+.surface:not(.login-surface) .device-phone .phone-shell {
+  border-color: rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(170deg, rgba(35, 34, 34, 0.98) 0%, rgba(18, 18, 18, 0.98) 48%, rgba(7, 7, 7, 0.99) 100%);
+}
+
+.surface:not(.login-surface) .dashboard-hero-head {
+  align-items: center;
+  gap: 14px;
+  padding-block: 18px;
+}
+
+.surface:not(.login-surface) .dashboard-title-block h2,
+.surface:not(.login-surface) .dashboard-title-block p {
+  line-height: 1.1;
+}
+
+.surface:not(.login-surface) .dashboard-counter-card {
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  border-radius: 18px;
+}
+
+.surface:not(.login-surface) .dashboard-bell-button,
+.surface:not(.login-surface) .dashboard-more-button {
+  display: grid;
+  place-items: center;
+}
+
+.surface:not(.login-surface) .dashboard-tabs {
+  grid-template-columns: 24px repeat(5, minmax(0, 1fr)) 24px;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 24px;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 64px;
+  gap: 5px;
+  border-radius: 17px;
+  font-weight: 900;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button .tab-icon,
+.surface:not(.login-surface) .dashboard-tabs .tab-edge-icon,
+.surface:not(.login-surface) .tab-edge-icon {
+  display: grid;
+  place-items: center;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button .tab-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.surface:not(.login-surface) .dashboard-tabs .tab-button.active {
+  background:
+    linear-gradient(145deg, rgba(237, 27, 47, 0.42), rgba(255, 74, 20, 0.26));
+}
+
+.surface:not(.login-surface) .device-head {
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  padding: 30px 18px 16px;
+}
+
+.surface:not(.login-surface) .device-head-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+}
+
+.surface:not(.login-surface) .device-head h2 {
+  max-width: 100%;
+  font-size: 1.3rem;
+  line-height: 1.08;
+}
+
+.surface:not(.login-surface) .device-head p {
+  margin-top: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.surface:not(.login-surface) .device-head .status-pill {
+  align-self: start;
+  min-height: 28px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+}
+
+.surface:not(.login-surface) .linked-device-label {
+  max-width: 100%;
+  margin-top: 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.surface:not(.login-surface) .device-phone .phone-body {
+  padding-top: 14px;
+}
+
+.surface:not(.login-surface) .device-phone .action-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.surface:not(.login-surface) .device-phone .action-row .small {
+  justify-content: center;
+  min-height: 36px;
+  padding-inline: 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.surface:not(.login-surface) .device-info-tab,
+.surface:not(.login-surface) .last-cooked-card,
+.surface:not(.login-surface) .operator-cook-card,
+.surface:not(.login-surface) .next-recipe-card,
+.surface:not(.login-surface) .next-prep-prompt {
+  border-radius: 18px;
+}
+
+.surface:not(.login-surface) .mini-title {
+  letter-spacing: 0.13em;
+}
+
 .modal-form {
   display: grid;
   gap: 12px;
