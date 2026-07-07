@@ -2801,6 +2801,81 @@ textarea.field-input {
   line-height: 1.15;
 }
 
+.current-recipe-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(111, 92, 71, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.current-recipe-head h3,
+.current-recipe-head p {
+  margin: 0;
+}
+
+.current-recipe-status {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  text-align: right;
+}
+
+.current-recipe-status strong {
+  color: var(--accent-strong);
+  font-size: 1rem;
+}
+
+.current-recipe-progress {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(111, 92, 71, 0.16);
+}
+
+.current-recipe-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.current-recipe-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.current-recipe-tile {
+  display: grid;
+  gap: 4px;
+  min-height: 82px;
+  padding: 12px;
+  border: 1px solid rgba(111, 92, 71, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.current-recipe-tile span,
+.current-recipe-tile small {
+  color: var(--muted);
+}
+
+.current-recipe-tile span {
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.current-recipe-tile strong {
+  color: var(--accent-strong);
+  font-size: 1.05rem;
+}
+
+.current-recipe-tile small {
+  font-size: 0.72rem;
+}
+
 .operator-live-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -5086,6 +5161,7 @@ textarea.field-input {
 .surface:not(.login-surface) .dashboard-title-block p,
 .surface:not(.login-surface) .order-id,
 .surface:not(.login-surface) .operator-current-step strong,
+.surface:not(.login-surface) .current-recipe-head h3,
 .surface:not(.login-surface) .operator-step-card strong,
 .surface:not(.login-surface) .operator-prompt strong,
 .surface:not(.login-surface) .next-recipe-main strong,
@@ -5097,6 +5173,7 @@ textarea.field-input {
 .surface:not(.login-surface) .phone-head p,
 .surface:not(.login-surface) .subtle,
 .surface:not(.login-surface) .operator-current-step small,
+.surface:not(.login-surface) .current-recipe-tile small,
 .surface:not(.login-surface) .operator-live-summary small,
 .surface:not(.login-surface) .operator-step-card small,
 .surface:not(.login-surface) .operator-prompt small,
@@ -5113,6 +5190,7 @@ textarea.field-input {
 .surface:not(.login-surface) .mini-title,
 .surface:not(.login-surface) .available-device-title,
 .surface:not(.login-surface) .operator-current-step span,
+.surface:not(.login-surface) .current-recipe-tile span,
 .surface:not(.login-surface) .operator-live-summary span,
 .surface:not(.login-surface) .operator-step-card span,
 .surface:not(.login-surface) .operator-prompt span,
@@ -5212,6 +5290,8 @@ textarea.field-input {
 .surface:not(.login-surface) .settings-card,
 .surface:not(.login-surface) .device-info-tab,
 .surface:not(.login-surface) .operator-cook-card,
+.surface:not(.login-surface) .current-recipe-card,
+.surface:not(.login-surface) .current-recipe-tile,
 .surface:not(.login-surface) .operator-current-step,
 .surface:not(.login-surface) .operator-live-summary span,
 .surface:not(.login-surface) .operator-step-card,
@@ -5233,9 +5313,14 @@ textarea.field-input {
 }
 
 .surface:not(.login-surface) .operator-cook-card,
+.surface:not(.login-surface) .current-recipe-card,
 .surface:not(.login-surface) .next-recipe-card.primary-next {
   border-color: rgba(255, 74, 20, 0.34);
   background: linear-gradient(180deg, rgba(255, 74, 20, 0.16), rgba(255, 255, 255, 0.045));
+}
+
+.surface:not(.login-surface) .current-recipe-progress {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .surface:not(.login-surface) .operator-prompt.water {

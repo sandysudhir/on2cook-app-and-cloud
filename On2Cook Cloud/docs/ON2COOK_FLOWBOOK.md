@@ -911,3 +911,15 @@ Notification types:
 Each notification row shows an icon, title, device number when available, recipe or order context when available, timestamp, message, and an action button when there is a useful destination. Actions can open order details, device details, live logs, stored logs, or the Recipes on Device page.
 
 The drawer does not interrupt the current screen or device workflow. It can be opened over the dashboard or device details, and action buttons close the drawer before routing to the selected context.
+
+## 23. Device Workflow Guardrails - July 7, 2026
+
+These are now the fixed guardrails for the Order, Device Details, queue, and logs screens:
+
+- Keep the current On2Cook visual language and navigation structure. Do not invent a new palette or rearrange the top navigation while fixing device behavior.
+- Device Details must keep a visible Current Recipe card. That card must show the live Induction, Microwave, Stirrer, and Water tiles before the queue timeline.
+- Live Logs and historical Logs are separate workflows. Live Logs sends `livelog=ON/OFF`; historical Logs uses `LOGSTATUS=?`, `LISTLOGS`, and `READLOG=<filename>`.
+- Offline devices are not selectable for cooking, queueing, or recipe upload actions. Recipe assignment controls require a connected, enabled device.
+- Queue reorder buttons affect only the selected device's upcoming queue (`device.queueOrderIds`).
+- Cook Again creates a new queued job tagged `recook`; it never deletes or edits the cooked-history record.
+- All device actions carry the selected `data-slot`, so D1 actions mutate only D1, D2 actions mutate only D2, and so on.

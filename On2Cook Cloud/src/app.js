@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707m";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707m";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260707n";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260707n";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260707m";
+} from "./ncb-services.js?v=20260707n";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260707m";
+} from "./data-store.js?v=20260707n";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -1589,6 +1589,10 @@ function emptyLogFetchState() {
     status: "",
     updatedAt: ""
   };
+}
+
+function canUseDeviceForRecipeActions(device) {
+  return Boolean(device?.enabled && device.connection === "connected");
 }
 
 function emptyLiveLogState() {
@@ -5649,6 +5653,10 @@ function queueDeviceStoredRecipe(slot, recipeName) {
   const snapshot = state();
   const device = snapshot.devices.find((item) => item.slot === Number(slot));
   if (!device) return;
+  if (!canUseDeviceForRecipeActions(device)) {
+    showToast(`Device ${slot} is offline. Connect it before queuing ${recipeName}.`, "warning");
+    return;
+  }
   const recipe = findRecipeByFirmwareName(snapshot, recipeName);
   const order = createDeviceMemoryOrder(snapshot, recipeName, slot, "queued", recipe);
   mutate((draft) => {
@@ -5784,7 +5792,7 @@ function requestDeviceRecipeDelete(slot, recipeNames) {
 function renderDeviceRecipeRow(row, device, selected) {
   const hasCloudRecipe = Boolean(row.recipe);
   const isRunning = isDeviceRecipeCurrentlyRunning(device, row.recipeName);
-  const connected = device.connection === "connected";
+  const connected = canUseDeviceForRecipeActions(device);
   const busy = isDeviceActivelyCooking(device);
   return `
     <article class="device-recipe-row ${selected ? "selected" : ""} ${isRunning ? "running" : ""}">
@@ -5810,7 +5818,7 @@ function renderDeviceRecipeRow(row, device, selected) {
       </div>
       <div class="device-recipe-actions">
         <button class="primary-button micro" type="button" data-action="device-recipe-run" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" ${connected && !busy ? "" : "disabled"}>Run</button>
-        <button class="secondary-button micro" type="button" data-action="device-recipe-queue" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" ${isRunning ? "disabled" : ""}>Queue</button>
+        <button class="secondary-button micro" type="button" data-action="device-recipe-queue" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" ${connected && !isRunning ? "" : "disabled"}>Queue</button>
         <button class="secondary-button micro" type="button" data-action="device-recipe-update" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" ${connected && hasCloudRecipe && !isRunning ? "" : "disabled"}>Update/Replace</button>
         <button class="danger-button micro" type="button" data-action="device-recipe-delete-request" data-slot="${device.slot}" data-recipe-name="${escapeHtml(row.recipeName)}" ${connected && !isRunning ? "" : "disabled"}>Delete</button>
       </div>
@@ -6629,7 +6637,8 @@ function renderOrderCard(snapshot, order, perms) {
   const assigned = order.assignedSlot ? `Device ${order.assignedSlot}` : "Auto";
   const orderType = getOrderType(order);
   const thumbUrl = getOrderThumbUrl(order);
-  const canCook = ["pending", "queued"].includes(order.status) && perms.canAssignQueues;
+  const canCook = ["pending", "queued"].includes(order.status) && perms.canAssignQueues && availableDevices.length > 0;
+  const blockedByNoDevice = ["pending", "queued"].includes(order.status) && perms.canAssignQueues && availableDevices.length === 0;
   return `
     <article class="order-card order-card-rich dashboard-order-card">
       <div class="row space order-card-topline">
@@ -6665,7 +6674,13 @@ function renderOrderCard(snapshot, order, perms) {
       ${order.specialInstructions ? `<p class="subtle">${escapeHtml(order.specialInstructions)}</p>` : ""}
       <div class="action-row dashboard-order-actions">
         <button class="secondary-button small" data-action="open-order-details" data-order-id="${order.id}">Details</button>
-        ${canCook ? `<button class="secondary-button small assign-recipe-button" data-action="auto-assign-order" data-order-id="${order.id}">Assign Recipe</button>` : renderContextOrderAction(order, perms)}
+        ${
+          canCook
+            ? `<button class="secondary-button small assign-recipe-button" data-action="auto-assign-order" data-order-id="${order.id}">Assign Recipe</button>`
+            : blockedByNoDevice
+              ? `<button class="secondary-button small assign-recipe-button" type="button" disabled>Connect device first</button>`
+              : renderContextOrderAction(order, perms)
+        }
         ${canCook ? `<button class="primary-button small cook-now-button" data-action="auto-assign-order" data-order-id="${order.id}">Cook Now</button>` : ""}
         <button class="icon-button more-order-button" data-action="open-order-details" data-order-id="${order.id}" aria-label="More order details">${renderUiIcon("more")}</button>
       </div>
@@ -7367,6 +7382,84 @@ function renderRecipeTimeline(snapshot, device, recipe, active = false) {
   `;
 }
 
+function renderCurrentRecipeCard(snapshot, device, currentOrder, recipe) {
+  const active = isDeviceActivelyCooking(device) && Boolean(recipe || currentOrder || getLiveRecipeName(device));
+  const stepState = recipe ? getOperatorStepState(device, recipe) : { activeIndex: 0, totalSteps: 0, currentStep: {} };
+  const step = stepState.currentStep || {};
+  const recipeName =
+    device.activeRun?.displayName ||
+    currentOrder?.itemName ||
+    recipe?.displayName ||
+    getLiveRecipeName(device) ||
+    "No active recipe";
+  const status = active ? device.telemetry.workStatus || currentOrder?.status || "cooking" : "idle";
+  const remainingSeconds = active ? getDeviceActiveRemainingSeconds(device, recipe) : 0;
+  const totalSeconds = Math.max(1, Number(device.activeRun?.durationSeconds) || getRecipeDuration(recipe));
+  const elapsedSeconds = active ? elapsedSecondsBetween(device.activeRun?.startedAt || currentOrder?.createdAt || nowIso(), nowIso()) : 0;
+  const progress = active ? Math.min(100, Math.max(0, (elapsedSeconds / totalSeconds) * 100)) : 0;
+  const water = getLiquidStepValue(step.pump_on);
+  const stirrerValue = device.telemetry.stirrer || step.stirrer_on || DEFAULT_STIRRER_LEVEL;
+  const tiles = [
+    {
+      label: "Induction",
+      value: `${clampPercent(device.telemetry.indPower || step.Induction_power)}%`,
+      hint: step.Induction_on_time ? `${secondsLabel(step.Induction_on_time)}` : "Standby"
+    },
+    {
+      label: "Microwave",
+      value: `${clampPercent(device.telemetry.magPower || step.Magnetron_power)}%`,
+      hint: step.Magnetron_on_time ? `${secondsLabel(step.Magnetron_on_time)}` : "Standby"
+    },
+    {
+      label: "Stirrer",
+      value: formatStirrerDisplay(stirrerValue),
+      hint: stirrerValue === "OFF" || String(stirrerValue) === "0" ? "Off" : "Active"
+    },
+    {
+      label: "Water",
+      value: water.label,
+      hint: water.fill > 0 ? "Scheduled" : "No water now"
+    }
+  ];
+  return `
+    <article class="current-recipe-card">
+      <div class="row space current-recipe-head">
+        <div>
+          <div class="mini-title">Current Recipe</div>
+          <h3>${escapeHtml(recipeName)}</h3>
+          <p class="subtle">
+            ${
+              active
+                ? `Step ${escapeHtml(stepState.activeIndex + 1)}${stepState.totalSteps ? ` of ${escapeHtml(stepState.totalSteps)}` : ""}`
+                : "Device is idle"
+            }
+          </p>
+        </div>
+        <div class="current-recipe-status">
+          ${renderStatusPill(status)}
+          <strong>${active ? `${formatProClock(remainingSeconds)} left` : "00:00"}</strong>
+        </div>
+      </div>
+      <div class="current-recipe-progress" aria-hidden="true">
+        <span style="width:${progress}%"></span>
+      </div>
+      <div class="current-recipe-tiles">
+        ${tiles
+          .map(
+            (tile) => `
+              <div class="current-recipe-tile">
+                <span>${escapeHtml(tile.label)}</span>
+                <strong>${escapeHtml(tile.value)}</strong>
+                <small>${escapeHtml(tile.hint)}</small>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    </article>
+  `;
+}
+
 function renderCompactDeviceInfo(device, summaryMessage) {
   return `
     <button class="device-info-tab" data-action="open-device-sheet" data-slot="${device.slot}">
@@ -7699,6 +7792,7 @@ function renderQueueTimelineCard(snapshot, device) {
 function renderQuickAssignCard(snapshot, device) {
   const recipes = getQuickAssignRecipes(snapshot, device, 3);
   const busy = isDeviceActivelyCooking(device);
+  const connected = canUseDeviceForRecipeActions(device);
   return `
     <div class="quick-assign-card">
       <div class="queue-timeline-header">
@@ -7706,7 +7800,7 @@ function renderQuickAssignCard(snapshot, device) {
           <div class="mini-title">Quick assign recipe</div>
           <p>Add a frequent recipe to Device ${device.slot} without leaving Device Details.</p>
         </div>
-        <button class="primary-button micro" type="button" data-action="open-assign-recipe" data-slot="${device.slot}">Add Recipe</button>
+        <button class="primary-button micro" type="button" data-action="open-assign-recipe" data-slot="${device.slot}" ${connected ? "" : "disabled"}>Add Recipe</button>
       </div>
       <div class="quick-recipe-chip-row">
         ${
@@ -7714,9 +7808,9 @@ function renderQuickAssignCard(snapshot, device) {
             ? recipes
                 .map(
                   (recipe) => `
-                    <button class="quick-recipe-chip" type="button" data-action="quick-assign-chip" data-slot="${device.slot}" data-recipe-id="${recipe.id}">
+                    <button class="quick-recipe-chip" type="button" data-action="quick-assign-chip" data-slot="${device.slot}" data-recipe-id="${recipe.id}" ${connected ? "" : "disabled"}>
                       <span>${escapeHtml(recipe.displayName)}</span>
-                      <small>${escapeHtml(busy ? "Add to Queue" : "Cook / Queue")}</small>
+                      <small>${escapeHtml(connected ? (busy ? "Add to Queue" : "Cook / Queue") : "Connect first")}</small>
                     </button>
                   `
                 )
@@ -7737,7 +7831,8 @@ function renderQuickAssignConfirmModal(snapshot, modal) {
   const title = recipe?.displayName || recipe?.name || recipe?.recipeName || "Selected recipe";
   const busy = device ? isDeviceActivelyCooking(device) : false;
   const forcedAction = modal.payload?.action === "cook" || modal.payload?.action === "queue" ? modal.payload.action : "";
-  const canCookNow = device?.connection === "connected" && !busy;
+  const connected = canUseDeviceForRecipeActions(device);
+  const canCookNow = connected && !busy;
   const baseAttrs = `data-slot="${slot}" data-recipe-id="${escapeHtml(modal.payload?.recipeId || "")}" data-catalog-id="${escapeHtml(modal.payload?.catalogId || "")}"`;
   return `
     <div class="modal-backdrop">
@@ -7751,21 +7846,21 @@ function renderQuickAssignConfirmModal(snapshot, modal) {
         </div>
         <div class="settings-card compact-note">
           <strong>Device ${slot}: ${escapeHtml(device?.displayName || "Unknown device")}</strong>
-          <p class="subtle">${escapeHtml(device?.connection === "connected" ? "The app will check the device recipe list and upload this recipe only if it is missing." : "Connect this device before assigning a recipe.")}</p>
+          <p class="subtle">${escapeHtml(connected ? "The app will check the device recipe list and upload this recipe only if it is missing." : "Connect this device before assigning a recipe.")}</p>
         </div>
         ${
           forcedAction
             ? `<p class="subtle">${escapeHtml(forcedAction === "cook" ? "Ready to check/upload the recipe and start cooking now." : "Ready to check/upload the recipe and add it to this device queue.")}</p>
                <div class="action-row">
                  <button class="secondary-button" type="button" data-action="return-device-sheet" data-slot="${slot}">Cancel</button>
-                 <button class="${forcedAction === "cook" ? "primary-button" : "secondary-button"}" type="button" data-action="confirm-quick-assignment" data-assign-action="${forcedAction}" ${baseAttrs} ${device?.connection === "connected" ? "" : "disabled"}>
+                 <button class="${forcedAction === "cook" ? "primary-button" : "secondary-button"}" type="button" data-action="confirm-quick-assignment" data-assign-action="${forcedAction}" ${baseAttrs} ${connected ? "" : "disabled"}>
                    ${forcedAction === "cook" ? "Confirm Cook Now" : "Confirm Add to Queue"}
                  </button>
                </div>`
             : `<p class="subtle">Choose what to do after the device recipe check is complete.</p>
                <div class="action-row">
                  <button class="primary-button" type="button" data-action="confirm-quick-assignment" data-assign-action="cook" ${baseAttrs} ${canCookNow ? "" : "disabled"}>Cook Now</button>
-                 <button class="secondary-button" type="button" data-action="confirm-quick-assignment" data-assign-action="queue" ${baseAttrs} ${device?.connection === "connected" ? "" : "disabled"}>Add to Queue</button>
+                 <button class="secondary-button" type="button" data-action="confirm-quick-assignment" data-assign-action="queue" ${baseAttrs} ${connected ? "" : "disabled"}>Add to Queue</button>
                  <button class="secondary-button" type="button" data-action="return-device-sheet" data-slot="${slot}">Cancel</button>
                </div>`
         }
@@ -7778,6 +7873,7 @@ function renderAssignRecipeModal(snapshot, modal) {
   const slot = Number(modal.payload?.slot || 0);
   const device = snapshot.devices.find((item) => item.slot === slot);
   const busy = device ? isDeviceActivelyCooking(device) : false;
+  const connected = canUseDeviceForRecipeActions(device);
   const uploadOnly = modal.payload?.mode === "upload";
   const results = getAssignRecipeSearchResults(snapshot, modal);
   return `
@@ -7812,13 +7908,15 @@ function renderAssignRecipeModal(snapshot, modal) {
                         </div>
                         <div class="action-row">
                           ${
-                            uploadOnly
-                              ? `<button class="primary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="upload" data-slot="${slot}" ${idAttrs}>Upload/Add</button>`
-                              : !busy
-                              ? `<button class="primary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="cook" data-slot="${slot}" ${idAttrs}>Cook Now</button>`
-                              : ""
+                            !connected
+                              ? `<button class="secondary-button micro" type="button" disabled>Connect D${slot} first</button>`
+                              : uploadOnly
+                                ? `<button class="primary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="upload" data-slot="${slot}" ${idAttrs}>Upload/Add</button>`
+                                : !busy
+                                  ? `<button class="primary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="cook" data-slot="${slot}" ${idAttrs}>Cook Now</button>`
+                                  : ""
                           }
-                          ${uploadOnly ? "" : `<button class="secondary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="queue" data-slot="${slot}" ${idAttrs}>Add to Queue</button>`}
+                          ${uploadOnly || !connected ? "" : `<button class="secondary-button micro" type="button" data-action="assign-recipe-action" data-assign-action="queue" data-slot="${slot}" ${idAttrs}>Add to Queue</button>`}
                         </div>
                       </article>
                     `;
@@ -8773,6 +8871,7 @@ function renderModal(snapshot) {
               <p class="subtle">${escapeHtml(device.lastMessage || "No live messages yet")}</p>
             </div>
             <div class="settings-card refined-current-card">
+              ${renderCurrentRecipeCard(snapshot, device, currentOrder, runtimeRecipe)}
               ${renderQueueTimelineCard(snapshot, device)}
               ${
                 telemetryMode.includes("ingredient") || telemetryMode.includes("cooking") || currentOrder || hasLiveRuntime(device)
