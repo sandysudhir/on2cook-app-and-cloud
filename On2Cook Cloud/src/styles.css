@@ -1590,12 +1590,16 @@ button {
   margin-top: 8px;
   min-height: 26px;
   align-items: center;
-  padding: 0 9px;
-  border-radius: 999px;
+  padding: 5px 10px;
+  border-radius: 12px;
   background: rgba(129, 103, 70, 0.1);
   color: var(--muted);
   font-size: 0.74rem;
+  line-height: 1.25;
   font-weight: 800;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .linked-device-label.locked {
@@ -5566,7 +5570,7 @@ textarea.field-input {
 .surface:not(.login-surface) .device-head {
   grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 12px;
+  gap: 9px 12px;
   padding: 30px 18px 16px;
 }
 
@@ -5599,11 +5603,14 @@ textarea.field-input {
 }
 
 .surface:not(.login-surface) .linked-device-label {
+  grid-column: 2 / -1;
+  justify-self: start;
   max-width: 100%;
-  margin-top: 9px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
 }
 
 .surface:not(.login-surface) .device-phone .phone-body {

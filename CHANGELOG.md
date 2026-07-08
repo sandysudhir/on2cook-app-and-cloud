@@ -2,6 +2,10 @@
 
 ## 2026-07-08
 
+- Expanded the device locked-cooker label into its own wrapping header band so longer Bluetooth names are readable instead of being truncated.
+- Corrected last-run timing labels: completed/aborted recipes now show `Idle before next` only when a next recipe has started, otherwise they show `Since completion` or `Since abort`.
+- Bumped web cache version to `20260708c` / service-worker cache `v81` and refreshed the APK cloud URL.
+
 - Refreshed the Android APK WebView entry so the Orders cloud workspace opens the latest APK-specific mobile surface with native BLE bridge support.
 - Preserved the native home screen flow: Cook, Orders, and Fry remain on the app home screen, and the cloud order/device workspace opens only from Orders.
 - Prepared a new APK build for phone testing with the current responsive/mobile-optimized On2Cook Cloud UI.

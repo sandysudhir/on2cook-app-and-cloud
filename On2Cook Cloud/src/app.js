@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708c";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708c";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260708b";
+} from "./ncb-services.js?v=20260708c";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260708b";
+} from "./data-store.js?v=20260708c";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -7965,8 +7965,10 @@ function renderLastRunMetrics(run) {
   const actualSeconds = getRunActualSeconds(run);
   const plannedSeconds = Number(run.durationSeconds) || actualSeconds;
   const sinceSeconds = getSinceRunFinishedSeconds(run);
-  const sinceLabel = run.nextStartedAt ? "Wait before next" : `Since ${run.outcome === "aborted" ? "abort" : "completion"}`;
-  const sinceSmall = run.nextStartedAt ? `next started ${formatAgo(run.nextStartedAt)}` : formatAgo(run.finishedAt);
+  const sinceLabel = run.nextStartedAt ? "Idle before next" : `Since ${run.outcome === "aborted" ? "abort" : "completion"}`;
+  const sinceSmall = run.nextStartedAt
+    ? "Next recipe has started"
+    : "No next recipe started yet";
   return `
     <div class="last-run-metrics">
       <div>
@@ -7987,12 +7989,15 @@ function renderLastRunTab(device, label = "Last recipe sheet") {
   if (!device?.lastRun?.finishedAt) return "";
   const actualSeconds = getRunActualSeconds(device.lastRun);
   const sinceSeconds = getSinceRunFinishedSeconds(device.lastRun);
+  const sinceCopy = device.lastRun.nextStartedAt
+    ? `idle ${formatProClock(sinceSeconds)} before next`
+    : `${formatProClock(sinceSeconds)} since ${device.lastRun.outcome === "aborted" ? "abort" : "completion"}`;
   return `
     <button class="last-recipe-tab" data-action="open-device-recipe-sheet" data-slot="${device.slot}">
       <span class="status-dot ${device.lastRun.outcome === "aborted" ? "failed" : "complete"}"></span>
       <span>
         <strong>${escapeHtml(device.lastRun.displayName || device.lastRun.firmwareName || "Last recipe")}</strong>
-        <small>${escapeHtml(device.lastRun.outcome === "aborted" ? "Aborted" : "Completed")} | ran ${formatProClock(actualSeconds)} | ${formatProClock(sinceSeconds)} ago</small>
+        <small>${escapeHtml(device.lastRun.outcome === "aborted" ? "Aborted" : "Completed")} | ran ${formatProClock(actualSeconds)} | ${escapeHtml(sinceCopy)}</small>
       </span>
       <span class="chevron">›</span>
     </button>
@@ -8064,6 +8069,8 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
   const actualSeconds = getRunActualSeconds(run) || Number(run?.actualDurationSeconds) || Number(run?.elapsed || 0);
   const sinceSeconds = getSinceRunFinishedSeconds(run);
   const outcome = run?.outcome || "completed";
+  const sinceSheetLabel = run?.nextStartedAt ? "Idle before next" : `Since ${outcome === "aborted" ? "abort" : "completion"}`;
+  const sinceSheetPrefix = run?.nextStartedAt ? "" : "+";
   const ingredients = draft?.ingredients || recipeSheetIngredientsFromRecipe(recipe);
   const steps = draft?.minutes
     ? draft.minutes.map((minute, index) => ({
@@ -8111,7 +8118,7 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
       </section>
       <div class="recipe-sheet-stat-grid">
         <div><span>On2Cook</span><strong>${formatProClock(actualSeconds)}</strong></div>
-        <div><span>Since finish</span><strong>+${formatProClock(sinceSeconds)}</strong></div>
+        <div><span>${escapeHtml(sinceSheetLabel)}</span><strong>${sinceSheetPrefix}${formatProClock(sinceSeconds)}</strong></div>
         <div><span>Normal cooking</span><strong>${formatProClock(plannedSeconds)}</strong></div>
       </div>
       <div class="recipe-sheet-profile">
@@ -8192,11 +8199,11 @@ function renderDevicePhone(snapshot, device) {
             <div class="eyebrow">Device ${device.slot}</div>
             <h2>${escapeHtml(device.displayName)}</h2>
             <p>${escapeHtml(device.bluetoothName || "Not paired yet")}</p>
-            <span class="linked-device-label ${device.browserDeviceId ? "locked" : ""}">${escapeHtml(linkedDeviceLabel)}</span>
           </div>
           <span class="status-pill ${connectionTone}">
             ${escapeHtml(connectionLabel)}
           </span>
+          <span class="linked-device-label ${device.browserDeviceId ? "locked" : ""}" title="${escapeHtml(linkedDeviceLabel)}">${escapeHtml(linkedDeviceLabel)}</span>
         </header>
         <div class="phone-body" data-scroll-key="body-device-${device.slot}">
           <section class="stack-section">
