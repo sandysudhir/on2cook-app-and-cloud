@@ -2413,6 +2413,139 @@ textarea.field-input {
   padding-right: 4px;
 }
 
+.live-log-dashboard,
+.live-log-compact-section,
+.live-log-raw-details {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.live-log-now-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(244, 123, 32, 0.22);
+  background: rgba(255, 248, 241, 0.92);
+}
+
+.live-log-now-card h4 {
+  margin: 2px 0 4px;
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.live-log-now-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.live-log-now-card > strong {
+  min-width: 96px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  color: var(--accent-strong);
+  background: rgba(244, 123, 32, 0.14);
+  text-align: center;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+}
+
+.live-log-metric-grid,
+.live-log-sensor-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.live-log-sensor-strip {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.live-log-metric {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(21, 21, 21, 0.035);
+}
+
+.live-log-metric small {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.live-log-metric strong {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+  font-size: 0.94rem;
+}
+
+.live-log-metric em {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-style: normal;
+}
+
+.live-log-compact-feed {
+  display: grid;
+  gap: 7px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.live-log-compact-row {
+  display: grid;
+  grid-template-columns: 64px 72px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid rgba(111, 92, 71, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.live-log-compact-row b {
+  color: var(--accent-strong);
+  text-transform: uppercase;
+}
+
+.live-log-compact-row em {
+  min-width: 0;
+  color: var(--ink);
+  font-style: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-log-raw-details summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+  font-weight: 900;
+}
+
+.live-log-raw-feed {
+  display: grid;
+  gap: 7px;
+  max-height: 260px;
+  overflow: auto;
+}
+
 .live-log-row {
   display: grid;
   gap: 8px;
@@ -2489,6 +2622,21 @@ textarea.field-input {
   line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.live-log-message b {
+  color: inherit;
+}
+
+@media (max-width: 720px) {
+  .live-log-metric-grid,
+  .live-log-sensor-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .live-log-compact-row {
+    grid-template-columns: 58px 64px minmax(0, 1fr);
+  }
 }
 
 .stored-log-panel {
@@ -6301,6 +6449,12 @@ textarea.field-input {
 }
 
 .surface:not(.login-surface) .live-log-row,
+.surface:not(.login-surface) .live-log-dashboard,
+.surface:not(.login-surface) .live-log-compact-section,
+.surface:not(.login-surface) .live-log-raw-details,
+.surface:not(.login-surface) .live-log-now-card,
+.surface:not(.login-surface) .live-log-metric,
+.surface:not(.login-surface) .live-log-compact-row,
 .surface:not(.login-surface) .stored-log-table-wrap,
 .surface:not(.login-surface) .live-log-grid span,
 .surface:not(.login-surface) .inventory-serial-grid span,
@@ -6321,6 +6475,9 @@ textarea.field-input {
 
 .surface:not(.login-surface) .live-log-row-head,
 .surface:not(.login-surface) .live-log-message,
+.surface:not(.login-surface) .live-log-now-card p,
+.surface:not(.login-surface) .live-log-metric small,
+.surface:not(.login-surface) .live-log-metric em,
 .surface:not(.login-surface) .stored-log-group-title,
 .surface:not(.login-surface) .stored-log-table th,
 .surface:not(.login-surface) .stored-log-table td {
@@ -6328,8 +6485,18 @@ textarea.field-input {
 }
 
 .surface:not(.login-surface) .live-log-row-head b,
-.surface:not(.login-surface) .live-log-grid strong {
+.surface:not(.login-surface) .live-log-grid strong,
+.surface:not(.login-surface) .live-log-now-card h4,
+.surface:not(.login-surface) .live-log-metric strong,
+.surface:not(.login-surface) .live-log-compact-row em {
   color: #fffaf5;
+}
+
+.surface:not(.login-surface) .live-log-now-card > strong,
+.surface:not(.login-surface) .live-log-compact-row b,
+.surface:not(.login-surface) .live-log-raw-details summary {
+  color: #ff7a2e;
+  background: rgba(255, 74, 20, 0.12);
 }
 
 .surface:not(.login-surface) .live-log-message {

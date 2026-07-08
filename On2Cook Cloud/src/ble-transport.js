@@ -203,14 +203,18 @@ export class BleTransport extends EventTarget {
 
   async connectGattWithRetry(device) {
     let lastError = null;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
         if (attempt > 0) {
-          await delay(450);
+          await delay(650);
         }
-        if (device.gatt?.connected) {
+        if (device.gatt?.connected && attempt === 0) {
+          const server = await device.gatt.connect();
+          if (server?.connected) return server;
+        }
+        if (device.gatt?.connected && attempt > 0) {
           device.gatt.disconnect();
-          await delay(250);
+          await delay(450);
         }
         const server = await device.gatt.connect();
         if (server?.connected) return server;
@@ -220,6 +224,20 @@ export class BleTransport extends EventTarget {
       }
     }
     throw lastError || new Error("Unable to connect to GATT server.");
+  }
+
+  closeStaleWebSession(slot) {
+    const session = this.sessions.get(Number(slot));
+    if (!session || this.usesNativeBridge) return;
+    const device = session.device;
+    this.cleanupSession(session);
+    try {
+      if (device?.gatt?.connected) {
+        device.gatt.disconnect();
+      }
+    } catch (error) {
+      console.warn("Unable to close stale BLE session.", error);
+    }
   }
 
   prepareSlotForDevice(slot, device) {
@@ -415,6 +433,21 @@ export class BleTransport extends EventTarget {
       session.device.gatt.disconnect();
     }
     this.sessions.delete(slot);
+  }
+
+  disconnectAllLocal() {
+    if (this.usesNativeBridge) return;
+    for (const session of Array.from(this.sessions.values())) {
+      const device = session.device;
+      this.cleanupSession(session);
+      try {
+        if (device?.gatt?.connected) {
+          device.gatt.disconnect();
+        }
+      } catch (error) {
+        console.warn("Unable to disconnect BLE session during page close.", error);
+      }
+    }
   }
 
   cleanupSession(session) {

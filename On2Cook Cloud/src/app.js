@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708f";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708f";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708g";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708g";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260708f";
+} from "./ncb-services.js?v=20260708g";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,12 +21,16 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260708f";
+} from "./data-store.js?v=20260708g";
+
+if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
+  window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
+}
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260708f";
+const APP_ASSET_VERSION = "20260708g";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -1772,6 +1776,64 @@ function parseLooseKeyValues(message) {
   return parsed;
 }
 
+function parseFirmwareLiveLogCsv(message) {
+  const raw = String(message || "").trim();
+  if (!/^log=/i.test(raw)) return null;
+  const parts = raw.split(",").map((part) => part.trim());
+  const timestamp = parts[0]?.replace(/^log=/i, "").trim() || "";
+  const macId = parts[1] || "";
+  const recipeIndex = parts.findIndex((part, index) => (
+    index > 1 &&
+    /[A-Za-z]/.test(part) &&
+    !part.includes("=") &&
+    !/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i.test(part)
+  ));
+  const values = parts.slice(2, recipeIndex > 0 ? recipeIndex : undefined);
+  const recipeName = recipeIndex > 0 ? parts[recipeIndex] : "";
+  const tail = recipeIndex > 0 ? parts.slice(recipeIndex + 1) : [];
+  return {
+    LOG_TIMESTAMP: timestamp,
+    MAC_ID: macId,
+    ON_COUNT: values[0] || "",
+    IGBT_TEMP: values[1] || "",
+    GLASS_TEMP: values[2] || "",
+    AMBIENT_TEMP: values[3] || "",
+    MAG_CURRENT: values[4] || "",
+    IND_CURRENT: values[5] || "",
+    IND_VOLTAGE: values[6] || "",
+    COIL_TEMP: values[7] || "",
+    PAN_TEMP: values[8] || "",
+    PCB_TEMP: values[9] || "",
+    DEVICE_MODE: values[10] || "",
+    MAG_ON: values[11] || "",
+    IND_ON: values[12] || "",
+    RECIPE: recipeName,
+    STEPNO: tail[0] || "",
+    TOTAL_STEPS: tail[1] || "",
+    TIME_LEFT: tail[2] || "",
+    SENSOR_PACKET: "1"
+  };
+}
+
+function enrichLiveLogParsed(message, parsed = {}) {
+  const raw = String(message || "").trim();
+  const csv = parseFirmwareLiveLogCsv(raw);
+  const enriched = {
+    ...(csv || {}),
+    ...(parsed || {})
+  };
+  const stirrerMatch = raw.match(/STIRRER=([^,\s]+),([^,\s]+)/i);
+  if (stirrerMatch) {
+    enriched.STIRRER = stirrerMatch[1];
+    enriched.STIRRER_MODE = stirrerMatch[2];
+  }
+  const microwaveMatch = raw.match(/MAGQUICKSTART=([^,\s]+)/i);
+  if (microwaveMatch) {
+    enriched.MAGQUICKSTART = microwaveMatch[1];
+  }
+  return enriched;
+}
+
 function pickParsedValue(parsed, names, fallback = "") {
   const pairs = Object.entries(parsed || {});
   for (const name of names) {
@@ -1790,12 +1852,37 @@ function formatLiveLogPower(value) {
   return clean;
 }
 
+function formatLiveLogSeconds(value) {
+  const clean = String(value || "").trim();
+  if (!clean || !/^-?\d+(\.\d+)?$/.test(clean)) return clean || "-";
+  return secondsLabel(Math.max(0, Math.round(Number(clean))));
+}
+
+function formatLiveLogTemperature(value) {
+  const clean = String(value || "").trim();
+  if (!clean || clean === "-") return "-";
+  if (/^-?\d+(\.\d+)?$/.test(clean)) return `${Number(clean).toFixed(Number(clean) % 1 ? 1 : 0)}C`;
+  return clean;
+}
+
 function buildLiveLogEntry(device, detail = {}) {
   const rawMessage = String(detail.message || "").trim();
-  const parsed = {
+  const parsed = enrichLiveLogParsed(rawMessage, {
     ...parseLooseKeyValues(rawMessage),
     ...(detail.parsed || {})
-  };
+  });
+  const isSensorPacket = pickParsedValue(parsed, ["SENSOR_PACKET"], "") === "1";
+  const isManualPacket = Boolean(
+    pickParsedValue(parsed, ["INDQUICKSTART", "MAGQUICKSTART", "FRYQUICKSTART"], "")
+  );
+  const isRecipePacket = Boolean(pickParsedValue(parsed, ["RECIPE"], "")) && !isSensorPacket;
+  const workStatus = pickParsedValue(parsed, ["WORKSTATUS"], "");
+  const modeType =
+    isManualPacket ? "manual" :
+      isRecipePacket ? "recipe" :
+        isSensorPacket ? "sensor" :
+          workStatus ? "status" :
+            detail.direction === "tx" ? "command" : "message";
   const recipeName =
     pickParsedValue(parsed, ["RECIPE", "recipe", "RECIPENAME", "recipe_name"], "") ||
     device.activeRun?.displayName ||
@@ -1804,6 +1891,12 @@ function buildLiveLogEntry(device, detail = {}) {
   const stepNo =
     pickParsedValue(parsed, ["STEP", "step", "STEPNO", "stepNo", "INSTR", "instruction"], "") ||
     (device.telemetry?.stepNo ? String(device.telemetry.stepNo) : "");
+  const totalSteps = pickParsedValue(parsed, ["TOTAL_STEPS", "TOTALSTEP", "totalStep"], "");
+  const timeLeft = pickParsedValue(parsed, ["TIME_LEFT", "time_left", "timeLeft"], "");
+  const inductionRun = pickParsedValue(parsed, ["IND_RUN", "INDSEC", "FRYSEC"], "");
+  const microwaveRun = pickParsedValue(parsed, ["MAG_RUN", "MICROWAVESEC"], "");
+  const inductionState = pickParsedValue(parsed, ["INDQUICKSTART", "IND_RUN_STATE", "IND"], "");
+  const microwaveState = pickParsedValue(parsed, ["MAGQUICKSTART", "MICROWAVE"], "");
   const induction =
     pickParsedValue(parsed, ["INDPOWER", "indPower", "Induction_power", "induction", "IH", "IND"], "") ||
     (device.telemetry?.inductionPower ? String(device.telemetry.inductionPower) : "");
@@ -1811,17 +1904,21 @@ function buildLiveLogEntry(device, detail = {}) {
     pickParsedValue(parsed, ["MAGPOWER", "magPower", "Magnetron_power", "microwave", "MW", "MAG"], "") ||
     (device.telemetry?.microwavePower ? String(device.telemetry.microwavePower) : "");
   const stirrer =
-    pickParsedValue(parsed, ["STIRRER", "stirrer", "stirrer_on", "STR"], "") ||
+    [
+      pickParsedValue(parsed, ["STIRRER", "stirrer", "stirrer_on", "STR"], ""),
+      pickParsedValue(parsed, ["STIRRER_MODE", "stirrerMode"], "")
+    ].filter(Boolean).join(" ") ||
     device.telemetry?.stirrer ||
     "";
   const pump =
     pickParsedValue(parsed, ["PUMP", "pump", "pump_on", "WATER", "water", "purge_on"], "") ||
     device.telemetry?.pump ||
     "";
-  const temperature = pickParsedValue(parsed, ["TEMP", "TEMPERATURE", "PAN_TEMP", "temperature", "temp", "NTC"], "");
+  const temperature = pickParsedValue(parsed, ["TEMP", "TEMPERATURE", "PAN_TEMP", "PAN_TEMP", "temperature", "temp", "NTC"], "") ||
+    pickParsedValue(parsed, ["PAN_TEMP", "GLASS_TEMP", "IGBT_TEMP", "AMBIENT_TEMP"], "");
   const currentVoltage = [
-    pickParsedValue(parsed, ["CURRENT", "current", "CUR", "I"], ""),
-    pickParsedValue(parsed, ["VOLTAGE", "voltage", "VOLT", "V"], "")
+    pickParsedValue(parsed, ["CURRENT", "current", "CUR", "I", "IND_CURRENT"], ""),
+    pickParsedValue(parsed, ["VOLTAGE", "voltage", "VOLT", "V", "IND_VOLTAGE"], "")
   ].filter(Boolean).join(" / ");
   const error = pickParsedValue(parsed, ["ERROR", "error", "ERR", "FAULT", "fault"], "");
   return {
@@ -1829,16 +1926,56 @@ function buildLiveLogEntry(device, detail = {}) {
     at: detail.at || nowIso(),
     direction: detail.direction || "rx",
     channel: detail.channel || "device",
+    modeType,
+    status: pickParsedValue(parsed, ["STATUS", "MODE", "WORKSTATUS", "INDQUICKSTART", "MAGQUICKSTART", "FRYQUICKSTART"], ""),
     recipeName,
     stepNo,
+    totalSteps,
+    timeLeft: formatLiveLogSeconds(timeLeft),
     induction: formatLiveLogPower(induction),
+    inductionRun: formatLiveLogSeconds(inductionRun),
+    inductionState: inductionState || "",
     microwave: formatLiveLogPower(microwave),
+    microwaveRun: formatLiveLogSeconds(microwaveRun),
+    microwaveState: microwaveState || "",
     stirrer: stirrer || "-",
     pump: pump || "-",
-    temperature: temperature || "-",
+    temperature: formatLiveLogTemperature(temperature),
     currentVoltage: currentVoltage || "-",
     error: error || "",
-    message: rawMessage || detail.message || ""
+    message: rawMessage || detail.message || "",
+    sensor: isSensorPacket
+      ? {
+          macId: pickParsedValue(parsed, ["MAC_ID"], ""),
+          onCount: pickParsedValue(parsed, ["ON_COUNT"], ""),
+          igbtTemp: formatLiveLogTemperature(pickParsedValue(parsed, ["IGBT_TEMP"], "")),
+          glassTemp: formatLiveLogTemperature(pickParsedValue(parsed, ["GLASS_TEMP"], "")),
+          ambientTemp: formatLiveLogTemperature(pickParsedValue(parsed, ["AMBIENT_TEMP"], "")),
+          coilTemp: formatLiveLogTemperature(pickParsedValue(parsed, ["COIL_TEMP"], "")),
+          panTemp: formatLiveLogTemperature(pickParsedValue(parsed, ["PAN_TEMP"], "")),
+          pcbTemp: formatLiveLogTemperature(pickParsedValue(parsed, ["PCB_TEMP"], "")),
+          magCurrent: pickParsedValue(parsed, ["MAG_CURRENT"], ""),
+          indCurrent: pickParsedValue(parsed, ["IND_CURRENT"], ""),
+          indVoltage: pickParsedValue(parsed, ["IND_VOLTAGE"], ""),
+          magOn: pickParsedValue(parsed, ["MAG_ON"], ""),
+          indOn: pickParsedValue(parsed, ["IND_ON"], "")
+        }
+      : null
+  };
+}
+
+function normalizeLiveLogEntry(device, entry = {}) {
+  const rebuilt = buildLiveLogEntry(device, {
+    direction: entry.direction,
+    channel: entry.channel,
+    message: entry.message,
+    parsed: entry.parsed,
+    at: entry.at
+  });
+  return {
+    ...entry,
+    ...rebuilt,
+    id: entry.id || rebuilt.id
   };
 }
 
@@ -3917,9 +4054,12 @@ async function connectDevice(slot) {
     appendActivity(device, device.lastMessage, "info");
   });
   try {
+    if (rememberedId) {
+      ble.closeStaleWebSession?.(Number(slot));
+    }
     await ble.connect(Number(slot), rememberedId, {
       lockToRememberedDevice: Boolean(rememberedId),
-      allowRememberedReauthorization: Boolean(rememberedId)
+      allowRememberedReauthorization: false
     });
     showToast(`Device ${slot} connected`, "success");
   } catch (error) {
@@ -3927,10 +4067,13 @@ async function connectDevice(slot) {
       const device = draft.devices.find((item) => item.slot === Number(slot));
       if (!device) return draft;
       device.connection = "disconnected";
-      device.lastMessage = error.message;
-      appendActivity(device, error.message, "warning");
+      const message = error.code === "remembered-device-missing"
+        ? `Chrome no longer has permission for the saved cooker. Use https://www.on2cook.net, then Clear pairing only if you must assign this window again.`
+        : error.message;
+      device.lastMessage = message;
+      appendActivity(device, message, "warning");
     });
-    showToast(error.message, "error");
+    showToast(error.code === "remembered-device-missing" ? "Saved cooker permission is missing. Use the canonical www site or clear pairing to reassign." : error.message, "error");
   }
 }
 
@@ -5177,12 +5320,70 @@ function renderStatusPill(status) {
   return `<span class="status-pill ${tone}">${escapeHtml(status.replaceAll("_", " "))}</span>`;
 }
 
+function getNewestLiveLogEntry(entries, predicate = () => true) {
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    if (predicate(entries[index])) return entries[index];
+  }
+  return null;
+}
+
+function renderLiveLogMetric(label, value, detail = "") {
+  return `
+    <span class="live-log-metric">
+      <small>${escapeHtml(label)}</small>
+      <strong>${escapeHtml(value || "-")}</strong>
+      ${detail ? `<em>${escapeHtml(detail)}</em>` : ""}
+    </span>
+  `;
+}
+
+function summarizeLiveLogEntry(entry) {
+  if (!entry) return "No live packet received yet.";
+  if (entry.modeType === "sensor") {
+    const sensor = entry.sensor || {};
+    return `Sensors: IGBT ${sensor.igbtTemp || "-"}, glass ${sensor.glassTemp || "-"}, pan ${sensor.panTemp || "-"}, ${sensor.indVoltage || "-"} V`;
+  }
+  if (entry.modeType === "manual") {
+    return `Manual: induction ${entry.inductionState || "-"} ${entry.inductionRun || ""}, microwave ${entry.microwaveState || "-"} ${entry.microwaveRun || ""}, stirrer ${entry.stirrer || "-"}`;
+  }
+  if (entry.modeType === "recipe") {
+    return `Recipe: ${entry.recipeName || "-"}, step ${entry.stepNo || "-"}${entry.totalSteps ? `/${entry.totalSteps}` : ""}, ${entry.status || "-"}`;
+  }
+  return entry.message || "Device message";
+}
+
 function renderLiveLogsModal(snapshot, device) {
   const liveLog = {
     ...emptyLiveLogState(),
     ...(device.liveLog || {})
   };
-  const entries = Array.isArray(liveLog.entries) ? liveLog.entries.slice(-160).reverse() : [];
+  const entries = Array.isArray(liveLog.entries)
+    ? liveLog.entries.slice(-MAX_LIVE_LOG_ENTRIES).map((entry) => normalizeLiveLogEntry(device, entry))
+    : [];
+  const newestFirst = [...entries].reverse();
+  const latestRecipe = getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx" && entry.modeType === "recipe");
+  const latestManual = getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx" && entry.modeType === "manual");
+  const latestSensor = getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx" && entry.modeType === "sensor");
+  const latestStatus = getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx" && entry.modeType === "status");
+  const currentEntry = latestRecipe || latestManual || latestSensor || latestStatus || getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx");
+  const modeLabel = latestRecipe
+    ? "Recipe running"
+    : latestManual
+      ? "Manual mode"
+      : latestSensor
+        ? "Sensor stream"
+        : latestStatus?.status === "IDLE" || device.telemetry?.workStatus === "idle"
+          ? "Device idle"
+          : "Waiting for live values";
+  const modeNote = latestRecipe
+    ? "Showing the latest recipe packet from the firmware."
+    : latestManual
+      ? "Showing quick-start induction, microwave, stirrer, and pump state."
+      : latestSensor
+        ? "Showing the latest compact sensor packet from livelog=ON."
+        : "Live Logs is on, but no recipe/manual telemetry packet has arrived yet.";
+  const sensor = latestSensor?.sensor || {};
+  const compactEvents = newestFirst.slice(0, 14);
   const canStream = device.connection === "connected";
   const emptyTitle = canStream ? "No live values received yet." : "Please connect the device";
   const emptyText = canStream
@@ -5212,52 +5413,83 @@ function renderLiveLogsModal(snapshot, device) {
             <button class="secondary-button small" type="button" data-action="clear-live-logs" data-slot="${device.slot}">Clear Feed</button>
           </div>
         </div>
-        <div class="live-log-feed">
+        ${
+          entries.length
+            ? `<div class="live-log-dashboard">
+                <section class="live-log-now-card ${escapeHtml(currentEntry?.modeType || "status")}">
+                  <div>
+                    <small>Current live view</small>
+                    <h4>${escapeHtml(modeLabel)}</h4>
+                    <p>${escapeHtml(modeNote)}</p>
+                  </div>
+                  <strong>${escapeHtml(currentEntry?.status || device.telemetry?.workStatus || "-")}</strong>
+                </section>
+                <div class="live-log-metric-grid">
+                  ${renderLiveLogMetric("Recipe", currentEntry?.recipeName || device.activeRun?.displayName || "-")}
+                  ${renderLiveLogMetric("Step", currentEntry?.stepNo ? `${currentEntry.stepNo}${currentEntry.totalSteps ? ` / ${currentEntry.totalSteps}` : ""}` : "-")}
+                  ${renderLiveLogMetric("Time left", currentEntry?.timeLeft || device.telemetry?.remainingSeconds ? (currentEntry?.timeLeft || secondsLabel(device.telemetry.remainingSeconds)) : "-")}
+                  ${renderLiveLogMetric("Induction", currentEntry?.induction || currentEntry?.inductionState || "-", currentEntry?.inductionRun ? `run ${currentEntry.inductionRun}` : "")}
+                  ${renderLiveLogMetric("Microwave", currentEntry?.microwave || currentEntry?.microwaveState || "-", currentEntry?.microwaveRun ? `run ${currentEntry.microwaveRun}` : "")}
+                  ${renderLiveLogMetric("Stirrer", currentEntry?.stirrer || "-")}
+                  ${renderLiveLogMetric("Water/Pump", currentEntry?.pump || "-")}
+                  ${renderLiveLogMetric("Temp", latestSensor ? `Pan ${sensor.panTemp || "-"}` : (currentEntry?.temperature || "-"), latestSensor ? `IGBT ${sensor.igbtTemp || "-"} | Glass ${sensor.glassTemp || "-"}` : "")}
+                  ${renderLiveLogMetric("Voltage / Current", latestSensor ? `${sensor.indVoltage || "-"} V / ${sensor.indCurrent || "-"} I` : (currentEntry?.currentVoltage || "-"))}
+                </div>
+                <div class="live-log-sensor-strip">
+                  ${renderLiveLogMetric("MAC", sensor.macId || "-")}
+                  ${renderLiveLogMetric("Ambient", sensor.ambientTemp || "-")}
+                  ${renderLiveLogMetric("Coil", sensor.coilTemp || "-")}
+                  ${renderLiveLogMetric("PCB", sensor.pcbTemp || "-")}
+                  ${renderLiveLogMetric("Mag current", sensor.magCurrent || "-")}
+                  ${renderLiveLogMetric("Ind/Mag on", latestSensor ? `${sensor.indOn || "0"} / ${sensor.magOn || "0"}` : "-")}
+                </div>
+              </div>`
+            : `<div class="empty-card live-log-empty ${canStream ? "" : "blocked"}">
+                <strong>${escapeHtml(emptyTitle)}</strong>
+                <span>${escapeHtml(emptyText)}</span>
+              </div>`
+        }
+        <section class="live-log-compact-section">
+          <div class="row space">
+            <div>
+              <div class="mini-title">Recent live events</div>
+              <p class="subtle">Compact feed. Full raw BLE packets are kept below for diagnostics.</p>
+            </div>
+            <span class="queue-tag">${escapeHtml(String(entries.length))} packets</span>
+          </div>
           ${
-            entries.length
-              ? entries
+            compactEvents.length
+              ? `<div class="live-log-compact-feed">
+                  ${compactEvents
                   .map(
                     (entry) => `
-                      <article class="live-log-row ${escapeHtml(entry.direction || "rx")}">
-                        <div class="live-log-row-head">
-                          <span>${escapeHtml(formatTimestamp(entry.at))}</span>
-                          <b>${escapeHtml(entry.direction || "rx")} ${escapeHtml(entry.channel || "device")}</b>
-                        </div>
-                        <div class="live-log-grid">
-                          <span><small>Recipe</small><strong>${escapeHtml(entry.recipeName || "-")}</strong></span>
-                          <span><small>Step</small><strong>${escapeHtml(entry.stepNo || "-")}</strong></span>
-                          <span><small>Induction</small><strong>${escapeHtml(entry.induction || "-")}</strong></span>
-                          <span><small>Microwave</small><strong>${escapeHtml(entry.microwave || "-")}</strong></span>
-                          <span><small>Stirrer</small><strong>${escapeHtml(entry.stirrer || "-")}</strong></span>
-                          <span><small>Water/Pump</small><strong>${escapeHtml(entry.pump || "-")}</strong></span>
-                          <span><small>Temp</small><strong>${escapeHtml(entry.temperature || "-")}</strong></span>
-                          <span><small>V/I</small><strong>${escapeHtml(entry.currentVoltage || "-")}</strong></span>
-                        </div>
-                        ${entry.error ? `<div class="log-status-line error">${escapeHtml(entry.error)}</div>` : ""}
-                        <pre class="live-log-message">${escapeHtml(entry.message || "")}</pre>
-                      </article>
+                      <div class="live-log-compact-row ${escapeHtml(entry.modeType || "message")} ${escapeHtml(entry.direction || "rx")}">
+                        <span>${escapeHtml(formatShortTime(entry.at))}</span>
+                        <b>${escapeHtml(entry.modeType === "sensor" ? "Sensor" : entry.modeType === "manual" ? "Manual" : entry.modeType === "recipe" ? "Recipe" : entry.direction === "tx" ? "Sent" : "Device")}</b>
+                        <em>${escapeHtml(summarizeLiveLogEntry(entry))}</em>
+                      </div>
                     `
                   )
-                  .join("")
+                  .join("")}
+                </div>`
               : `<div class="empty-card live-log-empty ${canStream ? "" : "blocked"}">
                   <strong>${escapeHtml(emptyTitle)}</strong>
                   <span>${escapeHtml(emptyText)}</span>
-                  <div class="live-log-grid">
-                    <span><small>Timestamp</small><strong>-</strong></span>
-                    <span><small>Recipe</small><strong>-</strong></span>
-                    <span><small>Step</small><strong>-</strong></span>
-                    <span><small>Induction</small><strong>-</strong></span>
-                    <span><small>Microwave</small><strong>-</strong></span>
-                    <span><small>Stirrer</small><strong>-</strong></span>
-                    <span><small>Water/Pump</small><strong>-</strong></span>
-                    <span><small>Temperature</small><strong>-</strong></span>
-                    <span><small>Voltage/Current</small><strong>-</strong></span>
-                    <span><small>Errors</small><strong>-</strong></span>
-                    <span><small>BLE message</small><strong>-</strong></span>
-                  </div>
                 </div>`
           }
-        </div>
+        </section>
+        ${
+          newestFirst.length
+            ? `<details class="live-log-raw-details">
+                <summary>Raw BLE traffic (${escapeHtml(String(newestFirst.length))})</summary>
+                <div class="live-log-raw-feed">
+                  ${newestFirst.slice(0, 40).map((entry) => `
+                    <pre class="live-log-message"><b>${escapeHtml(formatShortTime(entry.at))} ${escapeHtml(String(entry.direction || "rx").toUpperCase())}</b> ${escapeHtml(entry.message || "")}</pre>
+                  `).join("")}
+                </div>
+              </details>`
+            : ""
+        }
       </div>
     </div>
   `;
@@ -5550,22 +5782,44 @@ function renderDeviceCommandNotice(device, commandName, connectedText, disconnec
   `;
 }
 
+function getDeviceLiveLogSnapshot(device) {
+  const entries = Array.isArray(device.liveLog?.entries)
+    ? device.liveLog.entries.map((entry) => normalizeLiveLogEntry(device, entry))
+    : [];
+  const latestRecipe = getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx" && entry.modeType === "recipe");
+  const latestManual = getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx" && entry.modeType === "manual");
+  const latestSensor = getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx" && entry.modeType === "sensor");
+  return {
+    entries,
+    latestRecipe,
+    latestManual,
+    latestSensor,
+    latest: latestRecipe || latestManual || latestSensor || getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx")
+  };
+}
+
 function renderDeviceStatusModal(snapshot, device) {
   const telemetry = device.telemetry || {};
+  const liveSnapshot = getDeviceLiveLogSnapshot(device);
+  const live = liveSnapshot.latest;
+  const liveSensor = liveSnapshot.latestSensor?.sensor || {};
+  const liveMode = live?.modeType === "manual" ? "Manual Mode" : live?.modeType === "recipe" ? "Recipe Cooking" : telemetry.mode || "Unknown";
   const statusRows = [
     ["Connection", device.connection || "unknown"],
-    ["Work status", telemetry.workStatus || "Unknown"],
-    ["Mode", telemetry.mode || "Unknown"],
-    ["Recipe", telemetry.currentRecipe || device.activeRun?.displayName || "None"],
-    ["Step", telemetry.stepNo ? String(telemetry.stepNo) : "0"],
-    ["Remaining", secondsLabel(telemetry.remainingSeconds || 0)],
+    ["Work status", telemetry.workStatus || live?.status || "Unknown"],
+    ["Mode", liveMode],
+    ["Recipe", live?.recipeName || telemetry.currentRecipe || device.activeRun?.displayName || "None"],
+    ["Step", live?.stepNo ? `${live.stepNo}${live.totalSteps ? ` / ${live.totalSteps}` : ""}` : telemetry.stepNo ? String(telemetry.stepNo) : "0"],
+    ["Remaining", live?.timeLeft && live.timeLeft !== "-" ? live.timeLeft : secondsLabel(telemetry.remainingSeconds || 0)],
     ["Ingredients index", telemetry.ingredientsIndex ? String(telemetry.ingredientsIndex) : "0"],
-    ["Induction", `${telemetry.inductionStatus || "IDLE"}${telemetry.indPower ? ` | ${telemetry.indPower}%` : ""}`],
-    ["Microwave", `${telemetry.magnetronStatus || "IDLE"}${telemetry.magPower ? ` | ${telemetry.magPower}%` : ""}`],
-    ["Stirrer", telemetry.stirrer || DEFAULT_STIRRER_LEVEL],
-    ["Pump / water", telemetry.pumpOn ? "ON" : "OFF"],
+    ["Induction", live?.induction || live?.inductionState ? `${live.inductionState || ""}${live.induction ? ` | ${live.induction}` : ""}${live.inductionRun ? ` | ${live.inductionRun}` : ""}` : `${telemetry.inductionStatus || "IDLE"}${telemetry.indPower ? ` | ${telemetry.indPower}%` : ""}`],
+    ["Microwave", live?.microwave || live?.microwaveState ? `${live.microwaveState || ""}${live.microwave ? ` | ${live.microwave}` : ""}${live.microwaveRun ? ` | ${live.microwaveRun}` : ""}` : `${telemetry.magnetronStatus || "IDLE"}${telemetry.magPower ? ` | ${telemetry.magPower}%` : ""}`],
+    ["Stirrer", live?.stirrer || telemetry.stirrer || DEFAULT_STIRRER_LEVEL],
+    ["Pump / water", live?.pump || (telemetry.pumpOn ? "ON" : "OFF")],
+    ["Pan / glass temp", liveSensor.panTemp || liveSensor.glassTemp ? `Pan ${liveSensor.panTemp || "-"} | Glass ${liveSensor.glassTemp || "-"}` : "No sensor packet"],
+    ["Voltage / current", liveSensor.indVoltage || liveSensor.indCurrent ? `${liveSensor.indVoltage || "-"} V | ${liveSensor.indCurrent || "-"} I` : live?.currentVoltage || "-"],
     ["Paused", telemetry.paused ? "Yes" : "No"],
-    ["Last raw status", telemetry.lastRaw || "No raw status received yet"],
+    ["Last raw status", live?.message || telemetry.lastRaw || "No raw status received yet"],
     ["Last message", device.lastMessage || "No status message yet"],
     ["Last updated", device.lastUpdatedAt ? formatTimestamp(device.lastUpdatedAt) : "Never"]
   ];
@@ -5581,7 +5835,7 @@ function renderDeviceStatusModal(snapshot, device) {
           </div>
           <button class="icon-button" type="button" data-action="request-status" data-slot="${device.slot}" aria-label="Refresh status">${renderUiIcon("refresh")}</button>
         </div>
-        ${renderDeviceCommandNotice(device, "STATUS=?", "Ready to request live device status", "Cannot show live status at present. Last saved values are shown below.")}
+        ${renderDeviceCommandNotice(device, "STATUS=?", "Ready to request live device status", live ? "Cannot refresh live status at present. Last captured live values are shown below." : "Cannot show live status at present. Last saved values are shown below.")}
         <div class="settings-card">
           <div class="mini-title">Current status snapshot</div>
           <div class="metadata-grid status-grid">
@@ -12223,6 +12477,10 @@ async function init() {
   app.addEventListener("scroll", () => scheduleSaveUiSessionState(null, 250), true);
   window.addEventListener("scroll", () => scheduleSaveUiSessionState(null, 250), { passive: true });
   window.addEventListener("beforeunload", () => saveUiSessionState());
+  window.addEventListener("pagehide", () => {
+    saveUiSessionState();
+    ble.disconnectAllLocal?.();
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") saveUiSessionState();
   });

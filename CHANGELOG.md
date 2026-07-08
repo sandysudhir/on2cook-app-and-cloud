@@ -2,6 +2,13 @@
 
 ## 2026-07-08
 
+- Reworked Live Logs so `livelog=ON` shows a stable live dashboard, compact recent events, and raw BLE traffic in a diagnostic disclosure instead of an endless stack of large log cards.
+- Added parsing for firmware `log=...` sensor packets, recipe packets, and manual quick-start packets so manual mode and recipe mode display differently.
+- Updated Device Status to show the last captured live values after disconnects, including recipe/manual/sensor values, rather than only a raw CSV line.
+- Hardened Web Bluetooth reconnect by reusing remembered GATT sessions before forcing disconnect, closing stale local sessions before reconnect, and cleaning up local BLE sessions on page hide.
+- Added canonical production redirect from `https://on2cook.net` to `https://www.on2cook.net` so Chrome Bluetooth permissions stay on one origin.
+- Bumped web cache version to `20260708g` / service-worker cache `v85`, deployed to iPage FTP, and rebuilt the APK wrapper URL.
+
 - Added dedicated Status and Firmware windows for each device so those buttons always open a usable panel, even when no live BLE data is available.
 - Made Live Logs controllable from its own screen: Start/Stop/Clear remain clickable, disconnected devices show a clear “Please connect the device” message, and stopping clears stale live-log errors.
 - Bumped web cache version to `20260708d` / service-worker cache `v82` and refreshed the APK cloud URL.
