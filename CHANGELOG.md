@@ -2,6 +2,10 @@
 
 ## 2026-07-08
 
+- Removed Manual Mode from the kitchen-level top navigation; the main On2Cook Cloud screen now stays focused on Orders, Recipes, Queue, and Global Recipes.
+- Added Manual Mode as a device-specific screen from each device card and Device Details, so manual recipe runs, induction, microwave, stirrer, pump, and status commands are always bound to one cooker slot.
+- Bumped web cache version to `20260708h` / service-worker cache `v86` and refreshed the APK cloud URL.
+
 - Reworked Live Logs so `livelog=ON` shows a stable live dashboard, compact recent events, and raw BLE traffic in a diagnostic disclosure instead of an endless stack of large log cards.
 - Added parsing for firmware `log=...` sensor packets, recipe packets, and manual quick-start packets so manual mode and recipe mode display differently.
 - Updated Device Status to show the last captured live values after disconnects, including recipe/manual/sensor values, rather than only a raw CSV line.

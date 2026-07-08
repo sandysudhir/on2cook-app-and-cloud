@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708g";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708g";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708h";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708h";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260708g";
+} from "./ncb-services.js?v=20260708h";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260708g";
+} from "./data-store.js?v=20260708h";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -30,7 +30,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260708g";
+const APP_ASSET_VERSION = "20260708h";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -141,6 +141,7 @@ function sanitizeModalForSession(modal) {
     "order-details",
     "recipe-sheet",
     "manual-order",
+    "device-manual",
     "assign-recipe",
     "device-metadata"
   ]);
@@ -152,8 +153,9 @@ function captureUiSessionState(snapshot = null) {
   const ui = snapshot?.ui || store?.getState?.().ui || {};
   const activeApkButton = document.querySelector(".apk-screen-button.active");
   const activeApkIndex = Number(activeApkButton?.dataset?.apkScreenIndex ?? ui.apkScreenIndex ?? lastApkScreenIndex) || 0;
+  const activeTab = ui.activeTab === "manual" ? "orders" : ui.activeTab || "orders";
   return {
-    activeTab: ui.activeTab || "orders",
+    activeTab,
     orderMode: ui.orderMode || "current",
     recipeMode: ui.recipeMode || "selected",
     globalRecipeSearch: ui.globalRecipeSearch || "",
@@ -200,7 +202,7 @@ function takeSavedUiSessionState() {
 
 function applySavedUiSessionState(initialState, sessionState) {
   if (!initialState?.ui || !sessionState) return initialState;
-  const validTabs = new Set(["orders", "recipes", "queue", "manual", "global"]);
+  const validTabs = new Set(["orders", "recipes", "queue", "global"]);
   const validOrderModes = new Set(["current", "previous"]);
   const validRecipeModes = new Set(["selected", "final", "scale", "import"]);
   if (validTabs.has(sessionState.activeTab)) {
@@ -7436,11 +7438,11 @@ function stopProLiveTimer() {
 
 function renderControlTabs(snapshot) {
   const perms = currentPermissions(snapshot);
+  const activeTab = snapshot.ui.activeTab === "manual" ? "orders" : snapshot.ui.activeTab;
   const tabs = [
     ["orders", "Orders", "orders"],
     ["recipes", "Recipes", "recipes"],
     ["queue", "Queue", "queue"],
-    ["manual", "Manual", "manual"],
     perms.canSelectGlobalRecipes ? ["global", "Global R", "global"] : null
   ].filter(Boolean);
   return `
@@ -7449,7 +7451,7 @@ function renderControlTabs(snapshot) {
       ${tabs
         .map(
           ([id, label, icon]) => `
-            <button class="tab-button ${snapshot.ui.activeTab === id ? "active" : ""}" data-action="switch-tab" data-tab="${id}">
+            <button class="tab-button ${activeTab === id ? "active" : ""}" data-action="switch-tab" data-tab="${id}">
               <span class="tab-icon">${renderUiIcon(icon)}</span>
               <span>${label}</span>
             </button>
@@ -7819,9 +7821,10 @@ function renderQueueTab(snapshot) {
   `;
 }
 
-function renderManualModeTab(snapshot) {
-  const device = getManualModeTarget(snapshot);
-  const selectedSlot = Number(snapshot.ui.manualMode?.slot || device?.slot || 1);
+function renderManualModeTab(snapshot, fixedDevice = null) {
+  const fixedDeviceMode = Boolean(fixedDevice);
+  const device = fixedDevice || getManualModeTarget(snapshot);
+  const selectedSlot = Number(fixedDevice?.slot || snapshot.ui.manualMode?.slot || device?.slot || 1);
   const selectedRecipeId = String(snapshot.ui.manualMode?.recipeId || "");
   const manualRecipes = getSelectedRecipes(snapshot);
   const selectedRecipe = selectedRecipeId ? findRecipeById(snapshot, selectedRecipeId) : null;
@@ -7846,7 +7849,7 @@ function renderManualModeTab(snapshot) {
   const manualCommandDisabled = device?.connection === "connected" ? "" : "disabled";
   return `
     <section class="stack-section">
-      <div class="mini-title">Manual Mode</div>
+      <div class="mini-title">${fixedDeviceMode && device ? `Manual Mode - Device ${device.slot}` : "Manual Mode"}</div>
       <div class="settings-card">
         <label class="field-label">
           Recipe to run
@@ -7861,28 +7864,35 @@ function renderManualModeTab(snapshot) {
               .join("")}
           </select>
         </label>
-        <div class="mini-title top-gap">Choose device</div>
-        <div class="chip-row">
-          ${snapshot.devices
-            .map((item) => {
-              const runState = getManualDeviceRunState(snapshot, item);
-              return `
-                <button class="chip-button ${selectedSlot === item.slot ? "selected" : ""} ${escapeHtml(runState.status)}" data-action="select-manual-device" data-slot="${item.slot}">
-                  Device ${item.slot} ${escapeHtml(runState.label)}
-                </button>
-              `;
-            })
-            .join("")}
-        </div>
-        <div class="meta-grid top-gap">
-          <span>Idle devices: ${escapeHtml(idleDeviceLabels.length ? idleDeviceLabels.join(", ") : "None")}</span>
-          <span>Selected: ${escapeHtml(device ? `D${device.slot} ${selectedRunState?.label || ""}` : "None")}</span>
-        </div>
+        ${
+          fixedDeviceMode
+            ? `<div class="meta-grid top-gap">
+                <span>Selected device: ${escapeHtml(device ? `D${device.slot} ${device.displayName}` : "None")}</span>
+                <span>State: ${escapeHtml(selectedRunState?.label || "Unknown")}</span>
+              </div>`
+            : `<div class="mini-title top-gap">Choose device</div>
+              <div class="chip-row">
+                ${snapshot.devices
+                  .map((item) => {
+                    const runState = getManualDeviceRunState(snapshot, item);
+                    return `
+                      <button class="chip-button ${selectedSlot === item.slot ? "selected" : ""} ${escapeHtml(runState.status)}" data-action="select-manual-device" data-slot="${item.slot}">
+                        Device ${item.slot} ${escapeHtml(runState.label)}
+                      </button>
+                    `;
+                  })
+                  .join("")}
+              </div>
+              <div class="meta-grid top-gap">
+                <span>Idle devices: ${escapeHtml(idleDeviceLabels.length ? idleDeviceLabels.join(", ") : "None")}</span>
+                <span>Selected: ${escapeHtml(device ? `D${device.slot} ${selectedRunState?.label || ""}` : "None")}</span>
+              </div>`
+        }
         <p class="subtle top-gap">
           ${escapeHtml(manualRunMessage)}
         </p>
         <div class="action-row top-gap">
-          <button class="primary-button" data-action="manual-run-selected-recipe" ${canSubmitManualRecipe ? "" : "disabled"}>
+          <button class="primary-button" data-action="manual-run-selected-recipe" data-slot="${device?.slot || selectedSlot}" ${canSubmitManualRecipe ? "" : "disabled"}>
             ${escapeHtml(selectedRunState?.actionLabel || "Run now")}
           </button>
           ${
@@ -7977,6 +7987,25 @@ function renderManualModeTab(snapshot) {
           </section>
         `
     }
+  `;
+}
+
+function renderDeviceManualModeModal(snapshot, device) {
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card wide refined-mobile-screen device-manual-screen">
+        ${renderRefinedScreenTopBar(snapshot, "Manual Mode", `${device.displayName} | D${device.slot}`)}
+        <div class="refined-title-row">
+          <button class="icon-button refined-back-button" data-action="close-modal" aria-label="Back">${renderUiIcon("chevronLeft")}</button>
+          <div>
+            <div class="eyebrow">Device ${device.slot}</div>
+            <h3>${escapeHtml(device.displayName)} manual controls</h3>
+          </div>
+          <button class="icon-button" type="button" data-action="manual-request-status" data-slot="${device.slot}" aria-label="Refresh status">${renderUiIcon("refresh")}</button>
+        </div>
+        ${renderManualModeTab(snapshot, device)}
+      </div>
+    </div>
   `;
 }
 
@@ -8344,18 +8373,17 @@ function renderControlPhone(snapshot) {
     ["queued", "starting", "cooking", "awaiting_confirmation"].includes(order.status)
   ).length;
   const unreadCount = getUnreadNotificationCount(snapshot);
+  const activeTab = snapshot.ui.activeTab === "manual" ? "orders" : snapshot.ui.activeTab;
   const body =
-    snapshot.ui.activeTab === "orders"
+    activeTab === "orders"
       ? snapshot.ui.orderMode === "current"
         ? renderCurrentOrders(snapshot, perms)
         : renderPreviousOrders(snapshot)
-      : snapshot.ui.activeTab === "recipes"
+      : activeTab === "recipes"
         ? renderRecipesTab(snapshot, perms)
-      : snapshot.ui.activeTab === "queue"
+      : activeTab === "queue"
         ? renderQueueTab(snapshot)
-      : snapshot.ui.activeTab === "manual"
-        ? renderManualModeTab(snapshot)
-      : snapshot.ui.activeTab === "global"
+      : activeTab === "global"
         ? renderGlobalRecipesTab(snapshot, perms)
       : renderMoreTab(snapshot, perms);
 
@@ -9303,6 +9331,7 @@ function renderDevicePhone(snapshot, device) {
               <button class="secondary-button small" data-action="open-device-sheet" data-slot="${device.slot}">Details</button>
               <button class="secondary-button small" data-action="request-status" data-slot="${device.slot}">Status</button>
               <button class="secondary-button small" data-action="request-firmware" data-slot="${device.slot}">Firmware</button>
+              <button class="secondary-button small" data-action="open-device-manual" data-slot="${device.slot}">Manual Mode</button>
               <button class="secondary-button small" data-action="open-live-logs" data-slot="${device.slot}">Live Logs</button>
             </div>
             ${renderCompactDeviceInfo(device, summaryMessage)}
@@ -9897,6 +9926,12 @@ function renderModal(snapshot) {
     return renderLiveLogsModal(snapshot, device);
   }
 
+  if (modal.type === "device-manual") {
+    const device = getDevice(modal.payload.slot);
+    if (!device) return "";
+    return renderDeviceManualModeModal(snapshot, device);
+  }
+
   if (modal.type === "device-metadata") {
     const device = getDevice(modal.payload.slot);
     if (!device) return "";
@@ -10072,6 +10107,7 @@ function renderModal(snapshot) {
                 <button class="secondary-button" type="button" data-action="sync-selected-recipes" data-slot="${device.slot}" ${deviceCommandDisabled}>Check device recipes</button>
                 <button class="secondary-button" type="button" data-action="read-device-recipes" data-slot="${device.slot}" ${deviceCommandDisabled}>Read recipes</button>
                 <button class="secondary-button" type="button" data-action="request-status" data-slot="${device.slot}">Refresh status</button>
+                <button class="secondary-button" type="button" data-action="open-device-manual" data-slot="${device.slot}">Manual Mode</button>
                 <button class="secondary-button" type="button" data-action="open-live-logs" data-slot="${device.slot}">Live Logs</button>
                 <button class="danger-button" type="button" data-action="clear-device-binding" data-slot="${device.slot}">Clear pairing</button>
               </div>
@@ -11120,6 +11156,10 @@ async function handleClick(event) {
       showToast("Your login can run selected recipes only. Global Recipes is controlled by the master admin.", "warning");
       return;
     }
+    if (button.dataset.tab === "manual") {
+      showToast("Manual Mode is available inside each device screen.", "info");
+      return;
+    }
     mutate((draft) => {
       draft.ui.activeTab = button.dataset.tab;
     });
@@ -11565,6 +11605,14 @@ async function handleClick(event) {
     openModal("device-sheet", { slot: Number(button.dataset.slot) });
     return;
   }
+  if (action === "open-device-manual") {
+    const slot = Number(button.dataset.slot) || 1;
+    mutate((draft) => {
+      draft.ui.manualMode.slot = slot;
+    });
+    openModal("device-manual", { slot });
+    return;
+  }
   if (action === "open-device-recipe-sheet") {
     openModal("recipe-sheet", { slot: Number(button.dataset.slot) });
     return;
@@ -11907,7 +11955,7 @@ async function handleClick(event) {
   }
   if (action === "manual-run-selected-recipe") {
     const snapshot = state();
-    const slot = Number(snapshot.ui.manualMode?.slot || 0);
+    const slot = Number(button.dataset.slot || snapshot.ui.manualMode?.slot || 0);
     const recipeId = String(snapshot.ui.manualMode?.recipeId || "");
     const device = snapshot.devices.find((item) => item.slot === slot) || null;
     const recipe = recipeId ? findRecipeById(snapshot, recipeId) : null;
