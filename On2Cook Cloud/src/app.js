@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708h";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708h";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708i";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708i";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260708h";
+} from "./ncb-services.js?v=20260708i";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260708h";
+} from "./data-store.js?v=20260708i";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -30,7 +30,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260708h";
+const APP_ASSET_VERSION = "20260708i";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -1354,9 +1354,10 @@ function resetDeviceRuntimeState(draft, slot, options = {}) {
   device.telemetry.inductionStatus = "IDLE";
   device.telemetry.magnetronStatus = "IDLE";
   device.telemetry.ingredientsIndex = 0;
-  device.telemetry.stirrer = DEFAULT_STIRRER_LEVEL;
+  device.telemetry.stirrer = options.connection === "disconnected" ? "OFF" : DEFAULT_STIRRER_LEVEL;
   device.telemetry.pumpOn = false;
   device.telemetry.paused = false;
+  device.telemetry.lastRaw = "";
   return device;
 }
 
@@ -2025,12 +2026,15 @@ function stopLiveLogState(device, at = nowIso()) {
   device.lastUpdatedAt = at;
 }
 
-function failLiveLogState(device, error, at = nowIso()) {
+function failLiveLogState(device, error, at = nowIso(), options = {}) {
   const liveLog = ensureDeviceLiveLogState(device);
   liveLog.active = false;
   liveLog.starting = false;
   liveLog.error = error;
   liveLog.status = error;
+  if (options.clearEntries) {
+    liveLog.entries = [];
+  }
   liveLog.updatedAt = at;
   device.lastUpdatedAt = at;
 }
@@ -3754,7 +3758,7 @@ function handleTransportEvents() {
       device.baselineRecipeSyncPending = false;
       device.telemetry.workStatus = "offline";
       device.telemetry.disconnectedAt = nowIso();
-      failLiveLogState(device, "Device disconnected. Live log stream stopped.", nowIso());
+      failLiveLogState(device, "Device disconnected. Live log stream stopped.", nowIso(), { clearEntries: true });
       appendActivity(device, "Device disconnected. Active work returned to pending.", "warning");
       pushDraftNotification(draft, {
         type: "device",
@@ -4170,6 +4174,7 @@ async function disconnectDevice(slot) {
     device.connection = "disconnected";
     device.baselineRecipeSyncPending = false;
     device.telemetry.workStatus = "offline";
+    failLiveLogState(device, "Device disconnected. Live log stream stopped.", nowIso(), { clearEntries: true });
     appendActivity(device, "Device disconnected. Active work returned to pending.", "warning");
   });
   showToast(`Device ${slot} disconnected`, "info");
@@ -5028,7 +5033,7 @@ async function openLiveLogs(slot) {
     mutate((draft) => {
       const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
       if (!draftDevice) return draft;
-      failLiveLogState(draftDevice, "Connect the device to stream live logs.");
+      failLiveLogState(draftDevice, "Connect the device to stream live logs.", nowIso(), { clearEntries: true });
     });
     showToast("Connect the device first to view live logs.", "warning");
     return;
@@ -5359,7 +5364,8 @@ function renderLiveLogsModal(snapshot, device) {
     ...emptyLiveLogState(),
     ...(device.liveLog || {})
   };
-  const entries = Array.isArray(liveLog.entries)
+  const canStream = device.connection === "connected";
+  const entries = canStream && liveLog.active && Array.isArray(liveLog.entries)
     ? liveLog.entries.slice(-MAX_LIVE_LOG_ENTRIES).map((entry) => normalizeLiveLogEntry(device, entry))
     : [];
   const newestFirst = [...entries].reverse();
@@ -5386,7 +5392,6 @@ function renderLiveLogsModal(snapshot, device) {
         : "Live Logs is on, but no recipe/manual telemetry packet has arrived yet.";
   const sensor = latestSensor?.sensor || {};
   const compactEvents = newestFirst.slice(0, 14);
-  const canStream = device.connection === "connected";
   const emptyTitle = canStream ? "No live values received yet." : "Please connect the device";
   const emptyText = canStream
     ? "Tap Start Live Logs and keep this open while the device is cooking."
@@ -5410,8 +5415,8 @@ function renderLiveLogsModal(snapshot, device) {
           </div>
           <div class="log-status-line ${liveLog.error || !canStream ? "error" : ""}">${escapeHtml(liveLog.error || (!canStream ? "Please connect the device before starting live logs." : liveLog.status || "Live logs are off."))}</div>
           <div class="action-row">
-            <button class="primary-button small" type="button" data-action="start-live-logs" data-slot="${device.slot}">Start Live Logs</button>
-            <button class="secondary-button small" type="button" data-action="stop-live-logs" data-slot="${device.slot}">Stop Live Logs</button>
+            <button class="primary-button small" type="button" data-action="start-live-logs" data-slot="${device.slot}" ${canStream ? "" : "disabled"}>Start Live Logs</button>
+            <button class="secondary-button small" type="button" data-action="stop-live-logs" data-slot="${device.slot}" ${canStream ? "" : "disabled"}>Stop Live Logs</button>
             <button class="secondary-button small" type="button" data-action="clear-live-logs" data-slot="${device.slot}">Clear Feed</button>
           </div>
         </div>
@@ -5653,6 +5658,31 @@ function getDeviceLogsStatusLabel(device) {
   return "Not checked";
 }
 
+function getDisplayTelemetry(device) {
+  const telemetry = device.telemetry || {};
+  if (device.connection === "connected") return telemetry;
+  return {
+    ...telemetry,
+    workStatus: "offline",
+    currentRecipe: "",
+    remainingSeconds: 0,
+    magTime: 0,
+    indTime: 0,
+    indPower: 0,
+    magPower: 0,
+    stepNo: 0,
+    mode: "",
+    status: "",
+    inductionStatus: "IDLE",
+    magnetronStatus: "IDLE",
+    ingredientsIndex: 0,
+    stirrer: "OFF",
+    pumpOn: false,
+    paused: false,
+    lastRaw: ""
+  };
+}
+
 function getDeviceLastSyncLabel(device) {
   return device.recipeInventoryUpdatedAt || device.logFetch?.updatedAt || device.lastUpdatedAt
     ? formatTimestamp(device.recipeInventoryUpdatedAt || device.logFetch?.updatedAt || device.lastUpdatedAt)
@@ -5785,7 +5815,7 @@ function renderDeviceCommandNotice(device, commandName, connectedText, disconnec
 }
 
 function getDeviceLiveLogSnapshot(device) {
-  const entries = Array.isArray(device.liveLog?.entries)
+  const entries = device.connection === "connected" && device.liveLog?.active && Array.isArray(device.liveLog?.entries)
     ? device.liveLog.entries.map((entry) => normalizeLiveLogEntry(device, entry))
     : [];
   const latestRecipe = getNewestLiveLogEntry(entries, (entry) => entry.direction !== "tx" && entry.modeType === "recipe");
@@ -5801,7 +5831,7 @@ function getDeviceLiveLogSnapshot(device) {
 }
 
 function renderDeviceStatusModal(snapshot, device) {
-  const telemetry = device.telemetry || {};
+  const telemetry = getDisplayTelemetry(device);
   const liveSnapshot = getDeviceLiveLogSnapshot(device);
   const live = liveSnapshot.latest;
   const liveSensor = liveSnapshot.latestSensor?.sensor || {};
@@ -7842,10 +7872,11 @@ function renderManualModeTab(snapshot, fixedDevice = null) {
       ? `${selectedRecipe.displayName} is not enabled on Device ${device.slot}. Enable it in device details before running.`
       : selectedRunState?.note || "Choose a recipe and a device.";
   const pumpUnits = Math.max(1, Number(snapshot.ui.manualMode?.pumpUnits) || 10);
-  const inductionStatus = getManualStatus(device?.telemetry.inductionStatus || "IDLE");
-  const magnetronStatus = getManualStatus(device?.telemetry.magnetronStatus || "IDLE");
-  const stirrerLabel = formatStirrerDisplay(device?.telemetry.stirrer || DEFAULT_STIRRER_LEVEL);
-  const pumpLabel = device?.telemetry.pumpOn ? "ON" : "OFF";
+  const displayTelemetry = device ? getDisplayTelemetry(device) : {};
+  const inductionStatus = getManualStatus(displayTelemetry.inductionStatus || "IDLE");
+  const magnetronStatus = getManualStatus(displayTelemetry.magnetronStatus || "IDLE");
+  const stirrerLabel = formatStirrerDisplay(displayTelemetry.stirrer || (device?.connection === "connected" ? DEFAULT_STIRRER_LEVEL : "OFF"));
+  const pumpLabel = displayTelemetry.pumpOn ? "ON" : "OFF";
   const manualCommandDisabled = device?.connection === "connected" ? "" : "disabled";
   return `
     <section class="stack-section">
@@ -7915,10 +7946,10 @@ function renderManualModeTab(snapshot, fixedDevice = null) {
                 <div class="detail-info-row"><span>Connection</span><strong>${escapeHtml(device.connection)}</strong></div>
                 <div class="detail-info-row"><span>Induction</span><strong>${escapeHtml(inductionStatus)}</strong></div>
                 <div class="detail-info-row"><span>Microwave</span><strong>${escapeHtml(magnetronStatus)}</strong></div>
-                <div class="detail-info-row"><span>Remaining</span><strong>${secondsLabel(device.telemetry.indTime || 0)}</strong></div>
-                <div class="detail-info-row"><span>Power</span><strong>${escapeHtml((device.telemetry.indPower || 0) + "%")}</strong></div>
-                <div class="detail-info-row"><span>Microwave time</span><strong>${secondsLabel(device.telemetry.magTime || 0)}</strong></div>
-                <div class="detail-info-row"><span>Microwave power</span><strong>${escapeHtml((device.telemetry.magPower || 0) + "%")}</strong></div>
+                <div class="detail-info-row"><span>Remaining</span><strong>${secondsLabel(displayTelemetry.indTime || 0)}</strong></div>
+                <div class="detail-info-row"><span>Power</span><strong>${escapeHtml((displayTelemetry.indPower || 0) + "%")}</strong></div>
+                <div class="detail-info-row"><span>Microwave time</span><strong>${secondsLabel(displayTelemetry.magTime || 0)}</strong></div>
+                <div class="detail-info-row"><span>Microwave power</span><strong>${escapeHtml((displayTelemetry.magPower || 0) + "%")}</strong></div>
                 <div class="detail-info-row"><span>Stirrer</span><strong>${escapeHtml(stirrerLabel)}</strong></div>
                 <div class="detail-info-row"><span>Pump</span><strong>${escapeHtml(pumpLabel)}</strong></div>
                 <div class="detail-info-row"><span>Last updated</span><strong>${escapeHtml(device.lastUpdatedAt ? formatAgo(device.lastUpdatedAt) : "Never")}</strong></div>
@@ -8526,6 +8557,7 @@ function renderRecipeTimeline(snapshot, device, recipe, active = false) {
 
 function renderCurrentRecipeCard(snapshot, device, currentOrder, recipe) {
   const active = isDeviceActivelyCooking(device) && Boolean(recipe || currentOrder || getLiveRecipeName(device));
+  const displayTelemetry = getDisplayTelemetry(device);
   const stepState = recipe ? getOperatorStepState(device, recipe) : { activeIndex: 0, totalSteps: 0, currentStep: {} };
   const step = stepState.currentStep || {};
   const recipeName =
@@ -8539,18 +8571,24 @@ function renderCurrentRecipeCard(snapshot, device, currentOrder, recipe) {
   const totalSeconds = Math.max(1, Number(device.activeRun?.durationSeconds) || getRecipeDuration(recipe));
   const elapsedSeconds = active ? elapsedSecondsBetween(device.activeRun?.startedAt || currentOrder?.createdAt || nowIso(), nowIso()) : 0;
   const progress = active ? Math.min(100, Math.max(0, (elapsedSeconds / totalSeconds) * 100)) : 0;
-  const water = getLiquidStepValue(step.pump_on);
-  const stirrerValue = device.telemetry.stirrer || step.stirrer_on || DEFAULT_STIRRER_LEVEL;
+  const water = active ? getLiquidStepValue(step.pump_on) : getLiquidStepValue(0);
+  const stirrerValue = active
+    ? displayTelemetry.stirrer || step.stirrer_on || DEFAULT_STIRRER_LEVEL
+    : device.connection === "connected"
+      ? displayTelemetry.stirrer || DEFAULT_STIRRER_LEVEL
+      : "OFF";
+  const inductionPower = active ? clampPercent(displayTelemetry.indPower || step.Induction_power) : 0;
+  const microwavePower = active ? clampPercent(displayTelemetry.magPower || step.Magnetron_power) : 0;
   const tiles = [
     {
       label: "Induction",
-      value: `${clampPercent(device.telemetry.indPower || step.Induction_power)}%`,
-      hint: step.Induction_on_time ? `${secondsLabel(step.Induction_on_time)}` : "Standby"
+      value: `${inductionPower}%`,
+      hint: active && step.Induction_on_time ? `${secondsLabel(step.Induction_on_time)}` : "Standby"
     },
     {
       label: "Microwave",
-      value: `${clampPercent(device.telemetry.magPower || step.Magnetron_power)}%`,
-      hint: step.Magnetron_on_time ? `${secondsLabel(step.Magnetron_on_time)}` : "Standby"
+      value: `${microwavePower}%`,
+      hint: active && step.Magnetron_on_time ? `${secondsLabel(step.Magnetron_on_time)}` : "Standby"
     },
     {
       label: "Stirrer",

@@ -2,6 +2,10 @@
 
 ## 2026-07-08
 
+- Fixed disconnected/offline device rendering so Live Logs and Status no longer show stale live packets after a cooker is switched off or disconnected.
+- Disconnected devices now clear live feed entries, reset live telemetry outputs to idle/off, and show a clear “connect the device” state instead of old recipe/stirrer/power values.
+- Bumped web cache version to `20260708i` / service-worker cache `v87` and refreshed the APK cloud URL.
+
 - Removed Manual Mode from the kitchen-level top navigation; the main On2Cook Cloud screen now stays focused on Orders, Recipes, Queue, and Global Recipes.
 - Added Manual Mode as a device-specific screen from each device card and Device Details, so manual recipe runs, induction, microwave, stirrer, pump, and status commands are always bound to one cooker slot.
 - Bumped web cache version to `20260708h` / service-worker cache `v86` and refreshed the APK cloud URL.

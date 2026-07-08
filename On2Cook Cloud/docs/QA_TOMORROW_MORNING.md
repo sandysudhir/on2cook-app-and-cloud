@@ -45,7 +45,7 @@ Physical BLE/device behavior still needs the cooker:
 ## Tomorrow Morning Device Test Sequence
 
 1. Open Chrome or Edge on Windows and load `https://www.on2cook.net/`.
-2. Hard refresh once so `app.js?v=20260708h` and service worker `on2cook-cloud-v86` are active.
+2. Hard refresh once so `app.js?v=20260708i` and service worker `on2cook-cloud-v87` are active.
 3. Turn on only the first cooker and wait for BLE advertising.
 4. Open Device Details for D1, click Connect, and select the intended cooker.
 5. Confirm D1 shows Connected and locks to that exact Bluetooth name.
