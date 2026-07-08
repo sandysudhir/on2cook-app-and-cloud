@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708e";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708e";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708f";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708f";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260708e";
+} from "./ncb-services.js?v=20260708f";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,11 +21,12 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260708e";
+} from "./data-store.js?v=20260708f";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
-const APP_ASSET_VERSION = "20260708e";
+const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
+const APP_ASSET_VERSION = "20260708f";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -38,6 +39,8 @@ let statusTimer = 0;
 let orderFeedTimer = 0;
 let kotBridgeTimer = 0;
 let proLiveTimer = 0;
+let uiSessionSaveTimer = 0;
+let lastApkScreenIndex = 0;
 let proStudioShellOrientation = "portrait";
 let proStudioRoutePath = "";
 const recipeMissingRetryCounts = new Map();
@@ -108,6 +111,10 @@ function restoreScrollState(scrollState) {
       element.scrollLeft = position.left || 0;
       element.scrollTop = position.top || 0;
     });
+    if (IS_APK_MODE) {
+      const { rail, frames } = getApkRailFrames();
+      if (rail && frames.length) setApkScreenSwitcherActive(getCurrentApkRailIndex(rail, frames));
+    }
   });
 }
 
@@ -117,6 +124,101 @@ function saveScrollStateForReload() {
   } catch (error) {
     console.warn("[On2Cook] Could not save scroll state before refresh.", error);
   }
+}
+
+function sanitizeModalForSession(modal) {
+  if (!modal?.type) return null;
+  const safeModalTypes = new Set([
+    "device-sheet",
+    "device-status",
+    "device-firmware",
+    "stored-logs",
+    "device-recipes",
+    "order-details",
+    "recipe-sheet",
+    "manual-order",
+    "assign-recipe",
+    "device-metadata"
+  ]);
+  if (!safeModalTypes.has(modal.type)) return null;
+  return structuredClone(modal);
+}
+
+function captureUiSessionState(snapshot = null) {
+  const ui = snapshot?.ui || store?.getState?.().ui || {};
+  const activeApkButton = document.querySelector(".apk-screen-button.active");
+  const activeApkIndex = Number(activeApkButton?.dataset?.apkScreenIndex ?? ui.apkScreenIndex ?? lastApkScreenIndex) || 0;
+  return {
+    activeTab: ui.activeTab || "orders",
+    orderMode: ui.orderMode || "current",
+    recipeMode: ui.recipeMode || "selected",
+    globalRecipeSearch: ui.globalRecipeSearch || "",
+    globalRecipePickedIds: Array.isArray(ui.globalRecipePickedIds) ? ui.globalRecipePickedIds.slice(0, 200) : [],
+    manualMode: {
+      slot: Math.max(1, Number(ui.manualMode?.slot) || 1),
+      recipeId: ui.manualMode?.recipeId || "",
+      pumpUnits: Math.max(1, Number(ui.manualMode?.pumpUnits) || 10)
+    },
+    apkScreenIndex: Math.max(0, Math.trunc(activeApkIndex)),
+    activeModal: sanitizeModalForSession(ui.activeModal),
+    scroll: captureScrollState(),
+    savedAt: nowIso()
+  };
+}
+
+function saveUiSessionState(snapshot = null) {
+  try {
+    sessionStorage.setItem(UI_SESSION_STATE_KEY, JSON.stringify(captureUiSessionState(snapshot)));
+    sessionStorage.setItem(SCROLL_STATE_KEY, JSON.stringify(captureScrollState()));
+  } catch (error) {
+    console.warn("[On2Cook] Could not save current screen state.", error);
+  }
+}
+
+function scheduleSaveUiSessionState(snapshot = null, delay = 120) {
+  if (uiSessionSaveTimer) window.clearTimeout(uiSessionSaveTimer);
+  uiSessionSaveTimer = window.setTimeout(() => {
+    uiSessionSaveTimer = 0;
+    saveUiSessionState(snapshot);
+  }, Math.max(0, Number(delay) || 0));
+}
+
+function takeSavedUiSessionState() {
+  try {
+    const raw = sessionStorage.getItem(UI_SESSION_STATE_KEY);
+    sessionStorage.removeItem(UI_SESSION_STATE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn("[On2Cook] Could not restore saved screen state.", error);
+    return null;
+  }
+}
+
+function applySavedUiSessionState(initialState, sessionState) {
+  if (!initialState?.ui || !sessionState) return initialState;
+  const validTabs = new Set(["orders", "recipes", "queue", "manual", "global"]);
+  const validOrderModes = new Set(["current", "previous"]);
+  const validRecipeModes = new Set(["selected", "final", "scale", "import"]);
+  if (validTabs.has(sessionState.activeTab)) {
+    initialState.ui.activeTab = sessionState.activeTab;
+  }
+  if (validOrderModes.has(sessionState.orderMode)) {
+    initialState.ui.orderMode = sessionState.orderMode;
+  }
+  if (validRecipeModes.has(sessionState.recipeMode)) {
+    initialState.ui.recipeMode = sessionState.recipeMode;
+  }
+  initialState.ui.globalRecipeSearch = String(sessionState.globalRecipeSearch || "");
+  initialState.ui.globalRecipePickedIds = Array.isArray(sessionState.globalRecipePickedIds)
+    ? sessionState.globalRecipePickedIds.slice(0, 200)
+    : [];
+  initialState.ui.manualMode = {
+    ...initialState.ui.manualMode,
+    ...(sessionState.manualMode || {})
+  };
+  initialState.ui.apkScreenIndex = Math.max(0, Math.trunc(Number(sessionState.apkScreenIndex) || 0));
+  initialState.ui.activeModal = sanitizeModalForSession(sessionState.activeModal);
+  return initialState;
 }
 
 function takeSavedScrollState() {
@@ -2607,7 +2709,7 @@ function syncSelectedRecipesToAllDevices(draft) {
 }
 
 function clearStartupRecipeUploadState(draft) {
-  if (draft.ui?.activeModal) {
+  if (draft.ui?.activeModal && !sanitizeModalForSession(draft.ui.activeModal)) {
     draft.ui.activeModal = null;
   }
   draft.devices.forEach((device) => {
@@ -2660,8 +2762,8 @@ async function registerServiceWorker() {
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (refreshing) return;
       refreshing = true;
-      saveScrollStateForReload();
-      window.location.reload();
+      saveUiSessionState();
+      console.info("[On2Cook] App update activated. Staying on the current screen until the user refreshes.");
     });
     const registration = await navigator.serviceWorker.register(`./service-worker.js?v=${APP_ASSET_VERSION}`);
     if (registration.waiting) {
@@ -2791,8 +2893,7 @@ function applyKotBridgeSnapshot(payload) {
     });
     draft.orders.current = nextOrders;
     draft.orders.incoming = [];
-    if (draft.ui.orderMode !== "previous") {
-      draft.ui.activeTab = "orders";
+    if (draft.ui.activeTab === "orders" && draft.ui.orderMode !== "previous") {
       draft.ui.orderMode = "current";
     }
   });
@@ -10027,8 +10128,9 @@ function getCurrentApkRailIndex(rail, frames) {
 }
 
 function setApkScreenSwitcherActive(index) {
+  lastApkScreenIndex = Math.max(0, Number(index) || 0);
   document.querySelectorAll(".apk-screen-switcher [data-apk-screen-index]").forEach((button) => {
-    button.classList.toggle("active", Number(button.dataset.apkScreenIndex) === index);
+    button.classList.toggle("active", Number(button.dataset.apkScreenIndex) === lastApkScreenIndex);
   });
 }
 
@@ -10040,10 +10142,22 @@ function scrollApkRailToIndex(index, behavior = "smooth") {
   const left = frame.offsetLeft - Math.max(0, (rail.clientWidth - frame.offsetWidth) / 2);
   rail.scrollTo({ left, behavior });
   setApkScreenSwitcherActive(safeIndex);
+  scheduleSaveUiSessionState(null, behavior === "smooth" ? 420 : 80);
+}
+
+function restoreApkRailFromUiState(snapshot) {
+  if (!IS_APK_MODE) return;
+  const index = Math.max(0, Number(snapshot.ui.apkScreenIndex ?? lastApkScreenIndex) || 0);
+  if (index <= 0) {
+    setApkScreenSwitcherActive(0);
+    return;
+  }
+  window.requestAnimationFrame(() => scrollApkRailToIndex(index, "auto"));
 }
 
 function renderApkScreenSwitcher(snapshot) {
   if (!IS_APK_MODE) return "";
+  const activeIndex = Math.max(0, Number(snapshot.ui.apkScreenIndex ?? lastApkScreenIndex) || 0);
   const items = [
     ["Home", 0],
     ...snapshot.devices.map((device, index) => [`D${device.slot}`, index + 1])
@@ -10053,7 +10167,7 @@ function renderApkScreenSwitcher(snapshot) {
       ${items
         .map(([label, index]) => `
           <button
-            class="apk-screen-button ${index === 0 ? "active" : ""}"
+            class="apk-screen-button ${index === activeIndex ? "active" : ""}"
             type="button"
             data-action="jump-apk-screen"
             data-apk-screen-index="${index}"
@@ -10087,6 +10201,7 @@ function render() {
     </div>
   `;
   restoreScrollState(scrollState);
+  restoreApkRailFromUiState(snapshot);
 }
 
 async function handleManualOrderSubmit(formData) {
@@ -10771,7 +10886,12 @@ async function handleClick(event) {
     return;
   }
   if (action === "jump-apk-screen") {
-    scrollApkRailToIndex(Number(button.dataset.apkScreenIndex) || 0);
+    const apkScreenIndex = Math.max(0, Number(button.dataset.apkScreenIndex) || 0);
+    lastApkScreenIndex = apkScreenIndex;
+    mutate((draft) => {
+      draft.ui.apkScreenIndex = apkScreenIndex;
+    });
+    window.requestAnimationFrame(() => scrollApkRailToIndex(apkScreenIndex));
     return;
   }
   if (action === "order-jump-device") {
@@ -11962,12 +12082,13 @@ async function handleChange(event) {
   }
 }
 
-function bindStore() {
-  store.subscribe(() => {
+function bindStore(initialScrollState = null) {
+  store.subscribe((snapshot) => {
     render();
+    scheduleSaveUiSessionState(snapshot);
   });
   render();
-  restoreScrollState(takeSavedScrollState());
+  restoreScrollState(initialScrollState || takeSavedScrollState());
 }
 
 function bindApkRailGestures() {
@@ -11999,7 +12120,13 @@ function bindApkRailGestures() {
     const deltaY = y - swipe.startY;
     if (Math.abs(deltaX) < 52 || Math.abs(deltaX) < Math.abs(deltaY) * 1.25) return;
     event.preventDefault();
-    scrollApkRailToIndex(swipe.startIndex + (deltaX < 0 ? 1 : -1));
+    const { frames } = getApkRailFrames();
+    const targetIndex = Math.max(0, Math.min(frames.length - 1, swipe.startIndex + (deltaX < 0 ? 1 : -1)));
+    lastApkScreenIndex = targetIndex;
+    mutate((draft) => {
+      draft.ui.apkScreenIndex = targetIndex;
+    });
+    window.requestAnimationFrame(() => scrollApkRailToIndex(targetIndex));
   };
 
   app.addEventListener(
@@ -12054,7 +12181,13 @@ function bindApkRailGestures() {
     (event) => {
       if (!event.target.classList?.contains("apk-rail")) return;
       const { rail, frames } = getApkRailFrames();
-      setApkScreenSwitcherActive(getCurrentApkRailIndex(rail, frames));
+      const activeIndex = getCurrentApkRailIndex(rail, frames);
+      setApkScreenSwitcherActive(activeIndex);
+      if (Number(state().ui.apkScreenIndex || 0) !== activeIndex) {
+        mutate((draft) => {
+          draft.ui.apkScreenIndex = activeIndex;
+        });
+      }
     },
     true
   );
@@ -12069,12 +12202,14 @@ window.addEventListener("message", (event) => {
 async function init() {
   seedRecipes = await loadSeedRecipeCatalog();
   globalRecipeCatalog = await loadGlobalRecipeCatalog();
-  store = createStore(loadState(seedRecipes));
+  const savedUiSession = takeSavedUiSessionState();
+  const initialState = applySavedUiSessionState(loadState(seedRecipes), savedUiSession);
+  store = createStore(initialState);
   mutate((draft) => {
     clearStartupRecipeUploadState(draft);
     syncSelectedRecipesToAllDevices(draft);
   });
-  bindStore();
+  bindStore(savedUiSession?.scroll || takeSavedScrollState());
   handleTransportEvents();
   ensureStatusPolling();
   ensureIncomingOrderFeed();
@@ -12085,6 +12220,12 @@ async function init() {
   app.addEventListener("click", handleClick);
   app.addEventListener("submit", handleSubmit);
   app.addEventListener("change", handleChange);
+  app.addEventListener("scroll", () => scheduleSaveUiSessionState(null, 250), true);
+  window.addEventListener("scroll", () => scheduleSaveUiSessionState(null, 250), { passive: true });
+  window.addEventListener("beforeunload", () => saveUiSessionState());
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") saveUiSessionState();
+  });
   bindApkRailGestures();
   queueIdleWork();
 }

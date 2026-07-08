@@ -951,3 +951,11 @@ Scaling rules implemented from the supplied chart:
 - Salt uses concentration targets: mild 0.7%, medium 0.9%, rich 1.1% of final recipe weight.
 
 Changing the target quantity in the Scale tab immediately creates or updates the matching final recipe record. The base recipe is not overwritten.
+
+## 25. Refresh And Screen Persistence - July 8, 2026
+
+The cloud app now treats the visible screen as recoverable UI state. Before browser refresh, APK WebView reload, tab hide, or service-worker activation, it saves the active top tab, sub-tab, Manual Mode selection, safe open panels, page scroll, and horizontal device rail position.
+
+Server/KOT order polling no longer forces `activeTab` back to Orders. New orders still create the top notification/notice, but the user decides when to open Orders. This prevents Manual Mode, Recipes, Queue, Global Recipes, and device/detail panels from being interrupted by background refreshes or order feed updates.
+
+Service-worker updates no longer call `window.location.reload()` automatically. The next user refresh loads the new asset version while the current screen remains stable during active use.

@@ -45,7 +45,7 @@ Physical BLE/device behavior still needs the cooker:
 ## Tomorrow Morning Device Test Sequence
 
 1. Open Chrome or Edge on Windows and load `https://www.on2cook.net/`.
-2. Hard refresh once so `app.js?v=20260708e` and service worker `on2cook-cloud-v83` are active.
+2. Hard refresh once so `app.js?v=20260708f` and service worker `on2cook-cloud-v84` are active.
 3. Turn on only the first cooker and wait for BLE advertising.
 4. Open Device Details for D1, click Connect, and select the intended cooker.
 5. Confirm D1 shows Connected and locks to that exact Bluetooth name.
@@ -72,3 +72,4 @@ Physical BLE/device behavior still needs the cooker:
 - Live Logs can be opened offline for explanation, but Start/Stop stream buttons are disabled.
 - Historical Logs can be opened offline for explanation, but actual log listing requires an idle connected device.
 - `ingredients=100` exists only as an explicit ingredient-confirmation action, not as an automatic post-recipe command.
+- New order polling must not force the app back to Orders. If you are on Manual Mode, Recipes, Queue, Global Recipes, or a safe device/detail panel, refresh/re-render should preserve that tab, panel, and scroll position.

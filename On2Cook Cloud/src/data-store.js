@@ -658,6 +658,7 @@ function createUiState() {
     recipeMode: "selected",
     globalRecipeSearch: "",
     globalRecipePickedIds: [],
+    apkScreenIndex: 0,
     manualMode: {
       slot: 1,
       recipeId: "",
