@@ -931,3 +931,23 @@ These are now the fixed guardrails for the Order, Device Details, queue, and log
 - Queue reorder buttons affect only the selected device's upcoming queue (`device.queueOrderIds`).
 - Cook Again creates a new queued job tagged `recook`; it never deletes or edits the cooked-history record.
 - All device actions carry the selected `data-slot`, so D1 actions mutate only D1, D2 actions mutate only D2, and so on.
+
+## 24. Recipe Quantity And Scaling - July 8, 2026
+
+The Recipes screen now shows cooking-output information directly on each recipe card:
+
+- Final quantity, read from `FINAL OUTPUT`, `FINAL OUTCOME`, explicit quantity fields, or output labels in the firmware JSON.
+- Approximate calories. If the recipe JSON contains calories, the listed value is used; otherwise the app estimates from recognizable raw ingredients.
+- Ingredient categories and individual raw ingredients with approximate starting weights.
+
+The Scale tab creates a separate final recipe from a selected/base recipe. The original firmware JSON structure is preserved, and the scaled recipe is saved as a new final recipe whose display name, firmware name, and ZIP-ready name include the target quantity, for example `VEGETABLE UPMA_500g`.
+
+Scaling rules implemented from the supplied chart:
+
+- Ingredient factor = new final quantity / base final quantity.
+- Time factor = square root of ingredient factor.
+- Main ingredients and cooking liquids scale linearly.
+- Body/base masala, sweetness, ground spices, whole spices, fresh aromatics, acids, finishers, and cooking fat use category-specific sublinear factors.
+- Salt uses concentration targets: mild 0.7%, medium 0.9%, rich 1.1% of final recipe weight.
+
+Changing the target quantity in the Scale tab immediately creates or updates the matching final recipe record. The base recipe is not overwritten.

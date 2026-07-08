@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708d";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708d";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708e";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708e";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260708d";
+} from "./ncb-services.js?v=20260708e";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,10 +21,11 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260708d";
+} from "./data-store.js?v=20260708e";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
+const APP_ASSET_VERSION = "20260708e";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -2662,7 +2663,7 @@ async function registerServiceWorker() {
       saveScrollStateForReload();
       window.location.reload();
     });
-    const registration = await navigator.serviceWorker.register("./service-worker.js");
+    const registration = await navigator.serviceWorker.register(`./service-worker.js?v=${APP_ASSET_VERSION}`);
     if (registration.waiting) {
       registration.waiting.postMessage({ type: "SKIP_WAITING" });
     }
@@ -6339,20 +6340,33 @@ function parseQuantityText(value, fallbackQuantity = 500, fallbackUnit = "g") {
   return { quantity: Number(match[1]) || fallbackQuantity, unit };
 }
 
-function inferRecipeQuantity(recipeJson) {
-  return parseQuantityText(
-    [
-      recipeJson?.quantity,
-      recipeJson?.servings,
-      recipeJson?.weight,
-      recipeJson?.title,
-      recipeJson?.description
-    ]
-      .filter(Boolean)
-      .join(" "),
-    500,
-    "g"
+function parseExplicitQuantityText(value, fallbackQuantity = 500, fallbackUnit = "g") {
+  const text = String(value || "");
+  const match = text.match(/(\d+(?:\.\d+)?)\s*(kg|g|gm|gram|grams|ml|l|litre|liter|piece|pcs|number|nos?)\b/i);
+  if (!match) return { quantity: fallbackQuantity, unit: fallbackUnit };
+  return parseQuantityText(`${match[1]} ${match[2]}`, fallbackQuantity, fallbackUnit);
+}
+
+function findFinalOutputQuantity(recipeJson) {
+  const text = [
+    recipeJson?.quantity,
+    recipeJson?.servings,
+    recipeJson?.weight,
+    recipeJson?.finalQuantity,
+    recipeJson?.description
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const outputMatch = text.match(
+    /(?:final\s+(?:output|outcome|quantity|weight)|output|batch\s+size)\s*[:=\-]?\s*(\d+(?:\.\d+)?)\s*(kg|g|gm|gram|grams|ml|l|litre|liter|piece|pcs|number|nos?)\b/i
   );
+  if (outputMatch) return parseQuantityText(`${outputMatch[1]} ${outputMatch[2]}`, 500, "g");
+  const direct = [recipeJson?.quantity, recipeJson?.finalQuantity, recipeJson?.weight, recipeJson?.servings].find(Boolean);
+  return parseExplicitQuantityText(direct, 500, "g");
+}
+
+function inferRecipeQuantity(recipeJson) {
+  return findFinalOutputQuantity(recipeJson);
 }
 
 function splitIngredientNameWeight(item, index) {
@@ -6395,6 +6409,369 @@ function configIngredientsToFirmware(ingredients) {
       weight: `${ingredient.quantity || 0} ${ingredient.unit || "g"}`.trim(),
       Weight: `${ingredient.quantity || 0} ${ingredient.unit || "g"}`.trim()
     }));
+}
+
+const INGREDIENT_CATEGORY_RULES = [
+  { id: "salt", label: "Salt", exponent: 0, pattern: /\b(salt|black salt|sendha)\b/i },
+  { id: "sweetness", label: "Sweetness", exponent: 0.95, pattern: /\b(sugar|jaggery|honey|milk maid|condensed milk)\b/i },
+  { id: "cooking-fat", label: "Cooking fat", exponent: 0.85, pattern: /\b(oil|ghee|butter|fat)\b/i },
+  { id: "cooking-liquid", label: "Cooking liquids", exponent: 1, pattern: /\b(water|stock|milk|dal water|coconut milk|cream)\b/i },
+  { id: "acid", label: "Acids / sourness", exponent: 0.75, pattern: /\b(lemon|lime|vinegar|tamarind|amchur|kokum|sour)\b/i },
+  { id: "ground-spice", label: "Ground spices", exponent: 0.9, pattern: /\b(powder|masala|turmeric|chilli|chili|coriander powder|cumin powder|pepper)\b/i },
+  { id: "whole-spice", label: "Whole spices", exponent: 0.78, pattern: /\b(cumin|mustard|clove|cardamom|cinnamon|bay leaf|peppercorn|seed|hing|dalchini)\b/i },
+  { id: "fresh-aromatic", label: "Fresh aromatics", exponent: 0.88, pattern: /\b(coriander|curry leaves|ginger|garlic|chilli|chili|mint|spring onion|herb)\b/i },
+  { id: "body-masala", label: "Body / base masala", exponent: 0.95, pattern: /\b(onion|tomato|curd|yogurt|paste|gravy|sauce|vegetable)\b/i },
+  { id: "finisher", label: "Finishers", exponent: 0.72, pattern: /\b(kasuri|saffron|garam masala|aroma|finish|garnish)\b/i },
+  { id: "main", label: "Main ingredient / base", exponent: 1, pattern: /.*/i }
+];
+
+const SALT_INTENSITY_PERCENT = {
+  mild: 0.007,
+  medium: 0.009,
+  rich: 0.011
+};
+
+function classifyIngredientCategory(name) {
+  const rule = INGREDIENT_CATEGORY_RULES.find((item) => item.pattern.test(String(name || "")));
+  return rule || INGREDIENT_CATEGORY_RULES[INGREDIENT_CATEGORY_RULES.length - 1];
+}
+
+function normalizeIngredientUnit(unit) {
+  const value = String(unit || "g").trim().toLowerCase();
+  if (value === "gm" || value.startsWith("gram")) return "g";
+  if (value === "litre" || value === "liter") return "l";
+  if (value === "nos" || value === "no" || value === "pcs") return "piece";
+  return value || "g";
+}
+
+function formatScaledNumber(value, unit = "g") {
+  const safe = Math.max(0, Number(value) || 0);
+  const normalizedUnit = normalizeIngredientUnit(unit);
+  if (["piece", "number"].includes(normalizedUnit)) return String(Math.max(1, Math.round(safe)));
+  if (safe >= 100) return String(Math.round(safe));
+  if (safe >= 10) return String(Math.round(safe * 2) / 2).replace(/\.0$/, "");
+  return String(Math.round(safe * 10) / 10).replace(/\.0$/, "");
+}
+
+function formatScaledWeight(quantity, unit) {
+  return `${formatScaledNumber(quantity, unit)} ${normalizeIngredientUnit(unit)}`.trim();
+}
+
+function getRecipeIngredientFactor(baseQuantity, targetQuantity) {
+  const base = Math.max(1, Number(baseQuantity) || 1);
+  return Math.max(0.05, Number(targetQuantity) || base) / base;
+}
+
+function getRecipeTimeFactor(baseQuantity, targetQuantity) {
+  return Math.sqrt(getRecipeIngredientFactor(baseQuantity, targetQuantity));
+}
+
+function scaleIngredientAmount(name, quantity, unit, ingredientFactor, targetFinalQuantity, intensity = "medium") {
+  const category = classifyIngredientCategory(name);
+  const normalizedUnit = normalizeIngredientUnit(unit);
+  if (category.id === "salt" && ["g", "gm"].includes(normalizedUnit)) {
+    return {
+      quantity: Math.max(0.1, (Number(targetFinalQuantity) || 0) * (SALT_INTENSITY_PERCENT[intensity] || SALT_INTENSITY_PERCENT.medium)),
+      unit: "g",
+      category
+    };
+  }
+  const categoryFactor = Math.pow(ingredientFactor, category.exponent);
+  return {
+    quantity: (Number(quantity) || 0) * categoryFactor,
+    unit: normalizedUnit,
+    category
+  };
+}
+
+const INGREDIENT_TOKEN_PATTERN =
+  /([^,;|]+?)\s*(\d+(?:\.\d+)?)\s*(kg|g|gm|gram|grams|ml|l|litre|liter|piece|pcs|number|nos?|pinch|tbsp|tsp)\b/gi;
+
+function parseIngredientDetailsFromText(text, groupTitle = "") {
+  const source = String(text || "");
+  const details = [];
+  let match;
+  INGREDIENT_TOKEN_PATTERN.lastIndex = 0;
+  while ((match = INGREDIENT_TOKEN_PATTERN.exec(source))) {
+    const name = String(match[1] || groupTitle || "Ingredient")
+      .replace(/^[,\s:&+-]+|[,\s:&+-]+$/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!name) continue;
+    const unit = normalizeIngredientUnit(match[3]);
+    details.push({
+      name,
+      quantity: Number(match[2]) || 0,
+      unit,
+      category: classifyIngredientCategory(name)
+    });
+  }
+  return details;
+}
+
+function extractRecipeIngredientDetails(recipeJson) {
+  const ingredients = Array.isArray(recipeJson?.Ingredients)
+    ? recipeJson.Ingredients
+    : Array.isArray(recipeJson?.Ingredient)
+      ? recipeJson.Ingredient
+      : [];
+  const details = [];
+  ingredients.forEach((item, index) => {
+    const title = item?.title || item?.name || item?.Text || item?.text || `Ingredient ${index + 1}`;
+    const textDetails = parseIngredientDetailsFromText(item?.text || item?.ingredients || "", title);
+    const titleDetails = textDetails.length ? [] : parseIngredientDetailsFromText(title, title);
+    const parsedDetails = textDetails.length ? textDetails : titleDetails;
+    if (parsedDetails.length) {
+      details.push(...parsedDetails);
+      return;
+    }
+    const parsed = splitIngredientNameWeight(item, index);
+    details.push({
+      name: parsed.name,
+      quantity: parsed.quantity,
+      unit: parsed.unit,
+      category: classifyIngredientCategory(parsed.name)
+    });
+  });
+  return details.slice(0, 80);
+}
+
+function extractRecipeCalories(recipeJson, details) {
+  const direct = [
+    recipeJson?.calories,
+    recipeJson?.Calories,
+    recipeJson?.kcal,
+    recipeJson?.Kcal,
+    recipeJson?.nutrition?.calories,
+    recipeJson?.nutrition?.kcal
+  ].find((value) => Number(value) > 0);
+  if (direct) return { value: Math.round(Number(direct)), source: "listed" };
+  const kcalMap = [
+    [/oil|ghee/i, 884],
+    [/butter/i, 717],
+    [/sugar|jaggery|honey/i, 380],
+    [/semolina|rava|sooji/i, 360],
+    [/rice|noodle|pasta/i, 350],
+    [/dal|lentil|chana|urad/i, 340],
+    [/peanut|cashew|almond|raisin/i, 560],
+    [/milk/i, 65],
+    [/paneer|cheese/i, 265],
+    [/chicken|egg|mutton|fish|prawn/i, 170],
+    [/potato/i, 77],
+    [/carrot|beans|peas|cabbage|onion|tomato|spinach|vegetable/i, 35]
+  ];
+  const estimated = (details || []).reduce((total, item) => {
+    const unit = normalizeIngredientUnit(item.unit);
+    if (!["g", "ml"].includes(unit)) return total;
+    const rule = kcalMap.find(([pattern]) => pattern.test(item.name));
+    if (!rule) return total;
+    const grams = Number(item.quantity) || 0;
+    return total + (grams * rule[1]) / 100;
+  }, 0);
+  return estimated > 20 ? { value: Math.round(estimated), source: "estimated" } : { value: 0, source: "missing" };
+}
+
+function summarizeRecipeForCard(recipe) {
+  const quantity = inferRecipeQuantity(recipe.recipeJson || {});
+  const details = extractRecipeIngredientDetails(recipe.recipeJson || {});
+  const categories = new Map();
+  details.forEach((item) => {
+    const key = item.category?.label || "Ingredients";
+    categories.set(key, (categories.get(key) || 0) + 1);
+  });
+  const calories = extractRecipeCalories(recipe.recipeJson || {}, details);
+  return {
+    quantity,
+    details,
+    categories: [...categories.entries()].slice(0, 5),
+    calories
+  };
+}
+
+function renderRecipeNutritionLine(summary) {
+  const quantity = `${formatScaledNumber(summary.quantity.quantity, summary.quantity.unit)} ${summary.quantity.unit}`;
+  const calorieText =
+    summary.calories.value > 0
+      ? `${summary.calories.source === "estimated" ? "~" : ""}${summary.calories.value} kcal`
+      : "Calories not listed";
+  return `
+    <div class="recipe-facts">
+      <span><b>Final quantity</b>${escapeHtml(quantity)}</span>
+      <span><b>Calories</b>${escapeHtml(calorieText)}</span>
+      <span><b>Ingredients</b>${summary.details.length}</span>
+    </div>
+  `;
+}
+
+function renderIngredientSummary(summary) {
+  const detailRows = summary.details
+    .slice(0, 6)
+    .map(
+      (item) => `
+        <span class="ingredient-mini">
+          <b>${escapeHtml(item.name)}</b>
+          ${escapeHtml(formatScaledWeight(item.quantity, item.unit))}
+        </span>
+      `
+    )
+    .join("");
+  const categoryRows = summary.categories
+    .map(([label, count]) => `<span class="category-chip">${escapeHtml(label)} ${count}</span>`)
+    .join("");
+  return `
+    <div class="recipe-ingredient-summary">
+      <div class="category-chip-row">${categoryRows || `<span class="category-chip">Ingredients ${summary.details.length}</span>`}</div>
+      <div class="ingredient-mini-grid">${detailRows || `<span class="subtle">Ingredient details are not listed in this recipe file.</span>`}</div>
+    </div>
+  `;
+}
+
+function replaceFinalOutputDescription(description, targetQuantity, targetUnit) {
+  const replacement = `FINAL OUTPUT ${formatScaledNumber(targetQuantity, targetUnit)} ${String(targetUnit || "g").toUpperCase()}`;
+  const text = String(description || "");
+  if (/(final\s+(?:output|outcome)|output)\s*[:=\-]?\s*\d+(?:\.\d+)?\s*(kg|g|gm|ml|l|litre|liter|piece|pcs|number|nos?)/i.test(text)) {
+    return text.replace(
+      /(final\s+(?:output|outcome)|output)\s*[:=\-]?\s*\d+(?:\.\d+)?\s*(kg|g|gm|ml|l|litre|liter|piece|pcs|number|nos?)/i,
+      replacement
+    );
+  }
+  return `${text}${text ? "\n" : ""}${replacement}`;
+}
+
+function scaleIngredientPhraseText(text, ingredientFactor, targetQuantity, intensity) {
+  return String(text || "").replace(INGREDIENT_TOKEN_PATTERN, (full, rawName, rawQuantity, rawUnit) => {
+    const name = String(rawName || "").replace(/\s+/g, " ").trim();
+    const scaled = scaleIngredientAmount(name, Number(rawQuantity), rawUnit, ingredientFactor, targetQuantity, intensity);
+    return `${name} ${formatScaledWeight(scaled.quantity, scaled.unit)}`;
+  });
+}
+
+function roundScaledSeconds(value, timeFactor) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return value;
+  return String(Math.max(5, Math.round((numeric * timeFactor) / 5) * 5));
+}
+
+function formatAudioDuration(seconds) {
+  const safe = Math.max(0, Number(seconds) || 0);
+  const minutes = Math.floor(safe / 60);
+  const secs = safe % 60;
+  if (minutes && secs) return `${minutes}Minute${secs}Second`;
+  if (minutes) return `${minutes}Minute`;
+  return `${secs}Second`;
+}
+
+function createScaledRecipePayload(sourceRecipe, targetQuantity, intensity = "medium") {
+  const recipeJson = cloneRecipeForEditing(sourceRecipe);
+  const baseQuantity = inferRecipeQuantity(sourceRecipe.recipeJson || {});
+  const targetUnit = normalizeIngredientUnit(baseQuantity.unit || "g");
+  const cleanTarget = Math.max(1, Number(targetQuantity) || baseQuantity.quantity || 500);
+  const ingredientFactor = getRecipeIngredientFactor(baseQuantity.quantity, cleanTarget);
+  const timeFactor = getRecipeTimeFactor(baseQuantity.quantity, cleanTarget);
+  const originalIngredients = Array.isArray(recipeJson.Ingredients) ? recipeJson.Ingredients : [];
+  recipeJson.Ingredients = originalIngredients.map((item) => {
+    const next = structuredClone(item || {});
+    const title = next.title || next.name || "";
+    if (next.text) next.text = scaleIngredientPhraseText(next.text, ingredientFactor, cleanTarget, intensity);
+    if (title && /\d/.test(title)) {
+      next.title = scaleIngredientPhraseText(title, ingredientFactor, cleanTarget, intensity);
+      if (next.name) next.name = next.title;
+    }
+    const groupName = next.title || next.name || next.audioI || "Ingredient";
+    const parsedWeight = parseExplicitQuantityText(next.weight || next.Weight || "", 0, "g");
+    if (parsedWeight.quantity > 0) {
+      const scaled = scaleIngredientAmount(groupName, parsedWeight.quantity, parsedWeight.unit, ingredientFactor, cleanTarget, intensity);
+      next.weight = formatScaledWeight(scaled.quantity, scaled.unit);
+      next.Weight = next.weight;
+      next.audioQ = formatScaledNumber(scaled.quantity, scaled.unit);
+      next.audioU = normalizeIngredientUnit(scaled.unit);
+    }
+    return next;
+  });
+  if (Array.isArray(recipeJson.Instruction)) {
+    recipeJson.Instruction = recipeJson.Instruction.map((step) => {
+      const next = structuredClone(step || {});
+      const stepName = next.Text || next.audioI || "Step";
+      const parsedWeight = parseExplicitQuantityText(next.Weight || next.weight || "", 0, "g");
+      if (parsedWeight.quantity > 0) {
+        const scaled = scaleIngredientAmount(stepName, parsedWeight.quantity, parsedWeight.unit, ingredientFactor, cleanTarget, intensity);
+        next.Weight = formatScaledWeight(scaled.quantity, scaled.unit);
+        next.weight = next.Weight;
+        next.audioQ = formatScaledNumber(scaled.quantity, scaled.unit);
+      }
+      ["durationInSec", "Induction_on_time", "Magnetron_on_time", "wait_time", "warm_time"].forEach((key) => {
+        next[key] = roundScaledSeconds(next[key], timeFactor);
+      });
+      if (Number(next.pump_on) > 0) {
+        next.pump_on = String(Math.max(1, Math.round(Number(next.pump_on) * ingredientFactor)));
+      }
+      next.audioU = formatAudioDuration(Number(next.durationInSec) || getInstructionDuration(next) || 0);
+      return next;
+    });
+  }
+  const scaledName = `${sourceRecipe.displayName}_${Math.round(cleanTarget)}${targetUnit}`;
+  const firmwareName = sanitizeFirmwareName(scaledName);
+  recipeJson.quantity = `${formatScaledNumber(cleanTarget, targetUnit)} ${targetUnit}`;
+  recipeJson.finalQuantity = recipeJson.quantity;
+  recipeJson.scaling = {
+    baseRecipe: sourceRecipe.firmwareName,
+    baseQuantity: `${formatScaledNumber(baseQuantity.quantity, baseQuantity.unit)} ${baseQuantity.unit}`,
+    targetQuantity: recipeJson.quantity,
+    ingredientFactor: Number(ingredientFactor.toFixed(3)),
+    timeFactor: Number(timeFactor.toFixed(3)),
+    intensity
+  };
+  recipeJson.description = replaceFinalOutputDescription(recipeJson.description || "", cleanTarget, targetUnit);
+  return {
+    recipeJson,
+    displayName: scaledName,
+    firmwareName,
+    aliases: `${sourceRecipe.displayName}, ${scaledName}, ${firmwareName}`,
+    baseQuantity,
+    targetQuantity: cleanTarget,
+    targetUnit,
+    ingredientFactor,
+    timeFactor
+  };
+}
+
+async function saveScaledRecipe(recipeId, targetQuantity, intensity = "medium") {
+  const snapshot = state();
+  const sourceRecipe = findRecipeById(snapshot, recipeId);
+  if (!sourceRecipe) {
+    showToast("Recipe not found", "error");
+    return null;
+  }
+  const baseRecipe =
+    sourceRecipe.type === "final" && sourceRecipe.baseRecipeId ? findRecipeById(snapshot, sourceRecipe.baseRecipeId) || sourceRecipe : sourceRecipe;
+  const payload = createScaledRecipePayload(sourceRecipe, targetQuantity, intensity);
+  const finalRecipe = createFinalRecipeFromBase(baseRecipe, payload.recipeJson, {
+    displayName: payload.displayName,
+    firmwareName: payload.firmwareName,
+    aliases: payload.aliases,
+    imageDataUrl: sourceRecipe.imageDataUrl
+  });
+  finalRecipe.source = "scaled-final";
+  finalRecipe.zipName = `${payload.firmwareName}.zip`;
+  const existing = snapshot.recipes.find(
+    (recipe) => recipe.id !== sourceRecipe.id && normalizeRecipeNameKey(recipe.firmwareName) === normalizeRecipeNameKey(finalRecipe.firmwareName)
+  );
+  if (existing) {
+    finalRecipe.id = existing.id;
+    finalRecipe.createdAt = existing.createdAt;
+  }
+  mutate((draft) => {
+    draft.recipes = draft.recipes.filter((recipe) => recipe.id !== finalRecipe.id);
+    const baseDraft = draft.recipes.find((recipe) => recipe.id === baseRecipe.id);
+    if (baseDraft) baseDraft.selected = true;
+    draft.recipes.unshift(finalRecipe);
+    draft.ui.recipeMode = "scale";
+    syncSelectedRecipesToAllDevices(draft);
+  });
+  const saved = state().recipes.find((recipe) => recipe.id === finalRecipe.id) || finalRecipe;
+  syncImportedRecipeToCloud(saved).catch((error) => console.warn("[On2Cook] Scaled recipe cloud sync failed.", error));
+  showToast(`${saved.displayName} is ready as ${saved.zipName}`, "success");
+  return saved;
 }
 
 function recipeJsonToProMinutes(recipeJson) {
@@ -7251,6 +7628,7 @@ function renderManualModeTab(snapshot) {
 function renderRecipeCard(snapshot, recipe, perms) {
   const selectedClass = recipe.selected ? "selected" : "";
   const recipeImageUrl = safeOptionalUrl(recipe.imageDataUrl, "recipe image");
+  const summary = summarizeRecipeForCard(recipe);
   const connectedDevices = snapshot.devices.filter((device) => device.connection === "connected");
   const availableDevices = connectedDevices.filter((device) => isRecipeAllowedOnDevice(snapshot, device, recipe.id));
   const blockedConnectedDevices = connectedDevices.filter((device) => !isRecipeAllowedOnDevice(snapshot, device, recipe.id));
@@ -7277,6 +7655,8 @@ function renderRecipeCard(snapshot, recipe, perms) {
         </div>
         <div class="subtle">${escapeHtml(recipe.firmwareName)} | ${escapeHtml(recipe.source)}</div>
         <div class="subtle">Aliases: ${escapeHtml(recipe.aliases.join(", "))}</div>
+        ${renderRecipeNutritionLine(summary)}
+        ${renderIngredientSummary(summary)}
         <div class="action-row">
           ${
             perms.canCreateBaseRecipes
@@ -7289,6 +7669,13 @@ function renderRecipeCard(snapshot, recipe, perms) {
             perms.canCreateFinalRecipes
               ? `<button class="primary-button small" data-action="open-professional-editor" data-recipe-id="${recipe.id}">
                   ${recipe.type === "final" ? "Edit Final" : "Edit Recipe"}
+                </button>`
+              : ""
+          }
+          ${
+            perms.canCreateFinalRecipes
+              ? `<button class="secondary-button small" data-action="switch-recipe-mode" data-mode="scale" data-recipe-id="${recipe.id}">
+                  Scale
                 </button>`
               : ""
           }
@@ -7314,6 +7701,83 @@ function renderRecipeCard(snapshot, recipe, perms) {
   `;
 }
 
+function renderRecipeScaleCard(snapshot, recipe, perms) {
+  const summary = summarizeRecipeForCard(recipe);
+  const quantity = summary.quantity;
+  const intensity = recipe.recipeJson?.scaling?.intensity || "medium";
+  const scaledRecipes = snapshot.recipes
+    .filter((item) => item.type === "final" && item.baseRecipeId === (recipe.baseRecipeId || recipe.id) && item.source === "scaled-final")
+    .slice(0, 3);
+  const previewQuantities = [0.5, 0.75, 1, 1.5, 2].map((factor) => Math.max(1, Math.round(quantity.quantity * factor)));
+  return `
+    <article class="recipe-card recipe-scale-card">
+      <div class="recipe-thumb ${recipe.imageDataUrl ? "has-image" : ""}">
+        ${recipe.imageDataUrl ? `<img src="${escapeHtml(recipe.imageDataUrl)}" alt="${escapeHtml(recipe.displayName)}">` : `<span>${escapeHtml(recipe.displayName.slice(0, 1))}</span>`}
+      </div>
+      <div class="recipe-copy">
+        <div class="row space">
+          <div>
+            <h3>${escapeHtml(recipe.displayName)}</h3>
+            <div class="subtle">Base: ${escapeHtml(formatScaledWeight(quantity.quantity, quantity.unit))} | Time uses square-root scaling</div>
+          </div>
+          ${renderStatusPill(recipe.type === "final" ? "completed" : "pending")}
+        </div>
+        ${renderRecipeNutritionLine(summary)}
+        ${renderIngredientSummary(summary)}
+        <div class="scale-control-grid">
+          <label class="field-label">
+            Target final quantity
+            <input class="field-input" type="number" min="1" step="50" value="${escapeHtml(quantity.quantity)}" data-input="recipe-scale-quantity" data-recipe-id="${recipe.id}" data-intensity="${escapeHtml(intensity)}">
+          </label>
+          <label class="field-label">
+            Salt and intensity profile
+            <select class="field-input" data-input="recipe-scale-intensity" data-recipe-id="${recipe.id}" data-target-quantity="${escapeHtml(quantity.quantity)}">
+              <option value="mild" ${intensity === "mild" ? "selected" : ""}>Mild - 0.7% salt</option>
+              <option value="medium" ${intensity === "medium" ? "selected" : ""}>Medium - 0.9% salt</option>
+              <option value="rich" ${intensity === "rich" ? "selected" : ""}>Rich - 1.1% salt</option>
+            </select>
+          </label>
+        </div>
+        <div class="chip-row">
+          ${previewQuantities
+            .map(
+              (target) => `
+                <button class="chip-button" data-action="scale-recipe-now" data-recipe-id="${recipe.id}" data-target-quantity="${target}" data-intensity="${escapeHtml(intensity)}">
+                  ${escapeHtml(formatScaledWeight(target, quantity.unit))}
+                </button>
+              `
+            )
+            .join("")}
+        </div>
+        <div class="scaling-rule-card">
+          <span><b>Ingredients</b> new / base quantity</span>
+          <span><b>Time</b> square root of new / base quantity</span>
+          <span><b>Salt</b> mild 0.7%, medium 0.9%, rich 1.1% of final weight</span>
+        </div>
+        ${
+          scaledRecipes.length
+            ? `<div class="subtle">Ready final recipes: ${scaledRecipes.map((item) => escapeHtml(item.displayName)).join(", ")}</div>`
+            : `<div class="subtle">Changing the quantity creates a ZIP-ready final recipe without altering the base recipe.</div>`
+        }
+      </div>
+    </article>
+  `;
+}
+
+function renderRecipeScaleTab(snapshot, perms) {
+  if (!perms.canCreateFinalRecipes) {
+    return `<div class="empty-card">Your login can run recipes only. Scaling is available to the master admin or kitchen manager.</div>`;
+  }
+  const recipes = snapshot.recipes.filter((recipe) => recipe.selected || recipe.type === "final");
+  return `
+    <div class="settings-card recipe-scale-intro">
+      <div class="mini-title">Scale recipe output</div>
+      <p class="subtle">Choose the new final quantity. The app keeps the firmware JSON structure, scales raw ingredients by category, scales time by the square-root rule, and saves the result as a new final recipe named with the target size.</p>
+    </div>
+    ${recipes.map((recipe) => renderRecipeScaleCard(snapshot, recipe, perms)).join("") || `<div class="empty-card">No recipes are enabled for scaling.</div>`}
+  `;
+}
+
 function renderRecipesTab(snapshot, perms) {
   const selectedRecipes = snapshot.recipes.filter((recipe) => recipe.selected && recipe.type !== "final");
   const finalRecipes = snapshot.recipes.filter((recipe) => recipe.type === "final");
@@ -7325,6 +7789,7 @@ function renderRecipesTab(snapshot, perms) {
         <div class="segment-row">
           <button class="segment ${mode === "selected" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="selected">Selected</button>
           <button class="segment ${mode === "final" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="final">Final Modified</button>
+          ${perms.canCreateFinalRecipes ? `<button class="segment ${mode === "scale" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="scale">Scale</button>` : ""}
           ${perms.canCreateBaseRecipes ? `<button class="segment ${mode === "import" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="import">Import</button>` : ""}
         </div>
       </div>
@@ -7338,6 +7803,7 @@ function renderRecipesTab(snapshot, perms) {
           ? finalRecipes.map((recipe) => renderRecipeCard(snapshot, recipe, perms)).join("") || `<div class="empty-card">No final modified recipes yet.</div>`
           : ""
       }
+      ${mode === "scale" ? renderRecipeScaleTab(snapshot, perms) : ""}
       ${
         mode === "import" && perms.canCreateBaseRecipes
           ? `
@@ -10386,6 +10852,10 @@ async function handleClick(event) {
     });
     return;
   }
+  if (action === "scale-recipe-now") {
+    await saveScaledRecipe(button.dataset.recipeId, Number(button.dataset.targetQuantity), button.dataset.intensity || "medium");
+    return;
+  }
   if (action === "select-manual-device") {
     const slot = Number(button.dataset.slot) || 1;
     mutate((draft) => {
@@ -11396,6 +11866,16 @@ async function handleChange(event) {
     mutate((draft) => {
       draft.ui.globalRecipeSearch = input.value;
     });
+    return;
+  }
+
+  if (input.dataset.input === "recipe-scale-quantity") {
+    await saveScaledRecipe(input.dataset.recipeId, Number(input.value), input.dataset.intensity || "medium");
+    return;
+  }
+
+  if (input.dataset.input === "recipe-scale-intensity") {
+    await saveScaledRecipe(input.dataset.recipeId, Number(input.dataset.targetQuantity), input.value || "medium");
     return;
   }
 
