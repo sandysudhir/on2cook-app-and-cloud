@@ -2479,6 +2479,11 @@ textarea.field-input {
   gap: 10px;
 }
 
+.status-grid,
+.firmware-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
 .inventory-serial-grid span,
 .inventory-serial-grid button,
 .metadata-grid span,
@@ -2508,6 +2513,36 @@ textarea.field-input {
   display: block;
   overflow-wrap: anywhere;
   font-size: 0.9rem;
+}
+
+.command-state-card {
+  display: grid;
+  gap: 4px;
+  border-color: rgba(31, 168, 119, 0.22);
+  background: rgba(31, 168, 119, 0.08);
+}
+
+.command-state-card.blocked {
+  border-color: rgba(202, 62, 55, 0.22);
+  background: rgba(202, 62, 55, 0.07);
+}
+
+.command-state-card strong {
+  color: var(--ink);
+}
+
+.firmware-summary-card {
+  display: grid;
+  gap: 8px;
+}
+
+.firmware-summary-card strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--accent-strong);
+  font-size: 2rem;
+  line-height: 1;
+  overflow-wrap: anywhere;
 }
 
 .inventory-metric-button,
@@ -2574,6 +2609,8 @@ textarea.field-input {
 }
 
 .device-metadata-modal,
+.device-status-modal,
+.device-firmware-modal,
 .stored-logs-screen {
   display: grid;
   gap: 14px;
@@ -6149,6 +6186,8 @@ textarea.field-input {
 .surface:not(.login-surface) .inventory-serial-grid button,
 .surface:not(.login-surface) .metadata-grid span,
 .surface:not(.login-surface) .inventory-serial-firmware,
+.surface:not(.login-surface) .command-state-card,
+.surface:not(.login-surface) .firmware-summary-card,
 .surface:not(.login-surface) .connection-history-row,
 .surface:not(.login-surface) .device-recipes-summary span,
 .surface:not(.login-surface) .device-recipe-row,
@@ -6185,6 +6224,7 @@ textarea.field-input {
 .surface:not(.login-surface) .inventory-serial-grid small,
 .surface:not(.login-surface) .metadata-grid small,
 .surface:not(.login-surface) .inventory-serial-firmware span,
+.surface:not(.login-surface) .firmware-summary-card .subtle,
 .surface:not(.login-surface) .connection-history-row small {
   color: #a9a39e;
 }
@@ -6192,8 +6232,15 @@ textarea.field-input {
 .surface:not(.login-surface) .inventory-serial-grid strong,
 .surface:not(.login-surface) .metadata-grid strong,
 .surface:not(.login-surface) .inventory-serial-firmware strong,
+.surface:not(.login-surface) .command-state-card strong,
+.surface:not(.login-surface) .firmware-summary-card strong,
 .surface:not(.login-surface) .connection-history-row span {
   color: #fffaf5;
+}
+
+.surface:not(.login-surface) .command-state-card.blocked {
+  border-color: rgba(255, 84, 74, 0.24);
+  background: linear-gradient(180deg, rgba(255, 84, 74, 0.12), rgba(255, 84, 74, 0.045));
 }
 
 .surface:not(.login-surface) .device-recipe-main strong,

@@ -2,6 +2,10 @@
 
 ## 2026-07-08
 
+- Added dedicated Status and Firmware windows for each device so those buttons always open a usable panel, even when no live BLE data is available.
+- Made Live Logs controllable from its own screen: Start/Stop/Clear remain clickable, disconnected devices show a clear “Please connect the device” message, and stopping clears stale live-log errors.
+- Bumped web cache version to `20260708d` / service-worker cache `v82` and refreshed the APK cloud URL.
+
 - Expanded the device locked-cooker label into its own wrapping header band so longer Bluetooth names are readable instead of being truncated.
 - Corrected last-run timing labels: completed/aborted recipes now show `Idle before next` only when a next recipe has started, otherwise they show `Since completion` or `Since abort`.
 - Bumped web cache version to `20260708c` / service-worker cache `v81` and refreshed the APK cloud URL.

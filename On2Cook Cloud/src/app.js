@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708c";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708c";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708d";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708d";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260708c";
+} from "./ncb-services.js?v=20260708d";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260708c";
+} from "./data-store.js?v=20260708d";
 
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
@@ -1777,6 +1777,7 @@ function stopLiveLogState(device, at = nowIso()) {
   const liveLog = ensureDeviceLiveLogState(device);
   liveLog.active = false;
   liveLog.starting = false;
+  liveLog.error = "";
   liveLog.status = "Live log stream is off.";
   liveLog.updatedAt = at;
   device.lastUpdatedAt = at;
@@ -2244,6 +2245,14 @@ async function runNotificationAction(notificationId) {
   }
   if (action.type === "device" && action.slot) {
     openModal("device-sheet", { slot: Number(action.slot) });
+    return;
+  }
+  if (action.type === "device-status" && action.slot) {
+    openModal("device-status", { slot: Number(action.slot) });
+    return;
+  }
+  if (action.type === "device-firmware" && action.slot) {
+    openModal("device-firmware", { slot: Number(action.slot) });
     return;
   }
   if (action.type === "live-logs" && action.slot) {
@@ -4817,22 +4826,120 @@ async function openLiveLogs(slot) {
 async function stopLiveLogs(slot) {
   const device = getDevice(slot);
   if (!device) return;
+  let stopError = null;
   if (device.connection === "connected") {
-    await ble.setLiveLog(Number(slot), false);
+    try {
+      await ble.setLiveLog(Number(slot), false);
+    } catch (error) {
+      stopError = error;
+    }
   }
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
     stopLiveLogState(draftDevice);
-    appendFlowActivity(draftDevice, "Live Logs closed: livelog=OFF sent", "info");
+    appendFlowActivity(
+      draftDevice,
+      stopError
+        ? `Live Logs switched off locally. livelog=OFF failed: ${stopError.message || "unknown error"}`
+        : device.connection === "connected"
+          ? "Live Logs closed: livelog=OFF sent"
+          : "Live Logs switched off locally. Device is not connected.",
+      stopError ? "warning" : "info"
+    );
     pushDraftNotification(draft, {
       type: "logs",
       title: "Live logs stopped",
       deviceSlot: draftDevice.slot,
-      message: "Real-time diagnostic stream was stopped.",
+      message: stopError ? "The UI stream was stopped, but the device did not acknowledge livelog=OFF." : "Real-time diagnostic stream was stopped.",
       action: { type: "device", label: "Open device", slot: draftDevice.slot }
     });
   });
+  if (stopError) throw stopError;
+}
+
+async function requestDeviceStatusWindow(slot) {
+  const device = getDevice(slot);
+  if (!device) return;
+  openModal("device-status", { slot: Number(slot) });
+  if (device.connection !== "connected") {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      draftDevice.lastMessage = "Please connect the device to refresh live status.";
+      draftDevice.lastUpdatedAt = draftDevice.lastUpdatedAt || nowIso();
+    });
+    showToast("Please connect the device to refresh live status.", "warning");
+    return;
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.lastMessage = "STATUS=? requested";
+    draftDevice.lastUpdatedAt = nowIso();
+    appendFlowActivity(draftDevice, "Status requested: STATUS=? sent", "info");
+  });
+  try {
+    await ble.requestStatus(Number(slot));
+    addNotification({
+      type: "device",
+      title: "Device status refreshed",
+      deviceSlot: Number(slot),
+      message: "Status request was sent to the cooker.",
+      action: { type: "device-status", label: "View status", slot: Number(slot) }
+    });
+  } catch (error) {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      draftDevice.lastMessage = error.message || "Unable to request device status.";
+      draftDevice.lastUpdatedAt = nowIso();
+      appendFlowActivity(draftDevice, draftDevice.lastMessage, "error");
+    });
+    throw error;
+  }
+}
+
+async function requestDeviceFirmwareWindow(slot) {
+  const device = getDevice(slot);
+  if (!device) return;
+  openModal("device-firmware", { slot: Number(slot) });
+  if (device.connection !== "connected") {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      draftDevice.lastMessage = "Please connect the device to read firmware.";
+      draftDevice.lastUpdatedAt = draftDevice.lastUpdatedAt || nowIso();
+    });
+    showToast("Please connect the device to read firmware.", "warning");
+    return;
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.lastMessage = "Firmware=? requested";
+    draftDevice.lastUpdatedAt = nowIso();
+    appendFlowActivity(draftDevice, "Firmware requested: Firmware=? sent", "info");
+  });
+  try {
+    await ble.requestFirmwareVersion(Number(slot));
+    addNotification({
+      type: "device",
+      title: "Firmware request sent",
+      deviceSlot: Number(slot),
+      message: "Firmware=? was sent to the cooker.",
+      action: { type: "device-firmware", label: "View firmware", slot: Number(slot) }
+    });
+  } catch (error) {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      draftDevice.lastMessage = error.message || "Unable to request firmware.";
+      draftDevice.lastUpdatedAt = nowIso();
+      appendFlowActivity(draftDevice, draftDevice.lastMessage, "error");
+    });
+    throw error;
+  }
 }
 
 async function listDeviceLogs(slot) {
@@ -4974,6 +5081,11 @@ function renderLiveLogsModal(snapshot, device) {
     ...(device.liveLog || {})
   };
   const entries = Array.isArray(liveLog.entries) ? liveLog.entries.slice(-160).reverse() : [];
+  const canStream = device.connection === "connected";
+  const emptyTitle = canStream ? "No live values received yet." : "Please connect the device";
+  const emptyText = canStream
+    ? "Tap Start Live Logs and keep this open while the device is cooking."
+    : "Cannot show live diagnostics at present. Connect this device, then tap Start Live Logs.";
   return `
     <div class="modal-backdrop">
       <div class="modal-card live-logs-modal">
@@ -4991,10 +5103,10 @@ function renderLiveLogsModal(snapshot, device) {
             <span>Stream ${escapeHtml(liveLog.active ? "ON" : "OFF")}</span>
             <span>Updated ${escapeHtml(liveLog.updatedAt ? formatTimestamp(liveLog.updatedAt) : "Never")}</span>
           </div>
-          <div class="log-status-line ${liveLog.error ? "error" : ""}">${escapeHtml(liveLog.error || liveLog.status || "Live logs are off.")}</div>
+          <div class="log-status-line ${liveLog.error || !canStream ? "error" : ""}">${escapeHtml(liveLog.error || (!canStream ? "Please connect the device before starting live logs." : liveLog.status || "Live logs are off."))}</div>
           <div class="action-row">
-            <button class="primary-button small" type="button" data-action="start-live-logs" data-slot="${device.slot}" ${device.connection === "connected" ? "" : "disabled"}>Start Live Logs</button>
-            <button class="secondary-button small" type="button" data-action="stop-live-logs" data-slot="${device.slot}" ${device.connection === "connected" ? "" : "disabled"}>Stop Live Logs</button>
+            <button class="primary-button small" type="button" data-action="start-live-logs" data-slot="${device.slot}">Start Live Logs</button>
+            <button class="secondary-button small" type="button" data-action="stop-live-logs" data-slot="${device.slot}">Stop Live Logs</button>
             <button class="secondary-button small" type="button" data-action="clear-live-logs" data-slot="${device.slot}">Clear Feed</button>
           </div>
         </div>
@@ -5025,9 +5137,9 @@ function renderLiveLogsModal(snapshot, device) {
                     `
                   )
                   .join("")
-              : `<div class="empty-card live-log-empty">
-                  <strong>No live values received yet.</strong>
-                  <span>Keep this open while the device is connected and cooking.</span>
+              : `<div class="empty-card live-log-empty ${canStream ? "" : "blocked"}">
+                  <strong>${escapeHtml(emptyTitle)}</strong>
+                  <span>${escapeHtml(emptyText)}</span>
                   <div class="live-log-grid">
                     <span><small>Timestamp</small><strong>-</strong></span>
                     <span><small>Recipe</small><strong>-</strong></span>
@@ -5320,6 +5432,160 @@ function renderDeviceMetadataModal(snapshot, device) {
           <button class="secondary-button" type="button" data-action="return-device-sheet" data-slot="${device.slot}">Back to Device Details</button>
           <button class="secondary-button" type="button" data-action="open-device-recipes" data-slot="${device.slot}">Recipes</button>
           <button class="secondary-button" type="button" data-action="request-firmware" data-slot="${device.slot}">Check Firmware</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDeviceCommandNotice(device, commandName, connectedText, disconnectedText) {
+  const connected = device.connection === "connected";
+  return `
+    <div class="settings-card command-state-card ${connected ? "ready" : "blocked"}">
+      <strong>${escapeHtml(connected ? connectedText : "Please connect the device")}</strong>
+      <p class="subtle">${escapeHtml(connected ? `${commandName} can be sent now.` : disconnectedText)}</p>
+    </div>
+  `;
+}
+
+function renderDeviceStatusModal(snapshot, device) {
+  const telemetry = device.telemetry || {};
+  const statusRows = [
+    ["Connection", device.connection || "unknown"],
+    ["Work status", telemetry.workStatus || "Unknown"],
+    ["Mode", telemetry.mode || "Unknown"],
+    ["Recipe", telemetry.currentRecipe || device.activeRun?.displayName || "None"],
+    ["Step", telemetry.stepNo ? String(telemetry.stepNo) : "0"],
+    ["Remaining", secondsLabel(telemetry.remainingSeconds || 0)],
+    ["Ingredients index", telemetry.ingredientsIndex ? String(telemetry.ingredientsIndex) : "0"],
+    ["Induction", `${telemetry.inductionStatus || "IDLE"}${telemetry.indPower ? ` | ${telemetry.indPower}%` : ""}`],
+    ["Microwave", `${telemetry.magnetronStatus || "IDLE"}${telemetry.magPower ? ` | ${telemetry.magPower}%` : ""}`],
+    ["Stirrer", telemetry.stirrer || DEFAULT_STIRRER_LEVEL],
+    ["Pump / water", telemetry.pumpOn ? "ON" : "OFF"],
+    ["Paused", telemetry.paused ? "Yes" : "No"],
+    ["Last raw status", telemetry.lastRaw || "No raw status received yet"],
+    ["Last message", device.lastMessage || "No status message yet"],
+    ["Last updated", device.lastUpdatedAt ? formatTimestamp(device.lastUpdatedAt) : "Never"]
+  ];
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card wide refined-mobile-screen device-detail-screen device-status-modal">
+        ${renderRefinedScreenTopBar(snapshot, "Device Status", `${device.displayName} | D${device.slot}`)}
+        <div class="refined-title-row">
+          <button class="icon-button refined-back-button" data-action="return-device-sheet" data-slot="${device.slot}" aria-label="Back">${renderUiIcon("chevronLeft")}</button>
+          <div>
+            <div class="eyebrow">STATUS=?</div>
+            <h3>${escapeHtml(device.displayName)}</h3>
+          </div>
+          <button class="icon-button" type="button" data-action="request-status" data-slot="${device.slot}" aria-label="Refresh status">${renderUiIcon("refresh")}</button>
+        </div>
+        ${renderDeviceCommandNotice(device, "STATUS=?", "Ready to request live device status", "Cannot show live status at present. Last saved values are shown below.")}
+        <div class="settings-card">
+          <div class="mini-title">Current status snapshot</div>
+          <div class="metadata-grid status-grid">
+            ${statusRows
+              .map(
+                ([label, value]) => `
+                  <span>
+                    <small>${escapeHtml(label)}</small>
+                    <strong>${escapeHtml(value)}</strong>
+                  </span>
+                `
+              )
+              .join("")}
+          </div>
+        </div>
+        <div class="settings-card">
+          <div class="mini-title">Recent device messages</div>
+          <div class="activity-list compact">
+            ${
+              (device.activity || []).length
+                ? (device.activity || [])
+                    .slice(0, 10)
+                    .map(
+                      (item) => `
+                        <div class="activity-row ${escapeHtml(item.tone || "info")}">
+                          <div class="activity-copy">
+                            <span class="activity-badge ${escapeHtml(item.direction || item.tone || "info")}">${escapeHtml(item.label || item.tone || "log")}</span>
+                            <span>${escapeHtml(item.text)}</span>
+                          </div>
+                          <span class="subtle">${escapeHtml(formatTimestamp(item.at))}</span>
+                        </div>
+                      `
+                    )
+                    .join("")
+                : `<div class="empty-card">No device status messages have been retained yet.</div>`
+            }
+          </div>
+        </div>
+        <div class="action-row">
+          ${
+            device.connection === "connected"
+              ? `<button class="primary-button" type="button" data-action="request-status" data-slot="${device.slot}">Refresh Status</button>`
+              : `<button class="primary-button" type="button" data-action="connect-device" data-slot="${device.slot}">Connect Device</button>`
+          }
+          <button class="secondary-button" type="button" data-action="return-device-sheet" data-slot="${device.slot}">Back to Device Details</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderDeviceFirmwareModal(snapshot, device) {
+  const firmwareRows = [
+    ["Firmware version", device.telemetry?.firmwareVersion || "Unknown"],
+    ["Firmware command", "Firmware=?"],
+    ["Connection", device.connection || "unknown"],
+    ["Hardware version", getDeviceHardwareLabel(device)],
+    ["Device number", `D${device.slot}`],
+    ["Display name", device.displayName || "Unnamed device"],
+    ["Bluetooth name", device.bluetoothName || "Not paired yet"],
+    ["MAC ID", getDeviceMacLabel(device)],
+    ["Browser device ID", device.browserDeviceId || "Not assigned"],
+    ["Last updated", device.lastUpdatedAt ? formatTimestamp(device.lastUpdatedAt) : "Never"],
+    ["Last message", device.lastMessage || "No firmware message yet"]
+  ];
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card wide refined-mobile-screen device-detail-screen device-firmware-modal">
+        ${renderRefinedScreenTopBar(snapshot, "Firmware", `${device.displayName} | D${device.slot}`)}
+        <div class="refined-title-row">
+          <button class="icon-button refined-back-button" data-action="return-device-sheet" data-slot="${device.slot}" aria-label="Back">${renderUiIcon("chevronLeft")}</button>
+          <div>
+            <div class="eyebrow">Firmware command</div>
+            <h3>${escapeHtml(device.displayName)}</h3>
+          </div>
+          <button class="icon-button" type="button" data-action="request-firmware" data-slot="${device.slot}" aria-label="Check firmware">${renderUiIcon("refresh")}</button>
+        </div>
+        ${renderDeviceCommandNotice(device, "Firmware=?", "Ready to request firmware version", "Cannot read firmware at present. Connect the device first; saved values are shown below.")}
+        <div class="settings-card firmware-summary-card">
+          <div>
+            <span class="subtle">Current firmware</span>
+            <strong>${escapeHtml(device.telemetry?.firmwareVersion || "Unknown")}</strong>
+          </div>
+          <p class="subtle">When connected, this screen sends Firmware=? and updates as soon as the device replies.</p>
+        </div>
+        <div class="settings-card">
+          <div class="metadata-grid firmware-grid">
+            ${firmwareRows
+              .map(
+                ([label, value]) => `
+                  <span>
+                    <small>${escapeHtml(label)}</small>
+                    <strong>${escapeHtml(value)}</strong>
+                  </span>
+                `
+              )
+              .join("")}
+          </div>
+        </div>
+        <div class="action-row">
+          ${
+            device.connection === "connected"
+              ? `<button class="primary-button" type="button" data-action="request-firmware" data-slot="${device.slot}">Check Firmware</button>`
+              : `<button class="primary-button" type="button" data-action="connect-device" data-slot="${device.slot}">Connect Device</button>`
+          }
+          <button class="secondary-button" type="button" data-action="return-device-sheet" data-slot="${device.slot}">Back to Device Details</button>
         </div>
       </div>
     </div>
@@ -8816,6 +9082,18 @@ function renderModal(snapshot) {
     return renderDeviceMetadataModal(snapshot, device);
   }
 
+  if (modal.type === "device-status") {
+    const device = getDevice(modal.payload.slot);
+    if (!device) return "";
+    return renderDeviceStatusModal(snapshot, device);
+  }
+
+  if (modal.type === "device-firmware") {
+    const device = getDevice(modal.payload.slot);
+    if (!device) return "";
+    return renderDeviceFirmwareModal(snapshot, device);
+  }
+
   if (modal.type === "stored-logs") {
     const device = getDevice(modal.payload.slot);
     if (!device) return "";
@@ -10175,16 +10453,7 @@ async function handleClick(event) {
     return;
   }
   if (action === "request-status") {
-    const slot = Number(button.dataset.slot);
-    await ble.requestStatus(slot).then(() => {
-      addNotification({
-        type: "device",
-        title: "Device status refreshed",
-        deviceSlot: slot,
-        message: "Status request was sent to the cooker.",
-        action: { type: "device", label: "Open device", slot }
-      });
-    }).catch((error) => showToast(error.message, "error"));
+    await requestDeviceStatusWindow(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "manual-request-status") {
@@ -10292,7 +10561,7 @@ async function handleClick(event) {
     return;
   }
   if (action === "request-firmware") {
-    await ble.requestFirmwareVersion(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    await requestDeviceFirmwareWindow(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "open-stored-logs") {
