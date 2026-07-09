@@ -583,6 +583,18 @@ function createDeviceSlot(slot, allowedRecipeIds = []) {
       skippedRecipeNames: [],
       summary: ""
     },
+    firmwareUpdate: {
+      status: "unknown",
+      currentVersion: "",
+      latestVersion: "",
+      manifestUrl: "",
+      fileUrl: "",
+      message: "",
+      startedAt: "",
+      completedAt: "",
+      error: "",
+      progress: 0
+    },
     allowedRecipeIds: [...allowedRecipeIds],
     allowedRecipeIdsConfigured: false,
     availableRecipeNames: [],
@@ -718,6 +730,10 @@ function hydrateDevices(devices, recipes) {
     hydrated.uploadState = {
       ...createDeviceSlot(index + 1, defaultAllowedRecipeIds).uploadState,
       ...(existing.uploadState || {})
+    };
+    hydrated.firmwareUpdate = {
+      ...createDeviceSlot(index + 1, defaultAllowedRecipeIds).firmwareUpdate,
+      ...(existing.firmwareUpdate || {})
     };
     hydrated.logFetch = {
       ...createDeviceSlot(index + 1, defaultAllowedRecipeIds).logFetch,

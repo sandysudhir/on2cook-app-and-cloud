@@ -1,0 +1,15 @@
+{
+  "version": "IN-V9-260626",
+  "dateCode": "260626",
+  "hardwareVersion": "9.9.4",
+  "file": "./firmware.bin",
+  "size": 1835168,
+  "builtAt": "2026-07-09T22:00:30+05:30",
+  "source": "C:/Users/baps/Downloads/On2Cook_firmware_0807_for_chatgpt/On2Cook/.pio/build/esp32dev/firmware.bin",
+  "protocol": {
+    "bleStart": "OTA:true,SIZE=<bytes>",
+    "deviceWifiReply": "USE_WIFI",
+    "otaSsid": "ON2COOK_OTA",
+    "otaUploadUrl": "http://192.168.4.1/update"
+  }
+}

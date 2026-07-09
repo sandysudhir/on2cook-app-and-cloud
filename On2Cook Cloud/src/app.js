@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260708i";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260708i";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260709a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260709a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260708i";
+} from "./ncb-services.js?v=20260709a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260708i";
+} from "./data-store.js?v=20260709a";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -30,7 +30,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260708i";
+const APP_ASSET_VERSION = "20260709a";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -52,6 +52,7 @@ const RECIPE_ARCHIVE_VERSION = "20260612q";
 const KOT_BRIDGE_URL = "./api/orders/bridge";
 const KOT_BRIDGE_POLL_MS = 10000;
 const MAX_NOTIFICATIONS = 80;
+const FIRMWARE_MANIFEST_URL = `./firmware/latest/manifest.json?v=${APP_ASSET_VERSION}`;
 const cloudRuntime = {
   ready: false,
   instance: "",
@@ -262,6 +263,189 @@ function safeOptionalUrl(value, label = "optional URL") {
     return "";
   }
   return url;
+}
+
+function normalizeFirmwareVersion(value) {
+  return String(value || "")
+    .replace(/^Firmware=/i, "")
+    .trim()
+    .toUpperCase();
+}
+
+function firmwareVersionsMatch(current, latest) {
+  const currentVersion = normalizeFirmwareVersion(current);
+  const latestVersion = normalizeFirmwareVersion(latest);
+  return Boolean(currentVersion && latestVersion && currentVersion === latestVersion);
+}
+
+async function loadFirmwareManifest() {
+  if (latestFirmwareManifest) return latestFirmwareManifest;
+  if (firmwareManifestLoadPromise) return firmwareManifestLoadPromise;
+  firmwareManifestLoadPromise = fetch(FIRMWARE_MANIFEST_URL, { cache: "no-store" })
+    .then(async (response) => {
+      if (!response.ok) {
+        throw new Error(`Firmware manifest failed to load: HTTP ${response.status}`);
+      }
+      const manifest = await response.json();
+      const manifestUrl = new URL(FIRMWARE_MANIFEST_URL, window.location.href);
+      const fileUrl = new URL(safeOptionalUrl(manifest.file, "firmware file") || "./firmware.bin", manifestUrl).href;
+      latestFirmwareManifest = {
+        ...manifest,
+        manifestUrl: manifestUrl.href,
+        absoluteFileUrl: fileUrl
+      };
+      return latestFirmwareManifest;
+    })
+    .catch((error) => {
+      console.warn("[On2Cook] Firmware manifest unavailable.", error);
+      latestFirmwareManifest = null;
+      return null;
+    })
+    .finally(() => {
+      firmwareManifestLoadPromise = null;
+    });
+  return firmwareManifestLoadPromise;
+}
+
+function isFirmwareBlockingDevice(device) {
+  const status = String(device?.firmwareUpdate?.status || "").toLowerCase();
+  return ["checking", "required", "updating", "downloading", "starting"].includes(status);
+}
+
+function firmwareBlockMessage(device) {
+  const latest = device?.firmwareUpdate?.latestVersion || latestFirmwareManifest?.version || "latest firmware";
+  const status = String(device?.firmwareUpdate?.status || "").toLowerCase();
+  if (status === "updating" || status === "downloading" || status === "starting") {
+    return `Device ${device.slot} firmware is updating to ${latest}. Recipe and manual commands are blocked until it finishes.`;
+  }
+  return `Device ${device.slot} needs firmware ${latest}. Update firmware before cooking.`;
+}
+
+function markFirmwareCurrent(draftDevice, firmwareVersion, manifest = latestFirmwareManifest) {
+  draftDevice.firmwareUpdate = {
+    ...(draftDevice.firmwareUpdate || {}),
+    status: "current",
+    currentVersion: firmwareVersion,
+    latestVersion: manifest?.version || firmwareVersion,
+    manifestUrl: manifest?.manifestUrl || "",
+    fileUrl: manifest?.absoluteFileUrl || "",
+    message: `Firmware is current (${firmwareVersion}).`,
+    error: "",
+    progress: 100,
+    completedAt: draftDevice.firmwareUpdate?.completedAt || ""
+  };
+}
+
+function markFirmwareRequired(draftDevice, firmwareVersion, manifest) {
+  draftDevice.firmwareUpdate = {
+    ...(draftDevice.firmwareUpdate || {}),
+    status: "required",
+    currentVersion: firmwareVersion,
+    latestVersion: manifest?.version || "",
+    manifestUrl: manifest?.manifestUrl || "",
+    fileUrl: manifest?.absoluteFileUrl || "",
+    message: `Firmware update required: ${firmwareVersion || "unknown"} -> ${manifest?.version || "latest"}.`,
+    startedAt: "",
+    completedAt: "",
+    error: "",
+    progress: 0
+  };
+}
+
+async function evaluateFirmwareForDevice(slot, firmwareVersion) {
+  const manifest = await loadFirmwareManifest();
+  if (!manifest?.version) {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      draftDevice.firmwareUpdate = {
+        ...(draftDevice.firmwareUpdate || {}),
+        status: "unknown",
+        currentVersion: firmwareVersion,
+        message: "Firmware version received, but latest manifest is unavailable.",
+        progress: 0
+      };
+    });
+    return;
+  }
+  if (firmwareVersionsMatch(firmwareVersion, manifest.version)) {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      markFirmwareCurrent(draftDevice, firmwareVersion, manifest);
+    });
+    return;
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    markFirmwareRequired(draftDevice, firmwareVersion, manifest);
+    draftDevice.lastMessage = `Firmware update required before cooking: ${firmwareVersion || "unknown"} -> ${manifest.version}`;
+    draftDevice.lastUpdatedAt = nowIso();
+    pushDraftNotification(draft, {
+      type: "device",
+      title: "Firmware update required",
+      deviceSlot: draftDevice.slot,
+      message: `Update ${draftDevice.displayName} from ${firmwareVersion || "unknown"} to ${manifest.version} before cooking.`,
+      action: { type: "device-firmware", label: "Open firmware", slot: draftDevice.slot }
+    });
+  });
+  if (ble.usesNativeBridge) {
+    startFirmwareUpdateForDevice(Number(slot), { automatic: true }).catch((error) => {
+      showToast(error.message, "error");
+    });
+  } else {
+    showToast(`Device ${slot} needs firmware ${manifest.version}. Automatic OTA requires the Android app.`, "warning");
+  }
+}
+
+async function startFirmwareUpdateForDevice(slot, options = {}) {
+  const device = getDevice(slot);
+  if (!device) return;
+  if (device.connection !== "connected") {
+    showToast(`Connect Device ${slot} before firmware update.`, "warning");
+    return;
+  }
+  const manifest = await loadFirmwareManifest();
+  if (!manifest?.version || !manifest.absoluteFileUrl) {
+    throw new Error("Latest firmware manifest is not available.");
+  }
+  if (firmwareVersionsMatch(device.telemetry?.firmwareVersion, manifest.version)) {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      markFirmwareCurrent(draftDevice, device.telemetry?.firmwareVersion || manifest.version, manifest);
+    });
+    if (!options.automatic) showToast(`Device ${slot} already has firmware ${manifest.version}.`, "success");
+    return;
+  }
+  if (!ble.usesNativeBridge) {
+    mutate((draft) => {
+      const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+      if (!draftDevice) return draft;
+      markFirmwareRequired(draftDevice, device.telemetry?.firmwareVersion || "", manifest);
+    });
+    throw new Error("Automatic firmware update needs the Android APK because the app must switch to ON2COOK_OTA WiFi.");
+  }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.firmwareUpdate = {
+      ...(draftDevice.firmwareUpdate || {}),
+      status: "starting",
+      currentVersion: device.telemetry?.firmwareVersion || "",
+      latestVersion: manifest.version,
+      manifestUrl: manifest.manifestUrl,
+      fileUrl: manifest.absoluteFileUrl,
+      startedAt: nowIso(),
+      completedAt: "",
+      error: "",
+      progress: 1,
+      message: "Firmware update is starting. Cooking is blocked."
+    };
+    appendActivity(draftDevice, `Firmware update starting: ${manifest.version}`, "warning");
+  });
+  await ble.updateFirmware(Number(slot), manifest);
 }
 
 function userFacingCloudError(error, fallback = "Cloud sign-in is unavailable right now. Please try again later.") {
@@ -1718,7 +1902,16 @@ function emptyLogFetchState() {
 }
 
 function canUseDeviceForRecipeActions(device) {
-  return Boolean(device?.enabled && device.connection === "connected");
+  return Boolean(device?.enabled && device.connection === "connected" && !isFirmwareBlockingDevice(device));
+}
+
+function ensureDeviceCommandAllowed(device, commandLabel = "command") {
+  if (!device || device.connection !== "connected") {
+    throw new Error("Device is not connected.");
+  }
+  if (isFirmwareBlockingDevice(device)) {
+    throw new Error(`${commandLabel} blocked. ${firmwareBlockMessage(device)}`);
+  }
 }
 
 function emptyLiveLogState() {
@@ -3554,6 +3747,7 @@ async function ensureRecipesAvailableOnDevice(slot, recipes, options = {}) {
   const device = getDevice(slot);
   if (!device) return [];
   if (!Array.isArray(recipes) || recipes.length === 0) return [];
+  ensureDeviceCommandAllowed(device, "Recipe sync");
   let inventoryConfirmed = false;
 
   try {
@@ -3637,6 +3831,8 @@ async function ensureRecipesAvailableOnDevice(slot, recipes, options = {}) {
 }
 
 async function uploadRecipeForRunRetry(slot, recipe) {
+  const device = getDevice(slot);
+  ensureDeviceCommandAllowed(device, "Recipe upload retry");
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
@@ -3727,6 +3923,13 @@ function handleTransportEvents() {
       device.baselineRecipeSyncPending = false;
       device.uploadState = emptyUploadState();
       device.telemetry.workStatus = "idle";
+      device.firmwareUpdate = {
+        ...(device.firmwareUpdate || {}),
+        status: device.firmwareUpdate?.status === "updating" ? "updating" : "checking",
+        message: "Checking firmware version before cooking.",
+        error: "",
+        progress: device.firmwareUpdate?.progress || 0
+      };
       appendActivity(device, `Connected to ${bluetoothName || browserDeviceId}. Recipe upload is disabled until a recipe is run.`, "success");
       pushDraftNotification(draft, {
         type: "device",
@@ -3758,6 +3961,14 @@ function handleTransportEvents() {
       device.baselineRecipeSyncPending = false;
       device.telemetry.workStatus = "offline";
       device.telemetry.disconnectedAt = nowIso();
+      if (device.firmwareUpdate?.status !== "updating") {
+        device.firmwareUpdate = {
+          ...(device.firmwareUpdate || {}),
+          status: "unknown",
+          message: "Connect the cooker to check firmware.",
+          progress: 0
+        };
+      }
       failLiveLogState(device, "Device disconnected. Live log stream stopped.", nowIso(), { clearEntries: true });
       appendActivity(device, "Device disconnected. Active work returned to pending.", "warning");
       pushDraftNotification(draft, {
@@ -3860,6 +4071,11 @@ function handleTransportEvents() {
       const device = draft.devices.find((item) => item.slot === Number(slot));
       if (!device) return draft;
       device.telemetry.firmwareVersion = firmwareVersion;
+      device.firmwareUpdate = {
+        ...(device.firmwareUpdate || {}),
+        currentVersion: firmwareVersion,
+        message: `Firmware ${firmwareVersion} received.`
+      };
       appendActivity(device, `Firmware ${firmwareVersion}`, "info", at);
       pushDraftNotification(draft, {
         type: "device",
@@ -3870,6 +4086,110 @@ function handleTransportEvents() {
         action: { type: "device", label: "Open device", slot: device.slot }
       });
     });
+    evaluateFirmwareForDevice(slot, firmwareVersion).catch((error) => {
+      console.warn("[On2Cook] Firmware evaluation failed.", error);
+    });
+  });
+
+  ble.addEventListener("firmware-update-started", (event) => {
+    const { slot, version, message, progress, at } = event.detail;
+    mutate((draft) => {
+      const device = draft.devices.find((item) => item.slot === Number(slot));
+      if (!device) return draft;
+      device.firmwareUpdate = {
+        ...(device.firmwareUpdate || {}),
+        status: "updating",
+        latestVersion: version || device.firmwareUpdate?.latestVersion || "",
+        startedAt: at,
+        completedAt: "",
+        error: "",
+        message: message || "Firmware update started.",
+        progress: Number(progress) || 1
+      };
+      device.lastMessage = "Firmware is updating. Recipe/manual commands are blocked.";
+      device.lastUpdatedAt = at;
+      appendActivity(device, device.firmwareUpdate.message, "warning", at);
+    });
+  });
+
+  ble.addEventListener("firmware-update-progress", (event) => {
+    const { slot, version, message, progress, at } = event.detail;
+    mutate((draft) => {
+      const device = draft.devices.find((item) => item.slot === Number(slot));
+      if (!device) return draft;
+      device.firmwareUpdate = {
+        ...(device.firmwareUpdate || {}),
+        status: "updating",
+        latestVersion: version || device.firmwareUpdate?.latestVersion || "",
+        message: message || device.firmwareUpdate?.message || "Firmware update in progress.",
+        progress: Math.max(Number(device.firmwareUpdate?.progress) || 0, Number(progress) || 0),
+        error: ""
+      };
+      device.lastMessage = device.firmwareUpdate.message;
+      device.lastUpdatedAt = at;
+    });
+  });
+
+  ble.addEventListener("firmware-update-complete", (event) => {
+    const { slot, version, message, at } = event.detail;
+    mutate((draft) => {
+      const device = draft.devices.find((item) => item.slot === Number(slot));
+      if (!device) return draft;
+      device.firmwareUpdate = {
+        ...(device.firmwareUpdate || {}),
+        status: "current",
+        currentVersion: version || device.firmwareUpdate?.latestVersion || "",
+        latestVersion: version || device.firmwareUpdate?.latestVersion || "",
+        completedAt: at,
+        error: "",
+        message: message || `Firmware updated to ${version}.`,
+        progress: 100
+      };
+      device.telemetry.firmwareVersion = version || device.telemetry.firmwareVersion;
+      device.lastMessage = device.firmwareUpdate.message;
+      device.lastUpdatedAt = at;
+      appendActivity(device, device.firmwareUpdate.message, "success", at);
+      pushDraftNotification(draft, {
+        type: "device",
+        title: "Firmware updated",
+        deviceSlot: device.slot,
+        message: device.firmwareUpdate.message,
+        timestamp: at,
+        action: { type: "device-firmware", label: "View firmware", slot: device.slot }
+      });
+    });
+    showToast(`Device ${slot} firmware updated to ${version || "latest"}`, "success");
+    if (!state().ui.activeModal) {
+      openModal("device-firmware", { slot: Number(slot) });
+    }
+  });
+
+  ble.addEventListener("firmware-update-failed", (event) => {
+    const { slot, version, message, at } = event.detail;
+    mutate((draft) => {
+      const device = draft.devices.find((item) => item.slot === Number(slot));
+      if (!device) return draft;
+      device.firmwareUpdate = {
+        ...(device.firmwareUpdate || {}),
+        status: "failed",
+        latestVersion: version || device.firmwareUpdate?.latestVersion || "",
+        error: message || "Firmware update failed.",
+        message: message || "Firmware update failed.",
+        progress: 0
+      };
+      device.lastMessage = device.firmwareUpdate.message;
+      device.lastUpdatedAt = at;
+      appendActivity(device, device.firmwareUpdate.message, "error", at);
+      pushDraftNotification(draft, {
+        type: "error",
+        title: "Firmware update failed",
+        deviceSlot: device.slot,
+        message: device.firmwareUpdate.message,
+        timestamp: at,
+        action: { type: "device-firmware", label: "Open firmware", slot: device.slot }
+      });
+    });
+    showToast(message || `Device ${slot} firmware update failed`, "error");
   });
 
   ble.addEventListener("recipe-selection-acknowledged", (event) => {
@@ -4065,7 +4385,8 @@ async function connectDevice(slot) {
     }
     await ble.connect(Number(slot), rememberedId, {
       lockToRememberedDevice: Boolean(rememberedId),
-      allowRememberedReauthorization: false
+      allowRememberedReauthorization: true,
+      allowMoveConnectedSession: true
     });
     showToast(`Device ${slot} connected`, "success");
   } catch (error) {
@@ -4074,13 +4395,62 @@ async function connectDevice(slot) {
       if (!device) return draft;
       device.connection = "disconnected";
       const message = error.code === "remembered-device-missing"
-        ? `Chrome no longer has permission for the saved cooker. Use https://www.on2cook.net, then Clear pairing only if you must assign this window again.`
+        ? `Chrome no longer has permission for the saved cooker. Tap Connect again and choose the same physical cooker, or use Clear pairing only if you must assign a different cooker.`
         : error.message;
       device.lastMessage = message;
       appendActivity(device, message, "warning");
     });
-    showToast(error.code === "remembered-device-missing" ? "Saved cooker permission is missing. Use the canonical www site or clear pairing to reassign." : error.message, "error");
+    showToast(error.code === "remembered-device-missing" ? "Saved cooker permission is missing. Select the same cooker again to repair this slot." : error.message, "error");
   }
+}
+
+function findConnectedSlotMoveCandidate(snapshot, targetSlot) {
+  const target = snapshot.devices.find((item) => item.slot === Number(targetSlot));
+  const connected = snapshot.devices.filter((item) => item.slot !== Number(targetSlot) && item.connection === "connected");
+  if (!target || connected.length === 0) return null;
+  const targetId = String(target.browserDeviceId || "").trim();
+  const targetName = String(target.bluetoothName || "").trim().toLowerCase();
+  if (targetId) {
+    const idMatch = connected.find((item) => String(item.browserDeviceId || "") === targetId);
+    if (idMatch) return idMatch;
+  }
+  if (targetName) {
+    const nameMatch = connected.find((item) => String(item.bluetoothName || "").trim().toLowerCase() === targetName);
+    if (nameMatch) return nameMatch;
+  }
+  return connected.length === 1 ? connected[0] : null;
+}
+
+async function moveConnectedCookerToSlot(targetSlot) {
+  const snapshot = state();
+  const candidate = findConnectedSlotMoveCandidate(snapshot, Number(targetSlot));
+  if (!candidate) {
+    showToast(`No connected cooker can be safely moved to Device ${targetSlot}.`, "warning");
+    return;
+  }
+  await ble.moveConnectedSession(Number(candidate.slot), Number(targetSlot));
+  mutate((draft) => {
+    const target = draft.devices.find((item) => item.slot === Number(targetSlot));
+    const source = draft.devices.find((item) => item.slot === Number(candidate.slot));
+    if (source) {
+      source.browserDeviceId = "";
+      source.bluetoothName = "";
+      source.macAddress = "";
+      source.connection = "disconnected";
+      source.lastMessage = `Cooker moved to Device ${targetSlot}.`;
+      source.lastUpdatedAt = nowIso();
+    }
+    if (target) {
+      target.browserDeviceId = candidate.browserDeviceId;
+      target.bluetoothName = candidate.bluetoothName;
+      target.macAddress = candidate.macAddress || target.macAddress || "";
+      target.connection = "connected";
+      target.lastMessage = `Connected cooker moved from Device ${candidate.slot} to this window.`;
+      target.lastUpdatedAt = nowIso();
+      appendActivity(target, target.lastMessage, "success");
+    }
+  });
+  showToast(`Connected cooker moved from Device ${candidate.slot} to Device ${targetSlot}`, "success");
 }
 
 async function connectAllDevices() {
@@ -4182,6 +4552,7 @@ async function disconnectDevice(slot) {
 
 function canRunOnDevice(snapshot, order, device, recipe) {
   if (!device.enabled || device.connection !== "connected") return false;
+  if (isFirmwareBlockingDevice(device)) return false;
   if (!recipe) return false;
   return isRecipeAllowedOnDevice(snapshot, device, recipe.id);
 }
@@ -4214,6 +4585,10 @@ async function startOrderFlow(orderId, preferredSlot = null, options = {}) {
   if (!device) {
     showToast("No connected device is ready for this recipe", "warning");
     return "no-device";
+  }
+  if (isFirmwareBlockingDevice(device)) {
+    showToast(firmwareBlockMessage(device), "warning");
+    return "firmware-required";
   }
   if (!canRunOnDevice(snapshot, order, device, recipe)) {
     showToast(`${recipe.displayName} is not enabled on Device ${device.slot}`, "error");
@@ -4751,6 +5126,7 @@ async function startManualInduction(slot) {
     showToast(`Device ${slot} is not connected`, "warning");
     return;
   }
+  ensureDeviceCommandAllowed(device, "Manual induction");
   await ble.startInduction(Number(slot));
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
@@ -4769,6 +5145,7 @@ async function stopManualInduction(slot) {
     showToast(`Device ${slot} is not connected`, "warning");
     return;
   }
+  ensureDeviceCommandAllowed(device, "Manual induction");
   await ble.stopInduction(Number(slot));
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
@@ -4787,6 +5164,7 @@ async function adjustManualInductionPower(slot, delta) {
     showToast(`Device ${slot} is not connected`, "warning");
     return;
   }
+  ensureDeviceCommandAllowed(device, "Manual induction power");
   if (!isQuickStartActive(device.telemetry.inductionStatus) && Number(device.telemetry.indTime || 0) <= 0) {
     showToast("Start induction first, then adjust power", "warning");
     return;
@@ -4807,6 +5185,7 @@ async function startManualMagnetron(slot) {
     showToast(`Device ${slot} is not connected`, "warning");
     return;
   }
+  ensureDeviceCommandAllowed(device, "Manual microwave");
   await ble.startMagnetron(Number(slot));
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
@@ -4825,6 +5204,7 @@ async function stopManualMagnetron(slot) {
     showToast(`Device ${slot} is not connected`, "warning");
     return;
   }
+  ensureDeviceCommandAllowed(device, "Manual microwave");
   await ble.stopMagnetron(Number(slot));
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
@@ -4843,6 +5223,7 @@ async function setManualStirrer(slot, speedLabel) {
     showToast(`Device ${slot} is not connected`, "warning");
     return;
   }
+  ensureDeviceCommandAllowed(device, "Manual stirrer");
   const normalized = mapStirrerSpeedLabel(speedLabel);
   await ble.setStirrer(Number(slot), normalized);
   mutate((draft) => {
@@ -4871,6 +5252,7 @@ async function startManualPump(slot, units) {
     showToast(`Device ${slot} is not connected`, "warning");
     return;
   }
+  ensureDeviceCommandAllowed(device, "Manual pump");
   const safeUnits = Math.max(1, Math.trunc(Number(units) || 0));
   await ble.startPump(Number(slot), safeUnits);
   mutate((draft) => {
@@ -4890,6 +5272,7 @@ async function stopManualPump(slot) {
     showToast(`Device ${slot} is not connected`, "warning");
     return;
   }
+  ensureDeviceCommandAllowed(device, "Manual pump");
   await ble.stopPump(Number(slot));
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
@@ -5325,6 +5708,51 @@ function renderStatusPill(status) {
   };
   const tone = map[status] || "pending";
   return `<span class="status-pill ${tone}">${escapeHtml(status.replaceAll("_", " "))}</span>`;
+}
+
+function renderFirmwareUpdateNotice(device, options = {}) {
+  const update = device.firmwareUpdate || {};
+  const status = String(update.status || "unknown").toLowerCase();
+  const latest = update.latestVersion || latestFirmwareManifest?.version || "";
+  const current = update.currentVersion || device.telemetry?.firmwareVersion || "Unknown";
+  const visible = options.always || ["required", "updating", "starting", "downloading", "failed", "checking"].includes(status);
+  if (!visible) return "";
+  const tone = status === "failed" ? "error" : status === "required" ? "warning" : status === "current" ? "success" : "info";
+  const title =
+    status === "updating" || status === "starting" || status === "downloading"
+      ? "Firmware updating"
+      : status === "required"
+        ? "Firmware update required"
+        : status === "failed"
+          ? "Firmware update failed"
+          : status === "checking"
+            ? "Checking firmware"
+            : "Firmware status";
+  return `
+    <div class="settings-card firmware-update-notice ${tone}">
+      <div class="row space">
+        <div>
+          <div class="mini-title">${escapeHtml(title)}</div>
+          <p class="subtle">${escapeHtml(update.message || `Current ${current}${latest ? ` | Latest ${latest}` : ""}`)}</p>
+        </div>
+        <span class="queue-tag">${escapeHtml(status || "unknown")}</span>
+      </div>
+      ${
+        status === "updating" || status === "starting" || status === "downloading"
+          ? `<div class="progress-bar"><span style="width:${Math.max(1, Math.min(100, Number(update.progress) || 1))}%"></span></div>`
+          : ""
+      }
+      <div class="meta-grid">
+        <span>Current ${escapeHtml(current)}</span>
+        <span>Latest ${escapeHtml(latest || "Unknown")}</span>
+      </div>
+      ${
+        device.connection === "connected" && status !== "updating" && status !== "current"
+          ? `<div class="action-row top-gap"><button class="primary-button small" type="button" data-action="start-firmware-update" data-slot="${device.slot}">Update firmware</button></div>`
+          : ""
+      }
+    </div>
+  `;
 }
 
 function getNewestLiveLogEntry(entries, predicate = () => true) {
@@ -5946,6 +6374,7 @@ function renderDeviceFirmwareModal(snapshot, device) {
           <button class="icon-button" type="button" data-action="request-firmware" data-slot="${device.slot}" aria-label="Check firmware">${renderUiIcon("refresh")}</button>
         </div>
         ${renderDeviceCommandNotice(device, "Firmware=?", "Ready to request firmware version", "Cannot read firmware at present. Connect the device first; saved values are shown below.")}
+        ${renderFirmwareUpdateNotice(device, { always: true })}
         <div class="settings-card firmware-summary-card">
           <div>
             <span class="subtle">Current firmware</span>
@@ -6180,6 +6609,10 @@ async function startDeviceOnlyOrderFlow(orderId, preferredSlot, recipeName, opti
     showToast(`Device ${preferredSlot} is offline. Connect it before starting ${safeName}.`, "warning");
     return "no-device";
   }
+  if (isFirmwareBlockingDevice(device)) {
+    showToast(firmwareBlockMessage(device), "warning");
+    return "firmware-required";
+  }
   const liveSession = ble.getSession(device.slot);
   if (liveSession?.transfer) {
     showToast(`Device ${device.slot} is still syncing recipes. Try again in a moment.`, "warning");
@@ -6320,6 +6753,10 @@ async function runDeviceStoredRecipe(slot, recipeName) {
     showToast(`Device ${slot} is offline. Connect it before running ${recipeName}.`, "warning");
     return;
   }
+  if (isFirmwareBlockingDevice(device)) {
+    showToast(firmwareBlockMessage(device), "warning");
+    return;
+  }
   if (isDeviceActivelyCooking(device)) {
     showToast(`Device ${slot} is cooking. Use Queue for ${recipeName}, or stop the current recipe first.`, "warning");
     return;
@@ -6368,6 +6805,7 @@ async function uploadSingleRecipeToDevice(slot, recipe, options = {}) {
   if (!device || device.connection !== "connected") {
     throw new Error(`Device ${slot} is not connected.`);
   }
+  ensureDeviceCommandAllowed(device, "Recipe upload");
   if (isDeviceRecipeCurrentlyRunning(device, recipe.firmwareName)) {
     throw new Error(`Cannot replace ${recipe.firmwareName} while it is cooking.`);
   }
@@ -6817,6 +7255,8 @@ const SALT_INTENSITY_PERCENT = {
   medium: 0.009,
   rich: 0.011
 };
+let latestFirmwareManifest = null;
+let firmwareManifestLoadPromise = null;
 
 function classifyIngredientCategory(name) {
   const rule = INGREDIENT_CATEGORY_RULES.find((item) => item.pattern.test(String(name || "")));
@@ -9343,6 +9783,7 @@ function renderDevicePhone(snapshot, device) {
     : device.browserDeviceId
       ? "Locked to saved cooker"
       : "Not assigned";
+  const moveCandidate = findConnectedSlotMoveCandidate(snapshot, device.slot);
   return `
     <section class="phone-frame device-phone ${device.connection}" data-scroll-key="frame-device-${device.slot}">
       <div class="phone-shell">
@@ -9366,6 +9807,11 @@ function renderDevicePhone(snapshot, device) {
                   ? `<button class="secondary-button small" data-action="disconnect-device" data-slot="${device.slot}">Disconnect</button>`
                   : `<button class="primary-button small" data-action="connect-device" data-slot="${device.slot}">Connect</button>`
               }
+              ${
+                device.connection !== "connected" && moveCandidate
+                  ? `<button class="secondary-button small" data-action="move-connected-cooker" data-slot="${device.slot}">Use D${moveCandidate.slot} cooker here</button>`
+                  : ""
+              }
               <button class="secondary-button small" data-action="open-device-sheet" data-slot="${device.slot}">Details</button>
               <button class="secondary-button small" data-action="request-status" data-slot="${device.slot}">Status</button>
               <button class="secondary-button small" data-action="request-firmware" data-slot="${device.slot}">Firmware</button>
@@ -9373,6 +9819,7 @@ function renderDevicePhone(snapshot, device) {
               <button class="secondary-button small" data-action="open-live-logs" data-slot="${device.slot}">Live Logs</button>
             </div>
             ${renderCompactDeviceInfo(device, summaryMessage)}
+            ${renderFirmwareUpdateNotice(device)}
           </section>
           <section class="stack-section">
             <div class="mini-title">Last cooked recipe</div>
@@ -10014,6 +10461,7 @@ function renderModal(snapshot) {
     const currentIngredient = getCurrentIngredient(device, runtimeRecipe);
     const currentInstruction = getCurrentInstruction(device, runtimeRecipe);
     const deviceCommandDisabled = device.connection === "connected" ? "" : "disabled";
+    const moveCandidate = findConnectedSlotMoveCandidate(snapshot, device.slot);
     const recipeFilter = String(modal.payload.recipeFilter || "").trim().toLowerCase();
     const filteredRecipes = snapshot.recipes
       .filter((recipe) => recipe.selected)
@@ -10071,6 +10519,7 @@ function renderModal(snapshot) {
               <strong>${escapeHtml(device.browserDeviceId ? `Locked to ${device.bluetoothName || "a saved cooker"}` : "Not assigned to a cooker yet")}</strong>
               <p class="subtle">${escapeHtml(device.browserDeviceId ? "Reconnect will use this saved physical cooker. Use Clear pairing before assigning a different cooker to this window." : "Press Connect once and select the intended cooker. After that this window will reconnect only to that cooker.")}</p>
             </div>
+            ${renderFirmwareUpdateNotice(device)}
             <div class="settings-card refined-live-card">
               <div class="meta-grid">
                 <span>Firmware ${escapeHtml(device.telemetry.firmwareVersion || "Unknown")}</span>
@@ -10141,6 +10590,11 @@ function renderModal(snapshot) {
                   device.connection === "connected"
                     ? `<button class="secondary-button" type="button" data-action="disconnect-device" data-slot="${device.slot}">Disconnect</button>`
                     : `<button class="primary-button" type="button" data-action="connect-device" data-slot="${device.slot}">Connect</button>`
+                }
+                ${
+                  device.connection !== "connected" && moveCandidate
+                    ? `<button class="secondary-button" type="button" data-action="move-connected-cooker" data-slot="${device.slot}">Use Device ${moveCandidate.slot} cooker here</button>`
+                    : ""
                 }
                 <button class="secondary-button" type="button" data-action="sync-selected-recipes" data-slot="${device.slot}" ${deviceCommandDisabled}>Check device recipes</button>
                 <button class="secondary-button" type="button" data-action="read-device-recipes" data-slot="${device.slot}" ${deviceCommandDisabled}>Read recipes</button>
@@ -11366,6 +11820,10 @@ async function handleClick(event) {
     await connectDevice(button.dataset.slot);
     return;
   }
+  if (action === "move-connected-cooker") {
+    await moveConnectedCookerToSlot(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
   if (action === "connect-all-devices") {
     await connectAllDevices();
     return;
@@ -11484,6 +11942,10 @@ async function handleClick(event) {
   }
   if (action === "request-firmware") {
     await requestDeviceFirmwareWindow(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "start-firmware-update") {
+    await startFirmwareUpdateForDevice(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "open-stored-logs") {
@@ -12542,6 +13004,7 @@ window.addEventListener("message", (event) => {
 async function init() {
   seedRecipes = await loadSeedRecipeCatalog();
   globalRecipeCatalog = await loadGlobalRecipeCatalog();
+  await loadFirmwareManifest();
   const savedUiSession = takeSavedUiSessionState();
   const initialState = applySavedUiSessionState(loadState(seedRecipes), savedUiSession);
   store = createStore(initialState);

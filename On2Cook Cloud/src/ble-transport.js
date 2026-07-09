@@ -240,7 +240,7 @@ export class BleTransport extends EventTarget {
     }
   }
 
-  prepareSlotForDevice(slot, device) {
+  prepareSlotForDevice(slot, device, options = {}) {
     const requestedSlot = Number(slot);
     for (const session of Array.from(this.sessions.values())) {
       if (session.device?.id !== device.id) continue;
@@ -252,6 +252,25 @@ export class BleTransport extends EventTarget {
         continue;
       }
       if (this.getWebSessionConnected(session)) {
+        if (options.allowMoveConnectedSession === true) {
+          this.sessions.delete(session.slot);
+          const previousSlot = session.slot;
+          session.slot = requestedSlot;
+          this.sessions.set(requestedSlot, session);
+          this.dispatch("device-disconnected", {
+            slot: previousSlot,
+            browserDeviceId: session.device?.id || "",
+            bluetoothName: session.device?.name || ""
+          });
+          this.dispatch("device-connected", {
+            slot: requestedSlot,
+            browserDeviceId: session.device?.id || "",
+            bluetoothName: session.device?.name || "",
+            serviceUuid: SERVICE_UUID,
+            movedFromSlot: previousSlot
+          });
+          return session;
+        }
         throw new Error(`This On2Cook device is already connected as Device ${session.slot}. Disconnect that slot before assigning it somewhere else.`);
       }
       this.cleanupSession(session);
@@ -273,8 +292,51 @@ export class BleTransport extends EventTarget {
     return null;
   }
 
-  async openWebDevice(slot, device) {
-    const reusableSession = this.prepareSlotForDevice(slot, device);
+  moveConnectedSession(fromSlot, toSlot) {
+    if (this.usesNativeBridge) {
+      const response = this.callNativeBridge("moveSlot", Number(fromSlot), Number(toSlot));
+      if (response && response.ok === false) {
+        throw new Error(response.error || "Native BLE slot move failed.");
+      }
+      return response || { ok: true };
+    }
+    const source = this.sessions.get(Number(fromSlot));
+    if (!this.getWebSessionConnected(source)) {
+      throw new Error(`Device ${fromSlot} is not connected.`);
+    }
+    const previousTarget = this.sessions.get(Number(toSlot));
+    if (previousTarget && previousTarget !== source) {
+      this.cleanupSession(previousTarget);
+      if (previousTarget.device?.gatt?.connected) {
+        previousTarget.device.gatt.disconnect();
+      }
+    }
+    this.sessions.delete(Number(fromSlot));
+    source.slot = Number(toSlot);
+    this.sessions.set(Number(toSlot), source);
+    this.dispatch("device-disconnected", {
+      slot: Number(fromSlot),
+      browserDeviceId: source.device?.id || "",
+      bluetoothName: source.device?.name || ""
+    });
+    this.dispatch("device-connected", {
+      slot: Number(toSlot),
+      browserDeviceId: source.device?.id || "",
+      bluetoothName: source.device?.name || "",
+      serviceUuid: SERVICE_UUID,
+      movedFromSlot: Number(fromSlot)
+    });
+    return {
+      ok: true,
+      fromSlot: Number(fromSlot),
+      slot: Number(toSlot),
+      browserDeviceId: source.device?.id || "",
+      bluetoothName: source.device?.name || ""
+    };
+  }
+
+  async openWebDevice(slot, device, options = {}) {
+    const reusableSession = this.prepareSlotForDevice(slot, device, options);
     if (reusableSession) {
       return {
         slot: Number(slot),
@@ -379,7 +441,7 @@ export class BleTransport extends EventTarget {
       }
       if (rememberedDevice) {
         try {
-          return await this.openWebDevice(numericSlot, rememberedDevice);
+          return await this.openWebDevice(numericSlot, rememberedDevice, options);
         } catch (error) {
           rememberedFailed = true;
           console.warn("Saved Bluetooth device could not be reused.", error);
@@ -406,7 +468,7 @@ export class BleTransport extends EventTarget {
       }
 
       try {
-        return await this.openWebDevice(numericSlot, selectedDevice);
+        return await this.openWebDevice(numericSlot, selectedDevice, options);
       } catch (error) {
         throw this.formatWebBluetoothError(error, `Could not connect Device ${numericSlot}`);
       }
@@ -544,6 +606,19 @@ export class BleTransport extends EventTarget {
         message: detail.message || "Native BLE error.",
         at: new Date().toISOString()
       });
+      return;
+    }
+    if (detail.type === "firmware-update-started" || detail.type === "firmware-update-progress" || detail.type === "firmware-update-complete" || detail.type === "firmware-update-failed") {
+      this.dispatch(detail.type, {
+        slot,
+        browserDeviceId: detail.browserDeviceId || `native:${detail.macAddress || slot}`,
+        bluetoothName: detail.bluetoothName || "",
+        macAddress: detail.macAddress || "",
+        version: detail.version || "",
+        message: detail.message || "",
+        progress: Number(detail.progress || 0),
+        at: new Date().toISOString()
+      });
     }
   }
 
@@ -572,6 +647,22 @@ export class BleTransport extends EventTarget {
       throw new Error(response.error || "Native BLE connect-all failed.");
     }
     return await this.waitForNativeConnectSet(slots, 12000);
+  }
+
+  async updateFirmware(slot, manifest) {
+    if (!this.usesNativeBridge) {
+      throw new Error("Automatic firmware update requires the On2Cook Android app. Browser Chrome cannot switch to the cooker OTA WiFi automatically.");
+    }
+    const firmwareUrl = manifest?.absoluteFileUrl || manifest?.fileUrl || manifest?.file || "";
+    const version = manifest?.version || "";
+    if (!firmwareUrl || !version) {
+      throw new Error("Firmware manifest is missing the update file URL or version.");
+    }
+    const response = this.callNativeBridge("updateFirmware", Number(slot), firmwareUrl, version);
+    if (response && response.ok === false) {
+      throw new Error(response.error || "Native firmware update could not start.");
+    }
+    return response || { ok: true };
   }
 
   waitForNativeConnectSet(slots, timeoutMs = 12000) {

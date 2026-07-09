@@ -1,5 +1,15 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-07-09
+
+- Added a latest-firmware package under `On2Cook Cloud/firmware/latest/` using the current firmware build `IN-V9-260626`.
+- Added connect-time firmware gating: after a cooker connects the app checks `Firmware=?`, blocks recipe/manual commands while firmware is checking, required, or updating, and shows a firmware update notice instead of allowing cooking too early.
+- Added Android native OTA bridge support using the existing firmware protocol: `OTA:true,SIZE:<bytes>`, `USE_WIFI`, `ON2COOK_OTA` / `12345678`, and HTTP upload to `http://192.168.4.1/update`.
+- Added firmware update progress/completion/failure events back into the cloud UI, including a completion popup with the updated version.
+- Added slot-repair support so a physical cooker already connected in another slot can be moved back to the intended D1-D5 window instead of forcing a power cycle.
+- Browser mode now warns that automatic firmware OTA requires the Android APK because Chrome cannot switch the computer/phone Wi-Fi into the cooker OTA access point by itself.
+- Bumped web cache version to `20260709a` / service-worker cache `v88`, added the firmware manifest/binary to the web bundle, and built APK `On2Cook-Cloud-Mobile-APK-2026-07-09-firmware-update.apk`.
+
 ## 2026-07-08
 
 - Fixed disconnected/offline device rendering so Live Logs and Status no longer show stale live packets after a cooker is switched off or disconnected.

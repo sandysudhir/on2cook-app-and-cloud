@@ -13,6 +13,12 @@ import android.content.ServiceConnection
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.net.wifi.WifiManager
+import android.net.wifi.WifiNetworkSpecifier
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -43,7 +49,13 @@ import com.invent.ontocook.multiple_connection.model.PairedDeviceData
 import com.invent.ontocook.multiple_connection.service.BleService
 import com.invent.ontocook.utils.Constants
 import com.invent.ontocook.utils.SharedPreferencesManager
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 
 class CloudWebActivity : AppCompatActivity() {
     private lateinit var webView: WebView
@@ -58,6 +70,14 @@ class CloudWebActivity : AppCompatActivity() {
     private val pendingWebEvents = mutableListOf<String>()
     private var autoReconnectEnabled = false
     private var isWebPageReady = false
+    private var otaInProgress = false
+    private var pendingOtaSlot = 0
+    private var pendingOtaMac = ""
+    private var pendingOtaVersion = ""
+    private var pendingOtaFileName = "firmware.bin"
+    private var pendingFirmwareBytes: ByteArray? = null
+    private var wifiNetworkCallback: ConnectivityManager.NetworkCallback? = null
+    private var otaWifiNetwork: Network? = null
 
     private val filePickerLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -103,13 +123,16 @@ class CloudWebActivity : AppCompatActivity() {
                 ?: intent?.getStringExtra(Constants.EVENT_ERROR_MESSAGE)
                 ?: ""
             when (action) {
-                Constants.EVENT_BLE_NOTIFICATION -> dispatchNativeBleEvent(
-                    "message",
-                    slot,
-                    mac,
-                    message = message,
-                    channel = "command"
-                )
+                Constants.EVENT_BLE_NOTIFICATION -> {
+                    dispatchNativeBleEvent(
+                        "message",
+                        slot,
+                        mac,
+                        message = message,
+                        channel = "command"
+                    )
+                    handleOtaNotification(slot, mac, message)
+                }
 
                 Constants.EVENT_BLE_WRITE_FAIL -> dispatchNativeBleEvent(
                     "error",
@@ -434,6 +457,335 @@ class CloudWebActivity : AppCompatActivity() {
         enqueueOrRunWebScript(script)
     }
 
+    private fun dispatchFirmwareEvent(
+        type: String,
+        slot: Int,
+        macAddress: String,
+        version: String = pendingOtaVersion,
+        message: String = "",
+        progress: Int = 0
+    ) {
+        if (!this::webView.isInitialized) return
+        val detail = JSONObject()
+            .put("type", type)
+            .put("slot", slot)
+            .put("macAddress", macAddress)
+            .put("browserDeviceId", if (macAddress.isBlank()) "" else "native:$macAddress")
+            .put("version", version)
+            .put("message", message)
+            .put("progress", progress)
+            .put("at", System.currentTimeMillis())
+        val script =
+            "window.dispatchEvent(new CustomEvent('on2cook-native-ble',{detail:$detail}));"
+        enqueueOrRunWebScript(script)
+    }
+
+    private fun handleOtaNotification(slot: Int, macAddress: String, message: String) {
+        if (!otaInProgress || macAddress != pendingOtaMac) return
+        when (message.trim().uppercase()) {
+            "USE_WIFI" -> {
+                dispatchFirmwareEvent(
+                    "firmware-update-progress",
+                    pendingOtaSlot,
+                    pendingOtaMac,
+                    message = "Device accepted OTA request. Switching to ON2COOK_OTA WiFi.",
+                    progress = 35
+                )
+                bleService?.disconnect(pendingOtaMac)
+                reconnectHandler.postDelayed({
+                    connectToOtaWifiAndUpload()
+                }, WIFI_OTA_INITIAL_DELAY_MS)
+            }
+            "ACK_CANCEL" -> {
+                failFirmwareUpdate("Device is busy. Firmware update can start only when the cooker is idle.")
+            }
+        }
+    }
+
+    private fun startFirmwareUpdate(slot: Int, firmwareUrl: String, version: String) {
+        val safeSlot = slot.coerceIn(1, 5)
+        val mac = slotToMac[safeSlot].orEmpty()
+        val service = bleService
+        if (!isBleBound || service == null) {
+            throw IllegalStateException("Native BLE service is not ready.")
+        }
+        if (mac.isBlank() || !service.isDeviceConnected(mac)) {
+            throw IllegalStateException("Connect Device $safeSlot before starting firmware update.")
+        }
+        if (otaInProgress) {
+            throw IllegalStateException("Firmware update is already in progress.")
+        }
+        otaInProgress = true
+        pendingOtaSlot = safeSlot
+        pendingOtaMac = mac
+        pendingOtaVersion = version
+        pendingOtaFileName = "on2cook-$version.bin"
+        dispatchFirmwareEvent(
+            "firmware-update-started",
+            safeSlot,
+            mac,
+            version,
+            "Downloading latest firmware package.",
+            5
+        )
+        Thread {
+            try {
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(20, TimeUnit.SECONDS)
+                    .readTimeout(90, TimeUnit.SECONDS)
+                    .build()
+                val request = Request.Builder().url(firmwareUrl).get().build()
+                val response = client.newCall(request).execute()
+                if (!response.isSuccessful) {
+                    throw IllegalStateException("Firmware download failed: HTTP ${response.code}")
+                }
+                val firmware = response.body?.bytes()
+                    ?: throw IllegalStateException("Firmware download returned no data.")
+                pendingFirmwareBytes = firmware
+                dispatchFirmwareEvent(
+                    "firmware-update-progress",
+                    safeSlot,
+                    mac,
+                    version,
+                    "Firmware downloaded. Requesting OTA mode on the cooker.",
+                    20
+                )
+                runOnUiThread {
+                    try {
+                        service.writeFileData(
+                            mac,
+                            "OTA:true,SIZE:${firmware.size}".toByteArray(Charsets.UTF_8)
+                        )
+                        service.sendBinFile(mac, firmware)
+                    } catch (error: Exception) {
+                        failFirmwareUpdate(error.message ?: "Unable to start BLE OTA transfer.")
+                    }
+                }
+            } catch (error: Exception) {
+                failFirmwareUpdate(error.message ?: "Firmware update failed before OTA started.")
+            }
+        }.start()
+    }
+
+    private fun connectToOtaWifiAndUpload() {
+        val firmware = pendingFirmwareBytes
+        if (firmware == null) {
+            failFirmwareUpdate("No firmware bytes are available for WiFi upload.")
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            connectWifiApi29(firmware)
+        } else {
+            connectWifiLegacy(firmware)
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun connectWifiApi29(firmware: ByteArray, attempt: Int = 1) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        val maxAttempts = 5
+        releaseWifiNetworkCallback()
+        dispatchFirmwareEvent(
+            "firmware-update-progress",
+            pendingOtaSlot,
+            pendingOtaMac,
+            message = "Connecting to ON2COOK_OTA WiFi ($attempt/$maxAttempts).",
+            progress = 45
+        )
+        val specifier = WifiNetworkSpecifier.Builder()
+            .setSsid(WIFI_OTA_SSID)
+            .setWpa2Passphrase(WIFI_OTA_PASSWORD)
+            .build()
+        val request = NetworkRequest.Builder()
+            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+            .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .setNetworkSpecifier(specifier)
+            .build()
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                otaWifiNetwork = network
+                reconnectHandler.postDelayed({
+                    pingThenUpload(firmware, network)
+                }, 2000)
+            }
+
+            override fun onUnavailable() {
+                wifiNetworkCallback = null
+                if (attempt < maxAttempts) {
+                    reconnectHandler.postDelayed({
+                        connectWifiApi29(firmware, attempt + 1)
+                    }, 3000)
+                } else {
+                    failFirmwareUpdate("Could not connect to $WIFI_OTA_SSID after $maxAttempts attempts.")
+                }
+            }
+        }
+        wifiNetworkCallback = callback
+        connectivityManager.requestNetwork(request, callback)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun connectWifiLegacy(firmware: ByteArray) {
+        dispatchFirmwareEvent(
+            "firmware-update-progress",
+            pendingOtaSlot,
+            pendingOtaMac,
+            message = "Connecting to ON2COOK_OTA WiFi.",
+            progress = 45
+        )
+        val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val wifiConfig = android.net.wifi.WifiConfiguration().apply {
+            SSID = "\"$WIFI_OTA_SSID\""
+            preSharedKey = "\"$WIFI_OTA_PASSWORD\""
+        }
+        val networkId = wifiManager.addNetwork(wifiConfig)
+        if (networkId == -1) {
+            failFirmwareUpdate("Failed to add OTA WiFi network.")
+            return
+        }
+        wifiManager.disconnect()
+        wifiManager.enableNetwork(networkId, true)
+        wifiManager.reconnect()
+        Thread {
+            var retries = 0
+            while (retries < 30) {
+                Thread.sleep(500)
+                if (wifiManager.connectionInfo?.ssid == "\"$WIFI_OTA_SSID\"") {
+                    Thread.sleep(5000)
+                    uploadFirmwareViaWifi(firmware, null)
+                    return@Thread
+                }
+                retries++
+            }
+            failFirmwareUpdate("Timed out connecting to $WIFI_OTA_SSID.")
+        }.start()
+    }
+
+    private fun pingThenUpload(
+        firmware: ByteArray,
+        otaNetwork: Network?,
+        attempt: Int = 1,
+        maxPingAttempts: Int = 5
+    ) {
+        Thread {
+            try {
+                val clientBuilder = OkHttpClient.Builder()
+                    .connectTimeout(5, TimeUnit.SECONDS)
+                    .readTimeout(5, TimeUnit.SECONDS)
+                if (otaNetwork != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    clientBuilder.socketFactory(otaNetwork.socketFactory)
+                }
+                val client = clientBuilder.build()
+                val response = client.newCall(Request.Builder().url(OTA_HEALTH_URL).get().build()).execute()
+                val body = response.body?.string() ?: ""
+                if (response.isSuccessful && body.contains("OTA Ready", ignoreCase = true)) {
+                    uploadFirmwareViaWifi(firmware, otaNetwork)
+                    return@Thread
+                }
+                throw IllegalStateException("Server not ready: HTTP ${response.code}")
+            } catch (error: Exception) {
+                if (attempt < maxPingAttempts) {
+                    Thread.sleep(2000)
+                    pingThenUpload(firmware, otaNetwork, attempt + 1, maxPingAttempts)
+                } else {
+                    failFirmwareUpdate("Device OTA server did not become ready.")
+                }
+            }
+        }.start()
+    }
+
+    private fun uploadFirmwareViaWifi(firmware: ByteArray, otaNetwork: Network? = null) {
+        Thread {
+            try {
+                dispatchFirmwareEvent(
+                    "firmware-update-progress",
+                    pendingOtaSlot,
+                    pendingOtaMac,
+                    message = "Uploading firmware through the device OTA WiFi.",
+                    progress = 70
+                )
+                val clientBuilder = OkHttpClient.Builder()
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(120, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                if (otaNetwork != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    clientBuilder.socketFactory(otaNetwork.socketFactory)
+                }
+                val body = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart(
+                        "update",
+                        pendingOtaFileName,
+                        firmware.toRequestBody("application/octet-stream".toMediaTypeOrNull())
+                    )
+                    .build()
+                val response = clientBuilder.build().newCall(
+                    Request.Builder().url(OTA_UPDATE_URL).post(body).build()
+                ).execute()
+                if (!response.isSuccessful) {
+                    throw IllegalStateException("OTA upload failed: HTTP ${response.code}")
+                }
+                finishFirmwareUpdate()
+            } catch (error: Exception) {
+                failFirmwareUpdate(error.message ?: "WiFi OTA upload failed.")
+            }
+        }.start()
+    }
+
+    private fun finishFirmwareUpdate() {
+        val slot = pendingOtaSlot
+        val mac = pendingOtaMac
+        val version = pendingOtaVersion
+        otaInProgress = false
+        pendingFirmwareBytes = null
+        releaseWifiNetworkCallback()
+        dispatchFirmwareEvent(
+            "firmware-update-complete",
+            slot,
+            mac,
+            version,
+            "Firmware updated to $version. The cooker is restarting.",
+            100
+        )
+        reconnectHandler.postDelayed({
+            pendingConnectSlots[slot] = mac
+            foundDuringScan.clear()
+            bleService?.stopScan()
+            bleService?.startScan()
+        }, 6000)
+    }
+
+    private fun failFirmwareUpdate(message: String) {
+        val slot = pendingOtaSlot
+        val mac = pendingOtaMac
+        val version = pendingOtaVersion
+        otaInProgress = false
+        pendingFirmwareBytes = null
+        releaseWifiNetworkCallback()
+        dispatchFirmwareEvent(
+            "firmware-update-failed",
+            slot,
+            mac,
+            version,
+            message,
+            0
+        )
+    }
+
+    private fun releaseWifiNetworkCallback() {
+        wifiNetworkCallback?.let { callback ->
+            try {
+                val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                connectivityManager.unregisterNetworkCallback(callback)
+            } catch (error: Exception) {
+                Log.e(TAG, "releaseWifiNetworkCallback failed: ${error.message}")
+            }
+        }
+        wifiNetworkCallback = null
+        otaWifiNetwork = null
+    }
+
     inner class NativeBleBridge {
         @JavascriptInterface
         fun isAvailable(): Boolean = true
@@ -515,6 +867,27 @@ class CloudWebActivity : AppCompatActivity() {
         }.getOrElse { errorJson(it) }
 
         @JavascriptInterface
+        fun moveSlot(fromSlot: Int, toSlot: Int): String = runCatching {
+            val safeFrom = fromSlot.coerceIn(1, 5)
+            val safeTo = toSlot.coerceIn(1, 5)
+            if (safeFrom == safeTo) {
+                return@runCatching JSONObject().put("ok", true).put("mode", "same-slot").toString()
+            }
+            val mac = slotToMac[safeFrom].orEmpty()
+            if (mac.isBlank()) {
+                return@runCatching JSONObject().put("ok", false).put("error", "No connected cooker is mapped to Device $safeFrom.").toString()
+            }
+            slotToMac.remove(safeFrom)
+            slotToMac[safeTo] = mac
+            macToSlot[mac] = safeTo
+            val name = bleService?.getConnectedDeviceName(mac).orEmpty()
+            ensurePairedDevice(safeTo, mac, name.ifBlank { "On2Cook-${safeTo.toString().padStart(2, '0')}" })
+            dispatchNativeBleEvent("disconnected", safeFrom, mac, bluetoothName = name)
+            dispatchNativeBleEvent("connected", safeTo, mac, bluetoothName = name.ifBlank { mac.takeLast(5) })
+            JSONObject().put("ok", true).put("fromSlot", safeFrom).put("slot", safeTo).toString()
+        }.getOrElse { errorJson(it) }
+
+        @JavascriptInterface
         fun sendCommand(slot: Int, message: String): String = runCatching {
             val mac = slotToMac[slot].orEmpty()
             if (mac.isBlank()) {
@@ -532,6 +905,15 @@ class CloudWebActivity : AppCompatActivity() {
             }
             bleService?.writeFileData(mac, message.toByteArray(Charsets.UTF_8))
             JSONObject().put("ok", true).toString()
+        }.getOrElse { errorJson(it) }
+
+        @JavascriptInterface
+        fun updateFirmware(slot: Int, firmwareUrl: String, version: String): String = runCatching {
+            if (firmwareUrl.isBlank() || version.isBlank()) {
+                return@runCatching JSONObject().put("ok", false).put("error", "Firmware URL or version is missing.").toString()
+            }
+            startFirmwareUpdate(slot, firmwareUrl, version)
+            JSONObject().put("ok", true).put("version", version).toString()
         }.getOrElse { errorJson(it) }
 
         @JavascriptInterface
@@ -589,6 +971,7 @@ class CloudWebActivity : AppCompatActivity() {
     override fun onDestroy() {
         filePathCallback?.onReceiveValue(null)
         filePathCallback = null
+        releaseWifiNetworkCallback()
         runCatching {
             LocalBroadcastManager.getInstance(this).unregisterReceiver(bleConnectionReceiver)
             LocalBroadcastManager.getInstance(this).unregisterReceiver(bleCommunicationReceiver)
@@ -606,6 +989,11 @@ class CloudWebActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "CloudWebActivity"
-        private const val CLOUD_URL = "https://www.on2cook.net/?apk=1&build=20260708i"
+        private const val CLOUD_URL = "https://www.on2cook.net/?apk=1&build=20260709a"
+        private const val WIFI_OTA_SSID = "ON2COOK_OTA"
+        private const val WIFI_OTA_PASSWORD = "12345678"
+        private const val OTA_UPDATE_URL = "http://192.168.4.1/update"
+        private const val OTA_HEALTH_URL = "http://192.168.4.1/"
+        private const val WIFI_OTA_INITIAL_DELAY_MS = 12_000L
     }
 }

@@ -1,6 +1,6 @@
 # On2Cook Cloud QA - Tomorrow Morning Runbook
 
-Date prepared: July 7, 2026
+Date prepared: July 9, 2026
 
 ## Verified Tonight Without Physical Device
 
@@ -30,6 +30,9 @@ Date prepared: July 7, 2026
 - Save-to-library code requires a new recipe name and refuses the original name or any existing recipe name.
 - Recipe start retry no longer auto-sends `ingredients=100`; it waits for explicit confirmation.
 - Closing Live Logs while offline no longer attempts to send `livelog=OFF`.
+- The latest firmware manifest is available at `firmware/latest/manifest.json` with version `IN-V9-260626`.
+- The web UI blocks recipe/manual commands while firmware is being checked or updated.
+- The Android APK build completed successfully: `On2Cook-Cloud-Mobile-APK-2026-07-09-firmware-update.apk`.
 
 ## Not Verified Tonight
 
@@ -37,6 +40,8 @@ Physical BLE/device behavior still needs the cooker:
 
 - Browser Bluetooth pairing stability on Windows.
 - Native Android BLE/classic BLE behavior.
+- Native Android OTA firmware update against the real cooker.
+- Whether Android shows a Wi-Fi-network approval prompt while switching to `ON2COOK_OTA`.
 - Actual `LISTRECIPES`, `DELETE=<recipeName>`, recipe upload, `recipe=<name>`, `ingredients=100`, `add_confirm=`, and `stop=100` command delivery.
 - Live telemetry values from firmware.
 - Stored log file listing and reading from firmware.
@@ -45,25 +50,31 @@ Physical BLE/device behavior still needs the cooker:
 ## Tomorrow Morning Device Test Sequence
 
 1. Open Chrome or Edge on Windows and load `https://www.on2cook.net/`.
-2. Hard refresh once so `app.js?v=20260708i` and service worker `on2cook-cloud-v87` are active.
+2. Hard refresh once so `app.js?v=20260709a` and service worker `on2cook-cloud-v88` are active.
 3. Turn on only the first cooker and wait for BLE advertising.
 4. Open Device Details for D1, click Connect, and select the intended cooker.
 5. Confirm D1 shows Connected and locks to that exact Bluetooth name.
-6. Click Status and Firmware. Confirm `WORKSTATUS=IDLE` and firmware version appear.
-7. Open Recipes on Device and click Refresh from device. Confirm actual recipe names appear from `LISTRECIPES`.
-8. Pick one order whose recipe is already on the device. Click Cook Now or assign to D1.
-9. Confirm the app does not upload all recipes on connect and does not send `ingredients=100` automatically.
-10. Confirm the app sends only `recipe=<firmware recipe name>` for the selected recipe and waits for ingredient confirmation.
-11. Confirm ingredients on the device or screen, then verify the device starts cooking.
-12. During cooking, verify Current Recipe updates step, remaining time, progress, induction, microwave, stirrer, and water.
-13. Open Live Logs. Confirm `livelog=ON` starts streaming values. Close it and confirm `livelog=OFF`.
-14. Add two upcoming queue items for D1. Reorder them and verify only D1 queue changes.
-15. Use View Queue to confirm cooked history, NOW, and upcoming queue are separated.
-16. Abort from the screen. Confirm the app sends `stop=100`, shows aborted status, and D1 becomes ready for the next recipe.
-17. Let one recipe complete normally. Confirm last cooked recipe appears at the top with since-completion time.
-18. While idle, open bottom Logs. Confirm `LOGSTATUS=?`, then `LISTLOGS`, then `READLOG=<filename>` work.
-19. Repeat the same connection lock and recipe run test for D2 with a second cooker if available.
-20. Verify D1 actions never affect D2, and D2 actions never affect D1.
+6. If the same cooker appears connected under D2/D3, click the D1 repair action (`Use Device X cooker here`) and confirm the cooker moves back to D1.
+7. Confirm the firmware notice appears while the app sends `Firmware=?`.
+8. In Chrome/Edge browser mode, confirm the app warns that automatic OTA requires the Android APK if the connected firmware is older than `IN-V9-260626`.
+9. Install/open `On2Cook-Cloud-Mobile-APK-2026-07-09-firmware-update.apk` for the actual OTA test.
+10. Connect D1 in the APK. If the device firmware is older, confirm the app blocks cooking, starts OTA, sends `OTA:true,SIZE=<bytes>`, waits for `USE_WIFI`, switches to `ON2COOK_OTA`, uploads to `http://192.168.4.1/update`, and shows the updated firmware version.
+11. If Android asks to allow the temporary `ON2COOK_OTA` Wi-Fi, approve it and keep the phone close to the cooker.
+12. After firmware completes, reconnect D1 and click Status and Firmware. Confirm `WORKSTATUS=IDLE` and firmware `IN-V9-260626` appear.
+13. Open Recipes on Device and click Refresh from device. Confirm actual recipe names appear from `LISTRECIPES`.
+14. Pick one order whose recipe is already on the device. Click Cook Now or assign to D1.
+15. Confirm the app does not upload all recipes on connect and does not send `ingredients=100` automatically.
+16. Confirm the app sends only `recipe=<firmware recipe name>` for the selected recipe and waits for ingredient confirmation.
+17. Confirm ingredients on the device or screen, then verify the device starts cooking.
+18. During cooking, verify Current Recipe updates step, remaining time, progress, induction, microwave, stirrer, and water.
+19. Open Live Logs. Confirm `livelog=ON` starts streaming values. Close it and confirm `livelog=OFF`.
+20. Add two upcoming queue items for D1. Reorder them and verify only D1 queue changes.
+21. Use View Queue to confirm cooked history, NOW, and upcoming queue are separated.
+22. Abort from the screen. Confirm the app sends `stop=100`, shows aborted status, and D1 becomes ready for the next recipe.
+23. Let one recipe complete normally. Confirm last cooked recipe appears at the top with since-completion time.
+24. While idle, open bottom Logs. Confirm `LOGSTATUS=?`, then `LISTLOGS`, then `READLOG=<filename>` work.
+25. Repeat the same connection lock and recipe run test for D2 with a second cooker if available.
+26. Verify D1 actions never affect D2, and D2 actions never affect D1.
 
 ## Known Expected States
 
@@ -72,4 +83,6 @@ Physical BLE/device behavior still needs the cooker:
 - Live Logs can be opened offline for explanation, but Start/Stop stream buttons are disabled.
 - Historical Logs can be opened offline for explanation, but actual log listing requires an idle connected device.
 - `ingredients=100` exists only as an explicit ingredient-confirmation action, not as an automatic post-recipe command.
+- Firmware update states block cooking and manual hardware commands until the device is current or the firmware update is explicitly resolved.
+- Automatic OTA firmware upload is expected to work from the Android APK/native bridge, not from desktop Chrome Web Bluetooth.
 - New order polling must not force the app back to Orders. If you are on Manual Mode, Recipes, Queue, Global Recipes, or a safe device/detail panel, refresh/re-render should preserve that tab, panel, and scroll position.

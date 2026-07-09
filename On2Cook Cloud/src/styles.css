@@ -1828,6 +1828,40 @@ button {
   margin: 6px 0 0;
 }
 
+.firmware-update-notice {
+  display: grid;
+  gap: 10px;
+}
+
+.firmware-update-notice.warning,
+.firmware-update-notice.error {
+  border-color: rgba(244, 83, 32, 0.48);
+}
+
+.firmware-update-notice.info {
+  border-color: rgba(65, 115, 220, 0.45);
+}
+
+.firmware-update-notice.success {
+  border-color: rgba(32, 168, 110, 0.42);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(120, 120, 120, 0.18);
+}
+
+.progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--danger));
+  transition: width 180ms ease;
+}
+
 .order-card h3,
 .recipe-card h3 {
   margin: 2px 0 4px;
