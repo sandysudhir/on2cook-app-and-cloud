@@ -1,5 +1,12 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-07-10
+
+- Rebuilt device Manual Mode from the old native Android manual screen instead of the cloud settings screen.
+- Added the old-app manual controls for induction, magnetron, stirrer, Sprinkle/pump, and Spray/purge with the existing firmware command strings unchanged.
+- Added missing manual BLE command paths for `INDPROCESSTIME=`, `MAGPOWER=`, `MAGPROCESSTIME=`, `PURGE=ON,`, and `PURGE=OFF`.
+- Bumped web cache version to `20260710a` / service-worker cache `v89` and refreshed the APK cloud URL.
+
 ## 2026-07-09
 
 - Added a latest-firmware package under `On2Cook Cloud/firmware/latest/` using the current firmware build `IN-V9-260626`.

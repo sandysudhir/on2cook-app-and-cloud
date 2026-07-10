@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260709a";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260709a";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260710a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260710a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260709a";
+} from "./ncb-services.js?v=20260710a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260709a";
+} from "./data-store.js?v=20260710a";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -30,7 +30,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260709a";
+const APP_ASSET_VERSION = "20260710a";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -164,7 +164,8 @@ function captureUiSessionState(snapshot = null) {
     manualMode: {
       slot: Math.max(1, Number(ui.manualMode?.slot) || 1),
       recipeId: ui.manualMode?.recipeId || "",
-      pumpUnits: Math.max(1, Number(ui.manualMode?.pumpUnits) || 10)
+      pumpUnits: Math.max(1, Number(ui.manualMode?.pumpUnits) || 10),
+      sprayMl: Math.max(10, Number(ui.manualMode?.sprayMl) || 10)
     },
     apkScreenIndex: Math.max(0, Math.trunc(activeApkIndex)),
     activeModal: sanitizeModalForSession(ui.activeModal),
@@ -5120,6 +5121,76 @@ function formatStirrerDisplay(level) {
   return "Off";
 }
 
+function formatManualTime(seconds) {
+  return secondsLabel(seconds || 0).replace(":", " : ");
+}
+
+function manualQuickState(value) {
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized.includes("PAUSE")) return "PAUSE";
+  if (normalized.includes("START") || normalized.includes("RUN")) return "START";
+  if (normalized.includes("STOP")) return "STOP";
+  return "IDLE";
+}
+
+function manualModuleLabel(module, status) {
+  const state = manualQuickState(status);
+  const name = module === "magnetron" ? "Magnetron" : "Induction";
+  if (state === "START") return `${name} Started`;
+  if (state === "PAUSE") return `${name} paused`;
+  if (state === "STOP") return `${name} stopped`;
+  return `Start ${name.toLowerCase()}`;
+}
+
+function renderManualRoundButton(action, slot, icon, options = {}) {
+  const attrs = [
+    `class="native-manual-round ${options.active ? "active" : ""}"`,
+    `data-action="${action}"`,
+    `data-slot="${slot}"`,
+    `aria-label="${escapeHtml(options.label || action)}"`
+  ];
+  if (options.extra) attrs.push(options.extra);
+  if (options.disabled) attrs.push("disabled");
+  return `<button ${attrs.join(" ")}>${icon}</button>`;
+}
+
+function renderManualStepButton(action, slot, label, options = {}) {
+  const attrs = [
+    `class="native-manual-step"`,
+    `data-action="${action}"`,
+    `data-slot="${slot}"`
+  ];
+  if (options.extra) attrs.push(options.extra);
+  if (options.disabled) attrs.push("disabled");
+  return `<button ${attrs.join(" ")}>${escapeHtml(label)}</button>`;
+}
+
+function renderNativeManualRecipeStrip(snapshot, className = "native-manual-recipes-strip") {
+  const recipes = getSelectedRecipes(snapshot).slice(0, 4);
+  const cards = recipes.length ? recipes : snapshot.recipes.slice(0, 4);
+  return `
+    <div class="${className}">
+      ${cards
+        .slice(0, className.includes("bottom") ? 3 : 2)
+        .map((recipe) => {
+          const imageUrl = safeOptionalUrl(recipe.imageDataUrl, "manual recommended recipe image");
+          const duration = secondsLabel(getRecipeDuration(recipe) || 420).replace("00:", "");
+          return `
+            <article class="native-manual-recipe-card">
+              <div class="native-manual-recipe-image ${imageUrl ? "has-image" : ""}">
+                ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(recipe.displayName)}">` : `<span>${escapeHtml(recipe.displayName.slice(0, 1))}</span>`}
+                <b>Easy</b>
+              </div>
+              <strong>${escapeHtml(recipe.displayName)}</strong>
+              <small>${escapeHtml(duration)} mins</small>
+            </article>
+          `;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
 async function startManualInduction(slot) {
   const device = getDevice(slot);
   if (!device || device.connection !== "connected") {
@@ -5156,6 +5227,48 @@ async function stopManualInduction(slot) {
   });
   refreshStatusSoon(slot);
   showToast(`Manual induction stop sent to Device ${slot}`, "info");
+}
+
+async function pauseResumeManualInduction(slot) {
+  const device = getDevice(slot);
+  if (!device || device.connection !== "connected") {
+    showToast(`Device ${slot} is not connected`, "warning");
+    return;
+  }
+  ensureDeviceCommandAllowed(device, "Manual induction pause/resume");
+  const paused = manualQuickState(device.telemetry?.inductionStatus) === "PAUSE";
+  await (paused ? ble.resumeInduction(Number(slot)) : ble.pauseInduction(Number(slot)));
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.telemetry.inductionStatus = paused ? "START" : "PAUSE";
+    draftDevice.telemetry.workStatus = "manual";
+    appendActivity(draftDevice, paused ? "Manual Mode: induction resume sent" : "Manual Mode: induction pause sent", "info");
+  });
+  refreshStatusSoon(slot);
+  showToast(paused ? `Induction resumed on Device ${slot}` : `Induction paused on Device ${slot}`, "success");
+}
+
+async function adjustManualInductionTime(slot, deltaSeconds) {
+  const device = getDevice(slot);
+  if (!device || device.connection !== "connected") {
+    showToast(`Device ${slot} is not connected`, "warning");
+    return;
+  }
+  ensureDeviceCommandAllowed(device, "Manual induction time");
+  if (manualQuickState(device.telemetry?.inductionStatus) !== "START") {
+    showToast("Start induction first, then adjust time", "warning");
+    return;
+  }
+  await ble.changeInductionProcessTime(Number(slot), deltaSeconds);
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.telemetry.indTime = Math.max(0, Number(draftDevice.telemetry.indTime || 0) + Number(deltaSeconds || 0));
+    appendActivity(draftDevice, `Manual Mode: induction time ${deltaSeconds > 0 ? "+" : ""}${deltaSeconds}s`, "info");
+  });
+  refreshStatusSoon(slot);
+  showToast(`Induction time ${deltaSeconds > 0 ? "increased" : "decreased"} on Device ${slot}`, "success");
 }
 
 async function adjustManualInductionPower(slot, delta) {
@@ -5215,6 +5328,70 @@ async function stopManualMagnetron(slot) {
   });
   refreshStatusSoon(slot);
   showToast(`Microwave stop sent to Device ${slot}`, "info");
+}
+
+async function pauseResumeManualMagnetron(slot) {
+  const device = getDevice(slot);
+  if (!device || device.connection !== "connected") {
+    showToast(`Device ${slot} is not connected`, "warning");
+    return;
+  }
+  ensureDeviceCommandAllowed(device, "Manual microwave pause/resume");
+  const paused = manualQuickState(device.telemetry?.magnetronStatus) === "PAUSE";
+  await (paused ? ble.resumeMagnetron(Number(slot)) : ble.pauseMagnetron(Number(slot)));
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.telemetry.magnetronStatus = paused ? "START" : "PAUSE";
+    draftDevice.telemetry.workStatus = "manual";
+    appendActivity(draftDevice, paused ? "Manual Mode: microwave resume sent" : "Manual Mode: microwave pause sent", "info");
+  });
+  refreshStatusSoon(slot);
+  showToast(paused ? `Microwave resumed on Device ${slot}` : `Microwave paused on Device ${slot}`, "success");
+}
+
+async function adjustManualMagnetronPower(slot, delta) {
+  const device = getDevice(slot);
+  if (!device || device.connection !== "connected") {
+    showToast(`Device ${slot} is not connected`, "warning");
+    return;
+  }
+  ensureDeviceCommandAllowed(device, "Manual microwave power");
+  if (manualQuickState(device.telemetry?.magnetronStatus) !== "START") {
+    showToast("Start microwave first, then adjust power", "warning");
+    return;
+  }
+  await ble.changeMagnetronPower(Number(slot), delta);
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.telemetry.magPower = Math.max(0, Math.min(100, Number(draftDevice.telemetry.magPower || 0) + Number(delta || 0)));
+    appendActivity(draftDevice, `Manual Mode: microwave power ${delta > 0 ? "+" : ""}${delta}`, "info");
+  });
+  refreshStatusSoon(slot);
+  showToast(`Microwave power ${delta > 0 ? "increased" : "decreased"} on Device ${slot}`, "success");
+}
+
+async function adjustManualMagnetronTime(slot, deltaSeconds) {
+  const device = getDevice(slot);
+  if (!device || device.connection !== "connected") {
+    showToast(`Device ${slot} is not connected`, "warning");
+    return;
+  }
+  ensureDeviceCommandAllowed(device, "Manual microwave time");
+  if (manualQuickState(device.telemetry?.magnetronStatus) !== "START") {
+    showToast("Start microwave first, then adjust time", "warning");
+    return;
+  }
+  await ble.changeMagnetronProcessTime(Number(slot), deltaSeconds);
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.telemetry.magTime = Math.max(0, Number(draftDevice.telemetry.magTime || 0) + Number(deltaSeconds || 0));
+    appendActivity(draftDevice, `Manual Mode: microwave time ${deltaSeconds > 0 ? "+" : ""}${deltaSeconds}s`, "info");
+  });
+  refreshStatusSoon(slot);
+  showToast(`Microwave time ${deltaSeconds > 0 ? "increased" : "decreased"} on Device ${slot}`, "success");
 }
 
 async function setManualStirrer(slot, speedLabel) {
@@ -5282,6 +5459,44 @@ async function stopManualPump(slot) {
   });
   refreshStatusSoon(slot);
   showToast(`Pump stop sent to Device ${slot}`, "info");
+}
+
+async function startManualPurge(slot, ml) {
+  const device = getDevice(slot);
+  if (!device || device.connection !== "connected") {
+    showToast(`Device ${slot} is not connected`, "warning");
+    return;
+  }
+  ensureDeviceCommandAllowed(device, "Manual spray");
+  const safeMl = Math.max(10, Math.trunc(Number(ml) || 0));
+  await ble.startPurge(Number(slot), safeMl);
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.telemetry.purgeOn = true;
+    draftDevice.telemetry.workStatus = "manual";
+    appendActivity(draftDevice, `Manual Mode: spray start sent (${safeMl} ml)`, "success");
+  });
+  refreshStatusSoon(slot);
+  showToast(`Spray started on Device ${slot}`, "success");
+}
+
+async function stopManualPurge(slot) {
+  const device = getDevice(slot);
+  if (!device || device.connection !== "connected") {
+    showToast(`Device ${slot} is not connected`, "warning");
+    return;
+  }
+  ensureDeviceCommandAllowed(device, "Manual spray");
+  await ble.stopPurge(Number(slot));
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.telemetry.purgeOn = false;
+    appendActivity(draftDevice, "Manual Mode: spray stop sent", "warning");
+  });
+  refreshStatusSoon(slot);
+  showToast(`Spray stop sent to Device ${slot}`, "info");
 }
 
 function queueIdleWork() {
@@ -8292,188 +8507,186 @@ function renderQueueTab(snapshot) {
 }
 
 function renderManualModeTab(snapshot, fixedDevice = null) {
-  const fixedDeviceMode = Boolean(fixedDevice);
   const device = fixedDevice || getManualModeTarget(snapshot);
-  const selectedSlot = Number(fixedDevice?.slot || snapshot.ui.manualMode?.slot || device?.slot || 1);
+  if (!device) {
+    return `<div class="native-manual-empty">No device slot is available.</div>`;
+  }
   const selectedRecipeId = String(snapshot.ui.manualMode?.recipeId || "");
-  const manualRecipes = getSelectedRecipes(snapshot);
   const selectedRecipe = selectedRecipeId ? findRecipeById(snapshot, selectedRecipeId) : null;
-  const selectedRunState = device ? getManualDeviceRunState(snapshot, device) : null;
-  const recipeAllowedOnSelectedDevice =
-    Boolean(device && selectedRecipe && isRecipeAllowedOnDevice(snapshot, device, selectedRecipe.id));
+  const manualRecipes = getSelectedRecipes(snapshot);
+  const selectedRunState = getManualDeviceRunState(snapshot, device);
+  const recipeAllowedOnSelectedDevice = Boolean(selectedRecipe && isRecipeAllowedOnDevice(snapshot, device, selectedRecipe.id));
   const canSubmitManualRecipe =
-    Boolean(selectedRecipe && selectedRunState && (selectedRunState.canRunNow || selectedRunState.canQueue) && recipeAllowedOnSelectedDevice);
-  const idleDeviceLabels = snapshot.devices
-    .filter((item) => getManualDeviceRunState(snapshot, item).status === "idle")
-    .map((item) => `D${item.slot}`);
+    Boolean(selectedRecipe && recipeAllowedOnSelectedDevice && (selectedRunState.canRunNow || selectedRunState.canQueue));
+  const telemetry = getDisplayTelemetry(device);
+  const isConnected = device.connection === "connected";
+  const disabled = !isConnected || isFirmwareBlockingDevice(device);
+  const disabledAttr = disabled ? "disabled" : "";
+  const indState = manualQuickState(telemetry.inductionStatus);
+  const magState = manualQuickState(telemetry.magnetronStatus);
+  const stirrerSpeed = mapStirrerSpeedLabel(telemetry.stirrer || DEFAULT_STIRRER_LEVEL);
+  const pumpUnits = Math.max(1, Number(snapshot.ui.manualMode?.pumpUnits) || 10);
+  const sprayMl = Math.max(10, Number(snapshot.ui.manualMode?.sprayMl) || 10);
   const manualRunMessage = !selectedRecipe
     ? "Choose a recipe first."
-    : selectedRecipe && device && !recipeAllowedOnSelectedDevice
-      ? `${selectedRecipe.displayName} is not enabled on Device ${device.slot}. Enable it in device details before running.`
-      : selectedRunState?.note || "Choose a recipe and a device.";
-  const pumpUnits = Math.max(1, Number(snapshot.ui.manualMode?.pumpUnits) || 10);
-  const displayTelemetry = device ? getDisplayTelemetry(device) : {};
-  const inductionStatus = getManualStatus(displayTelemetry.inductionStatus || "IDLE");
-  const magnetronStatus = getManualStatus(displayTelemetry.magnetronStatus || "IDLE");
-  const stirrerLabel = formatStirrerDisplay(displayTelemetry.stirrer || (device?.connection === "connected" ? DEFAULT_STIRRER_LEVEL : "OFF"));
-  const pumpLabel = displayTelemetry.pumpOn ? "ON" : "OFF";
-  const manualCommandDisabled = device?.connection === "connected" ? "" : "disabled";
+    : !recipeAllowedOnSelectedDevice
+      ? `${selectedRecipe.displayName} is not enabled on D${device.slot}.`
+      : selectedRunState?.note || "";
   return `
-    <section class="stack-section">
-      <div class="mini-title">${fixedDeviceMode && device ? `Manual Mode - Device ${device.slot}` : "Manual Mode"}</div>
-      <div class="settings-card">
-        <label class="field-label">
-          Recipe to run
-          <select class="field-input" data-input="manual-recipe-id">
-            <option value="">Select a recipe</option>
-            ${manualRecipes
-              .map(
-                (recipe) => `
-                  <option value="${recipe.id}" ${selectedRecipeId === recipe.id ? "selected" : ""}>${escapeHtml(recipe.displayName)}</option>
-                `
-              )
-              .join("")}
-          </select>
-        </label>
-        ${
-          fixedDeviceMode
-            ? `<div class="meta-grid top-gap">
-                <span>Selected device: ${escapeHtml(device ? `D${device.slot} ${device.displayName}` : "None")}</span>
-                <span>State: ${escapeHtml(selectedRunState?.label || "Unknown")}</span>
-              </div>`
-            : `<div class="mini-title top-gap">Choose device</div>
-              <div class="chip-row">
-                ${snapshot.devices
-                  .map((item) => {
-                    const runState = getManualDeviceRunState(snapshot, item);
-                    return `
-                      <button class="chip-button ${selectedSlot === item.slot ? "selected" : ""} ${escapeHtml(runState.status)}" data-action="select-manual-device" data-slot="${item.slot}">
-                        Device ${item.slot} ${escapeHtml(runState.label)}
-                      </button>
-                    `;
-                  })
-                  .join("")}
-              </div>
-              <div class="meta-grid top-gap">
-                <span>Idle devices: ${escapeHtml(idleDeviceLabels.length ? idleDeviceLabels.join(", ") : "None")}</span>
-                <span>Selected: ${escapeHtml(device ? `D${device.slot} ${selectedRunState?.label || ""}` : "None")}</span>
-              </div>`
-        }
-        <p class="subtle top-gap">
-          ${escapeHtml(manualRunMessage)}
-        </p>
-        <div class="action-row top-gap">
-          <button class="primary-button" data-action="manual-run-selected-recipe" data-slot="${device?.slot || selectedSlot}" ${canSubmitManualRecipe ? "" : "disabled"}>
-            ${escapeHtml(selectedRunState?.actionLabel || "Run now")}
-          </button>
-          ${
-            device
-              ? `<button class="secondary-button" data-action="sync-selected-recipes" data-slot="${device.slot}" ${manualCommandDisabled}>Check Device ${device.slot} recipes</button>`
-              : ""
-          }
+    <section class="native-manual-body">
+      ${renderNativeManualRecipeStrip(snapshot)}
+      <div class="native-manual-section-title"><span>Manual</span><i></i></div>
+      <div class="native-manual-status-note ${isConnected ? "connected" : "offline"}">
+        <b>${escapeHtml(isConnected ? "Connected" : "Reconnect required")}</b>
+        <span>${escapeHtml(device.lastMessage || (isConnected ? "Live manual controls are ready." : "Connect this cooker before using Manual Mode."))}</span>
+      </div>
+
+      <div class="native-manual-module">
+        <div class="native-manual-module-head">
+          <span class="${indState === "IDLE" || indState === "STOP" ? "" : "active"}">${escapeHtml(manualModuleLabel("induction", telemetry.inductionStatus))}</span>
+          <div class="native-manual-adjust">
+            ${renderManualStepButton("manual-induction-power", device.slot, "+", { extra: 'data-delta="10"', disabled })}
+            <b>${escapeHtml(`${Number(telemetry.indPower || 0)} %`)}</b>
+            ${renderManualStepButton("manual-induction-power", device.slot, "-", { extra: 'data-delta="-10"', disabled })}
+          </div>
+        </div>
+        <div class="native-manual-row">
+          <div class="native-manual-adjust time">
+            ${renderManualStepButton("manual-induction-time", device.slot, "+", { extra: 'data-delta="10"', disabled })}
+            <b>10</b>
+            ${renderManualStepButton("manual-induction-time", device.slot, "-", { extra: 'data-delta="-10"', disabled })}
+            <strong>${escapeHtml(formatManualTime(telemetry.indTime || telemetry.remainingSeconds || 0))}</strong>
+          </div>
+          <div class="native-manual-power-group">
+            ${renderManualRoundButton(indState === "START" || indState === "PAUSE" ? "manual-induction-stop" : "manual-induction-start", device.slot, indState === "START" || indState === "PAUSE" ? "■" : "▶", {
+              active: indState === "START" || indState === "PAUSE",
+              disabled,
+              label: indState === "START" || indState === "PAUSE" ? "Stop induction" : "Start induction"
+            })}
+            ${renderManualRoundButton("manual-induction-pause-toggle", device.slot, indState === "PAUSE" ? "▶" : "Ⅱ", {
+              disabled: disabled || !(indState === "START" || indState === "PAUSE"),
+              label: indState === "PAUSE" ? "Resume induction" : "Pause induction"
+            })}
+          </div>
         </div>
       </div>
+
+      <div class="native-manual-module">
+        <div class="native-manual-module-head">
+          <span class="${magState === "IDLE" || magState === "STOP" ? "" : "active"}">${escapeHtml(manualModuleLabel("magnetron", telemetry.magnetronStatus))}</span>
+          <div class="native-manual-adjust">
+            ${renderManualStepButton("manual-magnetron-power", device.slot, "+", { extra: 'data-delta="10"', disabled })}
+            <b>${escapeHtml(`${Number(telemetry.magPower || 0)} %`)}</b>
+            ${renderManualStepButton("manual-magnetron-power", device.slot, "-", { extra: 'data-delta="-10"', disabled })}
+          </div>
+        </div>
+        <div class="native-manual-row">
+          <div class="native-manual-adjust time">
+            ${renderManualStepButton("manual-magnetron-time", device.slot, "+", { extra: 'data-delta="10"', disabled })}
+            <b>10</b>
+            ${renderManualStepButton("manual-magnetron-time", device.slot, "-", { extra: 'data-delta="-10"', disabled })}
+            <strong>${escapeHtml(formatManualTime(telemetry.magTime || 0))}</strong>
+          </div>
+          <div class="native-manual-power-group">
+            ${renderManualRoundButton(magState === "START" || magState === "PAUSE" ? "manual-magnetron-stop" : "manual-magnetron-start", device.slot, magState === "START" || magState === "PAUSE" ? "■" : "▶", {
+              active: magState === "START" || magState === "PAUSE",
+              disabled,
+              label: magState === "START" || magState === "PAUSE" ? "Stop microwave" : "Start microwave"
+            })}
+            ${renderManualRoundButton("manual-magnetron-pause-toggle", device.slot, magState === "PAUSE" ? "▶" : "Ⅱ", {
+              disabled: disabled || !(magState === "START" || magState === "PAUSE"),
+              label: magState === "PAUSE" ? "Resume microwave" : "Pause microwave"
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div class="native-manual-module stirrer">
+        <div class="native-manual-module-head">
+          <span class="active">Stirrer</span>
+          ${renderManualRoundButton(telemetry.stirrer === "OFF" ? "manual-stirrer-speed" : "manual-stirrer-stop", device.slot, "⏻", {
+            active: telemetry.stirrer !== "OFF",
+            disabled,
+            extra: telemetry.stirrer === "OFF" ? `data-speed="${DEFAULT_STIRRER_LEVEL}"` : "",
+            label: telemetry.stirrer === "OFF" ? "Start stirrer" : "Stop stirrer"
+          })}
+        </div>
+        <div class="native-stirrer-segment">
+          ${[
+            ["LOW", "Low"],
+            ["MED", "Med"],
+            ["HIGH", "High"],
+            ["VERY_HIGH", "V High"]
+          ]
+            .map(
+              ([speed, label]) => `
+                <button class="${stirrerSpeed === speed ? "selected" : ""}" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="${speed}" ${disabledAttr}>${label}</button>
+              `
+            )
+            .join("")}
+        </div>
+      </div>
+
+      <div class="native-liquid-grid">
+        <label>Sprinkle</label>
+        <input type="number" min="1" step="1" value="${pumpUnits}" placeholder="count" data-input="manual-pump-units" ${disabledAttr}>
+        ${renderManualRoundButton(telemetry.pumpOn ? "manual-pump-stop" : "manual-pump-start", device.slot, "⏻", {
+          active: telemetry.pumpOn,
+          disabled,
+          label: telemetry.pumpOn ? "Stop sprinkle" : "Start sprinkle"
+        })}
+        <label>Spray</label>
+        <input type="number" min="10" step="1" value="${sprayMl}" placeholder="ml" data-input="manual-spray-ml" ${disabledAttr}>
+        ${renderManualRoundButton(telemetry.purgeOn ? "manual-spray-stop" : "manual-spray-start", device.slot, "⏻", {
+          active: telemetry.purgeOn,
+          disabled,
+          label: telemetry.purgeOn ? "Stop spray" : "Start spray"
+        })}
+      </div>
+
+      <div class="native-manual-run">
+        <select data-input="manual-recipe-id" ${disabledAttr}>
+          <option value="">Select recipe to run</option>
+          ${manualRecipes.map((recipe) => `<option value="${recipe.id}" ${selectedRecipeId === recipe.id ? "selected" : ""}>${escapeHtml(recipe.displayName)}</option>`).join("")}
+        </select>
+        <button class="native-manual-run-button" data-action="manual-run-selected-recipe" data-slot="${device.slot}" ${canSubmitManualRecipe && !disabled ? "" : "disabled"}>
+          ${escapeHtml(selectedRunState?.actionLabel || "Run now")}
+        </button>
+        <small>${escapeHtml(manualRunMessage)}</small>
+      </div>
+
+      <div class="native-manual-section-title recommended"><span>Recommended</span><i></i></div>
+      ${renderNativeManualRecipeStrip(snapshot, "native-manual-recipes-strip bottom")}
+      <div class="native-manual-live-status">
+        <span>Induction ${escapeHtml(getManualStatus(telemetry.inductionStatus || "IDLE"))}</span>
+        <span>Microwave ${escapeHtml(getManualStatus(telemetry.magnetronStatus || "IDLE"))}</span>
+        <span>Stirrer ${escapeHtml(formatStirrerDisplay(stirrerSpeed))}</span>
+        <span>Pump ${escapeHtml(telemetry.pumpOn ? "ON" : "OFF")}</span>
+        <span>Updated ${escapeHtml(device.lastUpdatedAt ? formatAgo(device.lastUpdatedAt) : "Never")}</span>
+        <button data-action="manual-request-status" data-slot="${device.slot}" ${disabledAttr}>STATUS=?</button>
+      </div>
     </section>
-    ${
-      !device
-        ? `<section class="stack-section"><div class="empty-card">No device slots are available.</div></section>`
-        : `
-          <section class="stack-section">
-            <div class="mini-title">Device status</div>
-            <div class="settings-card">
-              <div class="detail-info-list">
-                <div class="detail-info-row"><span>Device</span><strong>${escapeHtml(device.displayName)}</strong></div>
-                <div class="detail-info-row"><span>Connection</span><strong>${escapeHtml(device.connection)}</strong></div>
-                <div class="detail-info-row"><span>Induction</span><strong>${escapeHtml(inductionStatus)}</strong></div>
-                <div class="detail-info-row"><span>Microwave</span><strong>${escapeHtml(magnetronStatus)}</strong></div>
-                <div class="detail-info-row"><span>Remaining</span><strong>${secondsLabel(displayTelemetry.indTime || 0)}</strong></div>
-                <div class="detail-info-row"><span>Power</span><strong>${escapeHtml((displayTelemetry.indPower || 0) + "%")}</strong></div>
-                <div class="detail-info-row"><span>Microwave time</span><strong>${secondsLabel(displayTelemetry.magTime || 0)}</strong></div>
-                <div class="detail-info-row"><span>Microwave power</span><strong>${escapeHtml((displayTelemetry.magPower || 0) + "%")}</strong></div>
-                <div class="detail-info-row"><span>Stirrer</span><strong>${escapeHtml(stirrerLabel)}</strong></div>
-                <div class="detail-info-row"><span>Pump</span><strong>${escapeHtml(pumpLabel)}</strong></div>
-                <div class="detail-info-row"><span>Last updated</span><strong>${escapeHtml(device.lastUpdatedAt ? formatAgo(device.lastUpdatedAt) : "Never")}</strong></div>
-              </div>
-              <p class="subtle">${escapeHtml(device.lastMessage || "Waiting for device status")}</p>
-              <div class="action-row top-gap">
-                ${
-                  device.connection === "connected"
-                    ? `<button class="secondary-button small" data-action="manual-request-status" data-slot="${device.slot}">Refresh status</button>`
-                    : `<button class="primary-button small" data-action="connect-device" data-slot="${device.slot}">Connect device</button>`
-                }
-                <button class="secondary-button small" data-action="open-device-sheet" data-slot="${device.slot}">Open details</button>
-              </div>
-            </div>
-          </section>
-          <section class="stack-section">
-            <div class="mini-title">Induction control</div>
-            <div class="settings-card">
-              <div class="action-row">
-                <button class="primary-button" data-action="manual-induction-start" data-slot="${device.slot}" ${manualCommandDisabled}>Start induction</button>
-                <button class="danger-button" data-action="manual-induction-stop" data-slot="${device.slot}" ${manualCommandDisabled}>Stop induction</button>
-              </div>
-              <div class="action-row">
-                <button class="secondary-button" data-action="manual-induction-power" data-slot="${device.slot}" data-delta="-10" ${manualCommandDisabled}>-10 Power</button>
-                <button class="secondary-button" data-action="manual-induction-power" data-slot="${device.slot}" data-delta="10" ${manualCommandDisabled}>+10 Power</button>
-              </div>
-              <p class="subtle">Firmware accepts induction power changes in 10% steps while quick-start induction is running.</p>
-            </div>
-          </section>
-          <section class="stack-section">
-            <div class="mini-title">Microwave control</div>
-            <div class="settings-card">
-              <div class="action-row">
-                <button class="primary-button" data-action="manual-magnetron-start" data-slot="${device.slot}" ${manualCommandDisabled}>Start microwave</button>
-                <button class="danger-button" data-action="manual-magnetron-stop" data-slot="${device.slot}" ${manualCommandDisabled}>Stop microwave</button>
-              </div>
-              <p class="subtle">This uses the firmware quick-start microwave commands over BLE.</p>
-            </div>
-          </section>
-          <section class="stack-section">
-            <div class="mini-title">Stirrer control</div>
-            <div class="settings-card">
-              <div class="action-row">
-                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="LOW" ${manualCommandDisabled}>Speed 1</button>
-                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="MED" ${manualCommandDisabled}>Speed 2</button>
-                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="HIGH" ${manualCommandDisabled}>Speed 3</button>
-                <button class="secondary-button" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="VERY_HIGH" ${manualCommandDisabled}>Speed 4</button>
-                <button class="danger-button" data-action="manual-stirrer-stop" data-slot="${device.slot}" ${manualCommandDisabled}>Stop stirrer</button>
-              </div>
-              <p class="subtle">Normal mode keeps the stirrer ON at speed 2 by default. Manual Mode sends temporary overrides only: speed 1-4 maps to LOW, MED, HIGH, and VERY_HIGH, and Stop stirrer sends OFF.</p>
-            </div>
-          </section>
-          <section class="stack-section">
-            <div class="mini-title">Pump control</div>
-            <div class="settings-card">
-              <label class="field-label">
-                Pump amount (10 ml units)
-                <input class="field-input" type="number" min="1" step="1" value="${pumpUnits}" data-input="manual-pump-units">
-              </label>
-              <div class="action-row">
-                <button class="primary-button" data-action="manual-pump-start" data-slot="${device.slot}" ${manualCommandDisabled}>Start pump</button>
-                <button class="danger-button" data-action="manual-pump-stop" data-slot="${device.slot}" ${manualCommandDisabled}>Stop pump</button>
-              </div>
-              <p class="subtle"><code>PUMP=ON,n</code> uses the firmware's 10 ml tick units. For example, <code>10</code> sends roughly 100 ml.</p>
-            </div>
-          </section>
-        `
-    }
   `;
 }
 
 function renderDeviceManualModeModal(snapshot, device) {
+  const deviceTitle = device.bluetoothName || device.lockedBluetoothName || device.displayName || `ON2COOK00${device.slot}`;
   return `
-    <div class="modal-backdrop">
-      <div class="modal-card wide refined-mobile-screen device-manual-screen">
-        ${renderRefinedScreenTopBar(snapshot, "Manual Mode", `${device.displayName} | D${device.slot}`)}
-        <div class="refined-title-row">
-          <button class="icon-button refined-back-button" data-action="close-modal" aria-label="Back">${renderUiIcon("chevronLeft")}</button>
-          <div>
-            <div class="eyebrow">Device ${device.slot}</div>
-            <h3>${escapeHtml(device.displayName)} manual controls</h3>
-          </div>
-          <button class="icon-button" type="button" data-action="manual-request-status" data-slot="${device.slot}" aria-label="Refresh status">${renderUiIcon("refresh")}</button>
+    <div class="native-manual-backdrop">
+      <div class="native-manual-phone device-manual-screen">
+        <div class="native-manual-statusbar">
+          <strong>${escapeHtml(new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))}</strong>
+          <span>!</span>
+          <span>BLE</span>
+          <span>&bull;</span>
         </div>
+        <header class="native-manual-toolbar">
+          <button class="native-manual-nav-button" data-action="close-modal" aria-label="Back">&lsaquo;</button>
+          <span class="native-ble-mark" aria-hidden="true">B</span>
+          <strong>${escapeHtml(deviceTitle)}</strong>
+          <button class="native-manual-add-button" data-action="open-assign-recipe" data-slot="${device.slot}" aria-label="Add recipe">+</button>
+          <button class="native-manual-menu-button" data-action="manual-request-status" data-slot="${device.slot}" aria-label="Refresh status">&#9776;</button>
+        </header>
         ${renderManualModeTab(snapshot, device)}
       </div>
     </div>
@@ -12494,12 +12707,32 @@ async function handleClick(event) {
     await adjustManualInductionPower(Number(button.dataset.slot), Number(button.dataset.delta || 0)).catch((error) => showToast(error.message, "error"));
     return;
   }
+  if (action === "manual-induction-time") {
+    await adjustManualInductionTime(Number(button.dataset.slot), Number(button.dataset.delta || 0)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "manual-induction-pause-toggle") {
+    await pauseResumeManualInduction(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
   if (action === "manual-magnetron-start") {
     await startManualMagnetron(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "manual-magnetron-stop") {
     await stopManualMagnetron(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "manual-magnetron-power") {
+    await adjustManualMagnetronPower(Number(button.dataset.slot), Number(button.dataset.delta || 0)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "manual-magnetron-time") {
+    await adjustManualMagnetronTime(Number(button.dataset.slot), Number(button.dataset.delta || 0)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "manual-magnetron-pause-toggle") {
+    await pauseResumeManualMagnetron(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "manual-stirrer-speed") {
@@ -12521,6 +12754,19 @@ async function handleClick(event) {
   }
   if (action === "manual-pump-stop") {
     await stopManualPump(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "manual-spray-start") {
+    const input = app.querySelector('[data-input="manual-spray-ml"]');
+    const ml = Math.max(10, Number(input?.value || state().ui.manualMode?.sprayMl) || 10);
+    mutate((draft) => {
+      draft.ui.manualMode.sprayMl = ml;
+    });
+    await startManualPurge(Number(button.dataset.slot), ml).catch((error) => showToast(error.message, "error"));
+    return;
+  }
+  if (action === "manual-spray-stop") {
+    await stopManualPurge(Number(button.dataset.slot)).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "confirm-completion") {
@@ -12773,6 +13019,13 @@ async function handleChange(event) {
   if (input.dataset.input === "manual-pump-units") {
     mutate((draft) => {
       draft.ui.manualMode.pumpUnits = Math.max(1, Math.trunc(Number(input.value) || 10));
+    });
+    return;
+  }
+
+  if (input.dataset.input === "manual-spray-ml") {
+    mutate((draft) => {
+      draft.ui.manualMode.sprayMl = Math.max(10, Math.trunc(Number(input.value) || 10));
     });
     return;
   }

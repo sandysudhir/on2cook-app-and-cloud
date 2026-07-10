@@ -1143,6 +1143,12 @@ export class BleTransport extends EventTarget {
     await this.sendCommand(slot, `INDPOWER=${safeDelta}`);
   }
 
+  async changeInductionProcessTime(slot, deltaSeconds) {
+    const safeDelta = Math.trunc(Number(deltaSeconds) || 0);
+    if (!safeDelta) return;
+    await this.sendCommand(slot, `INDPROCESSTIME=${safeDelta}`);
+  }
+
   async startMagnetron(slot) {
     await this.sendCommand(slot, "MAGQUICKSTART=START");
   }
@@ -1157,6 +1163,18 @@ export class BleTransport extends EventTarget {
 
   async resumeMagnetron(slot) {
     await this.sendCommand(slot, "MAGQUICKSTART=RESUME");
+  }
+
+  async changeMagnetronPower(slot, delta) {
+    const safeDelta = Math.trunc(Number(delta) || 0);
+    if (!safeDelta) return;
+    await this.sendCommand(slot, `MAGPOWER=${safeDelta}`);
+  }
+
+  async changeMagnetronProcessTime(slot, deltaSeconds) {
+    const safeDelta = Math.trunc(Number(deltaSeconds) || 0);
+    if (!safeDelta) return;
+    await this.sendCommand(slot, `MAGPROCESSTIME=${safeDelta}`);
   }
 
   async setStirrer(slot, speed) {
@@ -1179,6 +1197,15 @@ export class BleTransport extends EventTarget {
 
   async stopPump(slot) {
     await this.sendCommand(slot, "PUMP=OFF");
+  }
+
+  async startPurge(slot, ml) {
+    const safeMl = Math.max(10, Math.trunc(Number(ml) || 0));
+    await this.sendCommand(slot, `PURGE=ON,${safeMl}`);
+  }
+
+  async stopPurge(slot) {
+    await this.sendCommand(slot, "PURGE=OFF");
   }
 
   async listRecipes(slot) {
