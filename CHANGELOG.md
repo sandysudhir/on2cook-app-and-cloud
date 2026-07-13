@@ -2,6 +2,15 @@
 
 ## 2026-07-13
 
+- Replaced the idle Manual Mode controls with the original-style live cooking timeline whenever a device is running a recipe.
+- Mapped recipe-mode status from the firmware `MODE`, `IND_RUN`, `MAG_RUN`, power, stirrer, and pump fields so active induction/microwave/stirrer states no longer appear idle; inactive sources stay neutral and an active stirrer is green.
+- Kept manual intervention controls collapsed during cooking and removed inappropriate Start/Play controls for sources that are already running.
+- Unified Orders, Recipe List, Quick Assign, and device Manual Mode around one ordered per-device queue. Manual Mode now keeps its recipe picker visible, shows every upcoming recipe, supports up/down reordering, and reflects the same order on the main device card.
+- Queuing no longer checks or uploads recipe files. A queued recipe is checked and uploaded only when it reaches the front and is about to cook.
+- Migrated duplicate saved seed-recipe IDs to stable unique IDs, preventing one selected recipe from resolving to another recipe with the same old internal ID.
+- Preserved the device Manual Mode scroll position across targeted queue/selection updates.
+- Verified two-recipe queue insertion, reorder, shared D1 rendering, unique option IDs, and a 390 x 844 mobile layout without horizontal overflow.
+- Bumped web cache version to `20260713b` / service-worker cache `v91` and refreshed the APK cloud URL.
 - Stabilized device Manual Mode so induction/magnetron/stirrer changes keep their selected UI value while the device acknowledgement/status refresh catches up.
 - Changed manual status refreshes from immediate repeated polling to a coalesced delayed refresh, reducing screen jumps while operators tap controls.
 - Fixed Manual Mode Sprinkle/Spray semantics: Sprinkle is fixed at one 10 ml shot, while Spray uses a visible count starting at 1 and sends count x 10 ml.

@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260713a";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260713a";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260713b";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260713b";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260713a";
+} from "./ncb-services.js?v=20260713b";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260713a";
+} from "./data-store.js?v=20260713b";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -30,7 +30,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260713a";
+const APP_ASSET_VERSION = "20260713b";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -815,7 +815,7 @@ function getQueueOrders(snapshot, device) {
     order.assignedSlot === device.slot &&
     order.id !== device.currentJobId;
   const queued = snapshot.orders.current.filter(isQueuedForDevice);
-  if (!device.queueOrderIds.length) return queued;
+  if (!Array.isArray(device.queueOrderIds) || !device.queueOrderIds.length) return queued;
   const orderIndex = new Map(device.queueOrderIds.map((orderId, index) => [orderId, index]));
   return queued.sort((left, right) => {
     const leftIndex = orderIndex.has(left.id) ? orderIndex.get(left.id) : Number.MAX_SAFE_INTEGER;
@@ -1212,6 +1212,71 @@ function getRuntimeRecipe(snapshot, device) {
     return getEffectiveRecipe(snapshot, currentOrder);
   }
   return findRecipeByFirmwareName(snapshot, getLiveRecipeName(device));
+}
+
+function isDeviceRecipeRuntimeActive(snapshot, device) {
+  const workStatus = String(device.telemetry?.workStatus || "").trim().toLowerCase();
+  const activeJob = getCurrentJob(snapshot, device);
+  const unfinishedRun = Boolean(device.activeRun?.startedAt && !device.activeRun?.finishedAt);
+  const hasAssignedRecipe = Boolean(activeJob || device.currentJobId || getLiveRecipeName(device) || unfinishedRun);
+  if (!hasAssignedRecipe) return false;
+  if (["offline", "complete", "completed", "aborted", "complete_wait"].includes(workStatus)) return false;
+  if (activeJob || device.currentJobId || unfinishedRun) return true;
+  return workStatus !== "idle";
+}
+
+function getRecipeRuntimePresentation(snapshot, device, recipe = null) {
+  const telemetry = getDisplayTelemetry(device);
+  const runtimeRecipe = recipe || getRuntimeRecipe(snapshot, device) || getRecipeForRunRecord(snapshot, device.activeRun);
+  const active = isDeviceRecipeRuntimeActive(snapshot, device);
+  const stepState = runtimeRecipe
+    ? getOperatorStepState(device, runtimeRecipe)
+    : { activeIndex: Math.max(0, Number(telemetry.stepNo || 1) - 1), totalSteps: 0, currentStep: null };
+  const step = stepState.currentStep || {};
+  const inductionState = getManualStatus(telemetry.inductionStatus);
+  const microwaveState = getManualStatus(telemetry.magnetronStatus);
+  const inductionRunning = active && isQuickStartActive(inductionState);
+  const microwaveRunning = active && isQuickStartActive(microwaveState);
+  const inductionPower = inductionRunning
+    ? clampPercent(Number(telemetry.indPower) > 0 ? telemetry.indPower : step.Induction_power)
+    : 0;
+  const microwavePower = microwaveRunning
+    ? clampPercent(Number(telemetry.magPower) > 0 ? telemetry.magPower : step.Magnetron_power)
+    : 0;
+  const inductionTime = inductionRunning
+    ? Math.max(0, Number(telemetry.indTime) || Number(step.Induction_on_time) || 0)
+    : 0;
+  const microwaveTime = microwaveRunning
+    ? Math.max(0, Number(telemetry.magTime) || Number(step.Magnetron_on_time) || 0)
+    : 0;
+  const stirrer = mapStirrerSpeedLabel(telemetry.stirrer || step.stirrer_on || DEFAULT_STIRRER_LEVEL);
+  const stirrerRunning = active && stirrer !== "OFF" && stirrer !== "0";
+  return {
+    active,
+    recipe: runtimeRecipe,
+    telemetry: {
+      ...telemetry,
+      workStatus: active ? telemetry.workStatus || "cooking" : telemetry.workStatus,
+      mode: active ? telemetry.mode || "Cooking" : telemetry.mode,
+      inductionStatus: active ? (inductionRunning ? "RUNNING" : "OFF") : telemetry.inductionStatus,
+      magnetronStatus: active ? (microwaveRunning ? "RUNNING" : "OFF") : telemetry.magnetronStatus,
+      indPower: inductionPower,
+      magPower: microwavePower,
+      indTime: inductionTime,
+      magTime: microwaveTime,
+      stirrer: stirrerRunning ? stirrer : "OFF"
+    },
+    stepState,
+    step,
+    inductionPower,
+    microwavePower,
+    inductionTime,
+    microwaveTime,
+    inductionRunning,
+    microwaveRunning,
+    stirrer,
+    stirrerRunning
+  };
 }
 
 function getTelemetryMode(device) {
@@ -3344,8 +3409,20 @@ function applyTelemetry(device, parsed, message, at, draft = null) {
   device.telemetry.ingredientsIndex = ingredientIndex || device.telemetry.ingredientsIndex;
   device.telemetry.mode = mode || device.telemetry.mode;
   device.telemetry.status = status || device.telemetry.status;
-  device.telemetry.inductionStatus = inductionStatus || device.telemetry.inductionStatus;
-  device.telemetry.magnetronStatus = magnetronStatus || device.telemetry.magnetronStatus;
+  const recipeExecutionSignal =
+    device.telemetry.workStatus === "cooking" ||
+    mode.toLowerCase().includes("cooking") ||
+    instructionRun.toUpperCase() === "START";
+  device.telemetry.inductionStatus =
+    inductionStatus ||
+    (recipeExecutionSignal && (indTime !== null || indPower !== null)
+      ? (Number(indTime || 0) > 0 || Number(indPower || 0) > 0 ? "RUN" : "IDLE")
+      : device.telemetry.inductionStatus);
+  device.telemetry.magnetronStatus =
+    magnetronStatus ||
+    (recipeExecutionSignal && (magTime !== null || magPower !== null)
+      ? (Number(magTime || 0) > 0 || Number(magPower || 0) > 0 ? "RUN" : "IDLE")
+      : device.telemetry.magnetronStatus);
   const stirrerSignal = parsed.STIRRER || parsed.stirrer || "";
   const shouldPreferDefaultStirrer =
     Boolean(mode) ||
@@ -4985,6 +5062,39 @@ function createDeviceQueuedRecipeOrder(snapshot, recipe, slot, source = "Quick A
   );
 }
 
+function queueRecipeOnDevice(slot, recipe, source = "Manual Mode") {
+  const snapshot = state();
+  const device = snapshot.devices.find((item) => item.slot === Number(slot));
+  if (!device || device.connection !== "connected") {
+    showToast(`Device ${slot} is offline. Connect it before adding a recipe to its queue.`, "warning");
+    return null;
+  }
+  if (!recipe) {
+    showToast("Recipe not found.", "error");
+    return null;
+  }
+  const order = createDeviceQueuedRecipeOrder(snapshot, recipe, Number(slot), source);
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    allowRecipeOnDevice(draft, slot, recipe.id);
+    draft.orders.current.push(order);
+    draftDevice.queueOrderIds = getDeviceQueuedOrderIds(draft, draftDevice);
+    appendActivity(draftDevice, `${recipe.displayName} added to queue from ${source}`, "info");
+    pushDraftNotification(draft, {
+      type: "order",
+      title: `Recipe queued on D${draftDevice.slot}`,
+      deviceSlot: draftDevice.slot,
+      recipeName: recipe.displayName,
+      orderId: order.orderId || "",
+      message: `${recipe.displayName} was added after the current device work.`,
+      action: { type: "device", label: "Open device", slot: draftDevice.slot }
+    });
+  });
+  showToast(`${recipe.displayName} added to Device ${slot} queue`, "success");
+  return order;
+}
+
 async function resolveAssignableRecipe(payload) {
   const snapshot = state();
   if (payload.recipeId) {
@@ -5014,6 +5124,11 @@ async function executeDeviceRecipeAssignment(payload) {
   const recipe = await resolveAssignableRecipe(payload);
   if (!recipe) {
     showToast("Recipe not found.", "error");
+    return;
+  }
+  if (action === "queue") {
+    queueRecipeOnDevice(slot, recipe, payload.source || "Quick Assign");
+    openModal("device-sheet", { slot });
     return;
   }
   mutate((draft) => {
@@ -5046,16 +5161,6 @@ async function executeDeviceRecipeAssignment(payload) {
     openModal("device-sheet", { slot });
     return;
   }
-  const order = createDeviceQueuedRecipeOrder(state(), recipe, slot, payload.source || "Quick Assign");
-  mutate((draft) => {
-    const draftDevice = draft.devices.find((item) => item.slot === slot);
-    if (!draftDevice) return draft;
-    draft.orders.current.push(order);
-    draftDevice.queueOrderIds = [...getDeviceQueuedOrderIds(draft, draftDevice), order.id];
-    appendActivity(draftDevice, `${recipe.displayName} added from Quick Assign`, "info");
-  });
-  showToast(`${recipe.displayName} added to Device ${slot} queue`, "success");
-  openModal("device-sheet", { slot });
 }
 
 async function completeIngredientStage(slot) {
@@ -6603,11 +6708,31 @@ function getDeviceLiveLogSnapshot(device) {
 }
 
 function renderDeviceStatusModal(snapshot, device) {
-  const telemetry = getManualDisplayTelemetry(snapshot, device);
+  const runtimePresentation = getRecipeRuntimePresentation(snapshot, device);
+  const manualTelemetry = getManualDisplayTelemetry(snapshot, device);
+  const telemetry = runtimePresentation.active ? runtimePresentation.telemetry : manualTelemetry;
   const liveSnapshot = getDeviceLiveLogSnapshot(device);
   const live = liveSnapshot.latest;
   const liveSensor = liveSnapshot.latestSensor?.sensor || {};
-  const liveMode = live?.modeType === "manual" ? "Manual Mode" : live?.modeType === "recipe" ? "Recipe Cooking" : telemetry.mode || "Unknown";
+  const liveMode = runtimePresentation.active
+    ? "Recipe Cooking"
+    : live?.modeType === "manual"
+      ? "Manual Mode"
+      : live?.modeType === "recipe"
+        ? "Recipe Cooking"
+        : telemetry.mode || "Unknown";
+  const inductionStatus = runtimePresentation.active
+    ? `${runtimePresentation.inductionRunning ? "RUNNING" : "OFF"} | ${runtimePresentation.inductionPower}% | ${secondsLabel(runtimePresentation.inductionTime)}`
+    : live?.induction || live?.inductionState
+      ? `${live.inductionState || ""}${live.induction ? ` | ${live.induction}` : ""}${live.inductionRun ? ` | ${live.inductionRun}` : ""}`
+      : `${telemetry.inductionStatus || "IDLE"}${telemetry.indPower ? ` | ${telemetry.indPower}%` : ""}`;
+  const microwaveStatus = runtimePresentation.active
+    ? `${runtimePresentation.microwaveRunning ? "RUNNING" : "OFF"} | ${runtimePresentation.microwavePower}% | ${secondsLabel(runtimePresentation.microwaveTime)}`
+    : live?.microwave || live?.microwaveState
+      ? `${live.microwaveState || ""}${live.microwave ? ` | ${live.microwave}` : ""}${live.microwaveRun ? ` | ${live.microwaveRun}` : ""}`
+      : `${telemetry.magnetronStatus || "IDLE"}${telemetry.magPower ? ` | ${telemetry.magPower}%` : ""}`;
+  const rawStatus = live?.message || telemetry.lastRaw || "No raw status received yet";
+  const lastMessage = device.lastMessage || "No status message yet";
   const statusRows = [
     ["Connection", device.connection || "unknown"],
     ["Work status", telemetry.workStatus || live?.status || "Unknown"],
@@ -6616,15 +6741,13 @@ function renderDeviceStatusModal(snapshot, device) {
     ["Step", live?.stepNo ? `${live.stepNo}${live.totalSteps ? ` / ${live.totalSteps}` : ""}` : telemetry.stepNo ? String(telemetry.stepNo) : "0"],
     ["Remaining", live?.timeLeft && live.timeLeft !== "-" ? live.timeLeft : secondsLabel(telemetry.remainingSeconds || 0)],
     ["Ingredients index", telemetry.ingredientsIndex ? String(telemetry.ingredientsIndex) : "0"],
-    ["Induction", live?.induction || live?.inductionState ? `${live.inductionState || ""}${live.induction ? ` | ${live.induction}` : ""}${live.inductionRun ? ` | ${live.inductionRun}` : ""}` : `${telemetry.inductionStatus || "IDLE"}${telemetry.indPower ? ` | ${telemetry.indPower}%` : ""}`],
-    ["Microwave", live?.microwave || live?.microwaveState ? `${live.microwaveState || ""}${live.microwave ? ` | ${live.microwave}` : ""}${live.microwaveRun ? ` | ${live.microwaveRun}` : ""}` : `${telemetry.magnetronStatus || "IDLE"}${telemetry.magPower ? ` | ${telemetry.magPower}%` : ""}`],
+    ["Induction", inductionStatus],
+    ["Microwave", microwaveStatus],
     ["Stirrer", live?.stirrer || telemetry.stirrer || DEFAULT_STIRRER_LEVEL],
     ["Pump / water", live?.pump || (telemetry.pumpOn ? "ON" : "OFF")],
     ["Pan / glass temp", liveSensor.panTemp || liveSensor.glassTemp ? `Pan ${liveSensor.panTemp || "-"} | Glass ${liveSensor.glassTemp || "-"}` : "No sensor packet"],
     ["Voltage / current", liveSensor.indVoltage || liveSensor.indCurrent ? `${liveSensor.indVoltage || "-"} V | ${liveSensor.indCurrent || "-"} I` : live?.currentVoltage || "-"],
     ["Paused", telemetry.paused ? "Yes" : "No"],
-    ["Last raw status", live?.message || telemetry.lastRaw || "No raw status received yet"],
-    ["Last message", device.lastMessage || "No status message yet"],
     ["Last updated", device.lastUpdatedAt ? formatTimestamp(device.lastUpdatedAt) : "Never"]
   ];
   return `
@@ -6654,6 +6777,13 @@ function renderDeviceStatusModal(snapshot, device) {
               )
               .join("")}
           </div>
+          <details class="status-technical-details">
+            <summary>Technical device message</summary>
+            <dl>
+              <div><dt>Latest parsed source</dt><dd>${escapeHtml(rawStatus)}</dd></div>
+              <div><dt>Last device message</dt><dd>${escapeHtml(lastMessage)}</dd></div>
+            </dl>
+          </details>
         </div>
         <div class="settings-card">
           <div class="mini-title">Recent device messages</div>
@@ -8642,7 +8772,9 @@ function renderManualModeTab(snapshot, fixedDevice = null) {
   }
   const selectedRecipeId = String(snapshot.ui.manualMode?.recipeId || "");
   const selectedRecipe = selectedRecipeId ? findRecipeById(snapshot, selectedRecipeId) : null;
-  const manualRecipes = getSelectedRecipes(snapshot);
+  const manualRecipes = getSelectedRecipes(snapshot).filter((recipe) =>
+    isRecipeAllowedOnDevice(snapshot, device, recipe.id)
+  );
   const selectedRunState = getManualDeviceRunState(snapshot, device);
   const recipeAllowedOnSelectedDevice = Boolean(selectedRecipe && isRecipeAllowedOnDevice(snapshot, device, selectedRecipe.id));
   const canSubmitManualRecipe =
@@ -8783,6 +8915,8 @@ function renderManualModeTab(snapshot, fixedDevice = null) {
         <small>${escapeHtml(manualRunMessage)}</small>
       </div>
 
+      ${renderNativeCookingQueue(snapshot, device, null, { includePicker: false })}
+
       <div class="native-manual-section-title recommended"><span>Recommended</span><i></i></div>
       ${renderNativeManualRecipeStrip(snapshot, "native-manual-recipes-strip bottom", device)}
       <div class="native-manual-live-status">
@@ -8797,11 +8931,255 @@ function renderManualModeTab(snapshot, fixedDevice = null) {
   `;
 }
 
+function getNativeCookingTimelineState(device, recipe) {
+  const steps = Array.isArray(recipe?.recipeJson?.Instruction) ? recipe.recipeJson.Instruction : [];
+  const activeIndex = Math.max(0, Math.min(Math.max(0, steps.length - 1), Number(device.telemetry?.stepNo || 1) - 1));
+  const totalSeconds = Math.max(1, steps.reduce((total, step) => total + Math.max(1, getInstructionDuration(step)), 0));
+  const completedSeconds = steps
+    .slice(0, activeIndex)
+    .reduce((total, step) => total + Math.max(1, getInstructionDuration(step)), 0);
+  const currentDuration = Math.max(1, getInstructionDuration(steps[activeIndex]));
+  const reportedRemaining = Math.max(0, Number(device.telemetry?.remainingSeconds) || 0);
+  const elapsedFromStart = device.activeRun?.startedAt ? elapsedSecondsBetween(device.activeRun.startedAt, nowIso()) : 0;
+  const elapsedInStep = reportedRemaining > 0
+    ? Math.max(0, currentDuration - Math.min(currentDuration, reportedRemaining))
+    : Math.max(0, Math.min(currentDuration, elapsedFromStart - completedSeconds));
+  const elapsedSeconds = Math.min(totalSeconds, completedSeconds + elapsedInStep);
+  return {
+    steps,
+    activeIndex,
+    totalSeconds,
+    currentDuration,
+    currentRemaining: reportedRemaining > 0 ? Math.min(currentDuration, reportedRemaining) : Math.max(0, currentDuration - elapsedInStep),
+    elapsedSeconds,
+    remainingSeconds: Math.max(0, totalSeconds - elapsedSeconds),
+    progress: Math.max(0, Math.min(100, (elapsedSeconds / totalSeconds) * 100))
+  };
+}
+
+function renderNativeCookingQueue(snapshot, device, activeRecipe, options = {}) {
+  const includePicker = options.includePicker !== false;
+  const queueOrders = getQueueOrders(snapshot, device);
+  const allowedRecipes = getSelectedRecipes(snapshot).filter((recipe) => isRecipeAllowedOnDevice(snapshot, device, recipe.id));
+  const selectedRecipeId = String(snapshot.ui.manualMode?.recipeId || "");
+  const selectedRecipe = allowedRecipes.find((recipe) => recipe.id === selectedRecipeId) || null;
+  let cursorSeconds = getDeviceActiveRemainingSeconds(device, activeRecipe);
+  const rows = queueOrders
+    .map((order, index) => {
+      const recipe = getEffectiveRecipe(snapshot, order);
+      const duration = Math.max(1, getRecipeDuration(recipe));
+      const startsIn = cursorSeconds;
+      cursorSeconds += duration;
+      return `
+        <article class="native-cook-queue-row">
+          <b>${index + 1}</b>
+          <div>
+            <strong>${escapeHtml(order.itemName)}</strong>
+            <small>Starts in ${escapeHtml(startsIn > 0 ? formatProClock(startsIn) : "next")} | cook time ${escapeHtml(secondsLabel(duration))}</small>
+          </div>
+          <div class="native-cook-queue-actions">
+            <button type="button" data-action="queue-move-up" data-slot="${device.slot}" data-order-id="${order.id}" ${index === 0 ? "disabled" : ""} aria-label="Move ${escapeHtml(order.itemName)} up">&uarr;</button>
+            <button type="button" data-action="queue-move-down" data-slot="${device.slot}" data-order-id="${order.id}" ${index === queueOrders.length - 1 ? "disabled" : ""} aria-label="Move ${escapeHtml(order.itemName)} down">&darr;</button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+  return `
+    <section class="native-cook-queue-panel" id="native-cook-queue-${device.slot}">
+      <div class="native-cook-queue-heading">
+        <div><span>Next recipes</span><strong>Device ${device.slot} queue</strong></div>
+        <b>${queueOrders.length}</b>
+      </div>
+      <div class="native-cook-queue-list">
+        ${rows || `<div class="native-cook-queue-empty">No recipe is queued after the current cook.</div>`}
+      </div>
+      ${
+        includePicker
+          ? `<div class="native-cook-queue-add">
+              <select data-input="manual-recipe-id" aria-label="Select the next recipe">
+                <option value="">Select next recipe</option>
+                ${allowedRecipes
+                  .map((recipe) => `<option value="${recipe.id}" ${recipe.id === selectedRecipeId ? "selected" : ""}>${escapeHtml(recipe.displayName)}</option>`)
+                  .join("")}
+              </select>
+              <button type="button" data-action="manual-run-selected-recipe" data-slot="${device.slot}" ${selectedRecipe ? "" : "disabled"}>Add to queue</button>
+            </div>
+            <small class="native-cook-queue-note">Select another recipe at any time. It will be checked and sent only when it is ready to cook.</small>`
+          : `<small class="native-cook-queue-note">Queued here and from Orders use this same Device ${device.slot} queue.</small>`
+      }
+    </section>
+  `;
+}
+
+function renderNativeCookingTimeline(snapshot, device) {
+  const presentation = getRecipeRuntimePresentation(snapshot, device);
+  const recipe = presentation.recipe;
+  const currentOrder = getCurrentJob(snapshot, device);
+  const timeline = getNativeCookingTimelineState(device, recipe);
+  const currentStep = timeline.steps[timeline.activeIndex] || presentation.step || {};
+  const nextStep = timeline.steps[timeline.activeIndex + 1] || null;
+  const currentPrompt = buildOperatorPrompt(recipe, currentStep, timeline.activeIndex);
+  const nextPrompt = nextStep ? buildOperatorPrompt(recipe, nextStep, timeline.activeIndex + 1) : null;
+  const recipeName =
+    device.activeRun?.displayName ||
+    currentOrder?.itemName ||
+    recipe?.displayName ||
+    getLiveRecipeName(device) ||
+    "Recipe running";
+  const connected = device.connection === "connected";
+  const disabledAttr = connected ? "" : "disabled";
+  const water = getLiquidStepValue(currentStep.pump_on);
+  const slurry = getLiquidStepValue(currentStep.purge_on);
+  const ingredientMode = String(device.telemetry?.workStatus || "").toLowerCase().includes("ingredient") ||
+    String(device.telemetry?.mode || "").toLowerCase().includes("ingredient");
+  const stirrerLabel = presentation.stirrerRunning ? formatStirrerDisplay(presentation.stirrer) : "Off";
+  return `
+    <section class="native-cook-body" data-device-slot="${device.slot}">
+      <div class="native-cook-control-panel">
+        <div class="native-cook-run-indicator ${device.telemetry?.paused ? "paused" : "running"}" aria-label="${device.telemetry?.paused ? "Recipe paused" : "Recipe running"}">
+          ${device.telemetry?.paused ? "II" : "&#9679;"}
+        </div>
+        <div class="native-cook-title">
+          <strong>${escapeHtml(formatProClock(timeline.currentRemaining || presentation.telemetry.remainingSeconds || 0))}</strong>
+          <span>${escapeHtml(recipeName)}</span>
+          <small>Step ${timeline.activeIndex + 1}${timeline.steps.length ? ` of ${timeline.steps.length}` : ""}</small>
+        </div>
+        <div class="native-cook-source-status ${presentation.inductionRunning ? "active" : ""}">
+          <b>IH</b><span>${presentation.inductionRunning ? `${presentation.inductionPower}%` : "Off"}</span>
+        </div>
+        <div class="native-cook-source-status ${presentation.microwaveRunning ? "active" : ""}">
+          <b>MW</b><span>${presentation.microwaveRunning ? `${presentation.microwavePower}%` : "Off"}</span>
+        </div>
+      </div>
+
+      <div class="native-cook-progress-summary">
+        <span><b>${formatProClock(timeline.elapsedSeconds)}</b><small>Elapsed</small></span>
+        <span><b>${Math.round(timeline.progress)}%</b><small>Recipe progress</small></span>
+        <span><b>${formatProClock(timeline.remainingSeconds)}</b><small>Estimated left</small></span>
+      </div>
+
+      <div class="native-cook-timeline" aria-label="Recipe cooking timeline">
+        <div class="native-cook-timeline-head">
+          <span>Step</span><span>Induction</span><span>Microwave</span><span>Action</span>
+        </div>
+        <div class="native-cook-stages">
+          ${
+            timeline.steps.length
+              ? timeline.steps
+                  .map((step, index) => {
+                    const duration = Math.max(1, getInstructionDuration(step));
+                    const stageHeight = Math.max(70, Math.min(132, Math.round((duration / timeline.totalSeconds) * 520)));
+                    const stateClass = index < timeline.activeIndex ? "done" : index === timeline.activeIndex ? "current" : "upcoming";
+                    const stepWater = getLiquidStepValue(step.pump_on);
+                    const stepSlurry = getLiquidStepValue(step.purge_on);
+                    return `
+                      <div class="native-cook-stage ${stateClass}" style="--stage-height:${stageHeight}px">
+                        <div class="native-cook-stage-axis">
+                          <i></i>
+                          <b>${index < timeline.activeIndex ? "&#10003;" : index + 1}</b>
+                          ${index === timeline.activeIndex ? `<span class="native-cook-playhead">&#9660;</span>` : ""}
+                        </div>
+                        <div class="native-cook-wave induction"><span style="width:${clampPercent(step.Induction_power)}%"></span><em>${clampPercent(step.Induction_power)}%</em></div>
+                        <div class="native-cook-wave microwave"><span style="width:${clampPercent(step.Magnetron_power)}%"></span><em>${clampPercent(step.Magnetron_power)}%</em></div>
+                        <div class="native-cook-stage-copy">
+                          <strong>${escapeHtml(step.Text || `Step ${index + 1}`)}</strong>
+                          <small>${escapeHtml(secondsLabel(duration))}${step.Weight ? ` | ${escapeHtml(step.Weight)}` : ""}</small>
+                          ${stepWater.fill > 0 ? `<small>Water ${escapeHtml(stepWater.label)}</small>` : ""}
+                          ${stepSlurry.fill > 0 ? `<small>Spray ${escapeHtml(stepSlurry.label)}</small>` : ""}
+                        </div>
+                      </div>
+                    `;
+                  })
+                  .join("")
+              : `<div class="native-cook-timeline-empty">The recipe is running, but its saved timeline is not available on this browser.</div>`
+          }
+        </div>
+      </div>
+
+      <div class="native-cook-current-action">
+        <div>
+          <b>${escapeHtml(formatProClock(timeline.currentRemaining))}</b>
+          <span>Current step</span>
+        </div>
+        <div>
+          <strong>${escapeHtml(currentPrompt?.title || currentStep.Text || `Step ${timeline.activeIndex + 1}`)}</strong>
+          <small>${escapeHtml(currentPrompt?.detail || currentStep.Weight || "Automatic cooking in progress")}</small>
+        </div>
+        ${
+          ingredientMode
+            ? `<button class="native-cook-confirm-button" data-action="complete-ingredients" data-slot="${device.slot}" ${disabledAttr}>Ingredient added</button>`
+            : ""
+        }
+      </div>
+
+      <div class="native-cook-next-action">
+        <span>Next</span>
+        <div>
+          <strong>${escapeHtml(nextPrompt?.title || nextStep?.Text || "Recipe completion")}</strong>
+          <small>${escapeHtml(nextPrompt?.detail || nextStep?.Weight || (nextStep ? "Automatic step" : "No further step"))}</small>
+        </div>
+        <b>${nextStep ? formatProClock(timeline.currentRemaining) : "--:--"}</b>
+      </div>
+
+      ${renderNativeCookingQueue(snapshot, device, recipe)}
+
+      <details class="native-cook-intervention">
+        <summary>Cooking controls and live status</summary>
+        <div class="native-cook-live-grid">
+          <div class="native-cook-live-tile ${presentation.inductionRunning ? "active" : ""}">
+            <span>Induction</span><strong>${presentation.inductionRunning ? "Running" : "Off"}</strong><small>${presentation.inductionPower}% | ${secondsLabel(presentation.inductionTime)}</small>
+            ${
+              presentation.inductionRunning
+                ? `<div class="native-cook-adjust"><button data-action="manual-induction-power" data-slot="${device.slot}" data-delta="-10" ${disabledAttr}>-</button><b>${presentation.inductionPower}%</b><button data-action="manual-induction-power" data-slot="${device.slot}" data-delta="10" ${disabledAttr}>+</button></div>`
+                : ""
+            }
+          </div>
+          <div class="native-cook-live-tile ${presentation.microwaveRunning ? "active" : ""}">
+            <span>Microwave</span><strong>${presentation.microwaveRunning ? "Running" : "Off"}</strong><small>${presentation.microwavePower}% | ${secondsLabel(presentation.microwaveTime)}</small>
+            ${
+              presentation.microwaveRunning
+                ? `<div class="native-cook-adjust"><button data-action="manual-magnetron-power" data-slot="${device.slot}" data-delta="-10" ${disabledAttr}>-</button><b>${presentation.microwavePower}%</b><button data-action="manual-magnetron-power" data-slot="${device.slot}" data-delta="10" ${disabledAttr}>+</button></div>`
+                : ""
+            }
+          </div>
+          <div class="native-cook-live-tile stirrer ${presentation.stirrerRunning ? "active" : ""}">
+            <span>Stirrer</span><strong>${presentation.stirrerRunning ? "On" : "Off"}</strong><small>${escapeHtml(stirrerLabel)}</small>
+            <button class="native-cook-stirrer-toggle ${presentation.stirrerRunning ? "active" : ""}" data-action="${presentation.stirrerRunning ? "manual-stirrer-stop" : "manual-stirrer-speed"}" data-slot="${device.slot}" ${presentation.stirrerRunning ? "" : `data-speed=\"${DEFAULT_STIRRER_LEVEL}\"`} ${disabledAttr}>
+              ${presentation.stirrerRunning ? "Stirrer on - switch off" : "Stirrer off - switch on"}
+            </button>
+          </div>
+          <div class="native-cook-live-tile ${water.fill > 0 || slurry.fill > 0 || presentation.telemetry.pumpOn ? "active" : ""}">
+            <span>Water / spray</span><strong>${presentation.telemetry.pumpOn ? "Running" : "Automatic"}</strong><small>Water ${escapeHtml(water.label)} | Spray ${escapeHtml(slurry.label)}</small>
+          </div>
+        </div>
+        <div class="native-cook-stirrer-speeds" aria-label="Stirrer speed">
+          ${[
+            ["LOW", "Low"],
+            ["MED", "Med"],
+            ["HIGH", "High"],
+            ["VERY_HIGH", "V High"]
+          ]
+            .map(
+              ([speed, label]) => `<button class="${presentation.stirrerRunning && presentation.stirrer === speed ? "active" : ""}" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="${speed}" ${disabledAttr}>${label}</button>`
+            )
+            .join("")}
+        </div>
+        <div class="native-cook-intervention-actions">
+          <button class="danger-button" data-action="abort-device" data-slot="${device.slot}" ${disabledAttr}>Abort recipe</button>
+          <button class="secondary-button" data-action="open-device-sheet" data-slot="${device.slot}">Full details</button>
+        </div>
+      </details>
+    </section>
+  `;
+}
+
 function renderDeviceManualModeModal(snapshot, device) {
   const deviceTitle = device.bluetoothName || device.lockedBluetoothName || device.displayName || `ON2COOK00${device.slot}`;
+  const cooking = isDeviceRecipeRuntimeActive(snapshot, device);
   return `
     <div class="native-manual-backdrop">
-      <div class="native-manual-phone device-manual-screen">
+      <div class="native-manual-phone device-manual-screen ${cooking ? "native-cooking-screen" : ""}" data-scroll-key="device-manual-modal-${device.slot}">
         <div class="native-manual-statusbar">
           <strong>${escapeHtml(new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))}</strong>
           <span>!</span>
@@ -8815,7 +9193,7 @@ function renderDeviceManualModeModal(snapshot, device) {
           <button class="native-manual-add-button" data-action="open-assign-recipe" data-slot="${device.slot}" aria-label="Add recipe">+</button>
           <button class="native-manual-menu-button" data-action="manual-request-status" data-slot="${device.slot}" aria-label="Refresh status">&#9776;</button>
         </header>
-        ${renderManualModeTab(snapshot, device)}
+        ${cooking ? renderNativeCookingTimeline(snapshot, device) : renderManualModeTab(snapshot, device)}
       </div>
     </div>
   `;
@@ -8830,7 +9208,7 @@ function renderRecipeCard(snapshot, recipe, perms) {
   const blockedConnectedDevices = connectedDevices.filter((device) => !isRecipeAllowedOnDevice(snapshot, device, recipe.id));
   const devices = availableDevices
     .map((device) => {
-      const runState = getDeviceRunState(snapshot, device);
+      const runState = getManualDeviceRunState(snapshot, device);
       return `
         <button class="order-device-assign-button ${escapeHtml(runState.status)}" data-action="run-recipe-on-device" data-slot="${device.slot}" data-recipe-id="${recipe.id}">
           <strong>D${device.slot}</strong>
@@ -12421,7 +12799,11 @@ async function handleClick(event) {
       showToast(`${recipe.displayName} is not enabled on Device ${device.slot}`, "warning");
       return;
     }
-    const runState = getDeviceRunState(snapshot, device);
+    const runState = getManualDeviceRunState(snapshot, device);
+    if (runState.canQueue) {
+      queueRecipeOnDevice(device.slot, recipe, "Recipe List");
+      return;
+    }
     const result = await runDeviceRecipe(device.slot, recipe.id);
     if (result === "started") {
       showToast(`${recipe.displayName} starting on Device ${device.slot}`, "success");
@@ -12817,6 +13199,10 @@ async function handleClick(event) {
       return;
     }
     const runState = getManualDeviceRunState(snapshot, device);
+    if (runState.canQueue) {
+      queueRecipeOnDevice(device.slot, recipe, "Device Manual Mode");
+      return;
+    }
     const result = await runDeviceRecipe(device.slot, recipe.id);
     if (result === "started" && runState.canRunNow) {
       showToast(`${recipe.displayName} starting on Device ${device.slot}`, "success");

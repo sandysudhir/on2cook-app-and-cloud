@@ -829,15 +829,39 @@ function mergeSeedRecipes(existingState, seedRecipes) {
   const normalizedSeeds = seedRecipes.map(toRecipeRecord);
   const existingSeedRecipes = existingState.recipes.filter((recipe) => recipe.source === "seed");
   const customRecipes = existingState.recipes.filter((recipe) => recipe.source !== "seed");
+  const usedRecipeIds = new Set(customRecipes.map((recipe) => recipe.id).filter(Boolean));
+  const idExpansions = new Map();
+  const registerId = (previousId, nextId) => {
+    if (!previousId || !nextId) return;
+    const expanded = idExpansions.get(previousId) || [];
+    if (!expanded.includes(nextId)) expanded.push(nextId);
+    idExpansions.set(previousId, expanded);
+  };
+  const allocateRecipeId = (preferredId) => {
+    let candidate = String(preferredId || "").trim() || uid("recipe");
+    while (usedRecipeIds.has(candidate)) candidate = uid("recipe");
+    usedRecipeIds.add(candidate);
+    return candidate;
+  };
   const mergedSeeds = normalizedSeeds.map((seedRecipe, index) => {
     const seedKey = String(seedRecipe.zipName || seedRecipe.displayName).trim().toLowerCase();
-    const existing =
-      existingSeedRecipes.find((recipe) => String(recipe.zipName || recipe.displayName).trim().toLowerCase() === seedKey) ||
-      existingSeedRecipes[index] ||
-      null;
-    if (!existing) return seedRecipe;
+    const exact = existingSeedRecipes.find(
+      (recipe) => String(recipe.zipName || recipe.displayName).trim().toLowerCase() === seedKey
+    );
+    const indexed = existingSeedRecipes[index] || null;
+    const existing = exact || indexed;
+    if (!existing) {
+      return {
+        ...seedRecipe,
+        id: allocateRecipeId(seedRecipe.id)
+      };
+    }
+    const previousId = existing.id || "";
+    const nextId = allocateRecipeId(previousId && !usedRecipeIds.has(previousId) ? previousId : seedRecipe.id);
+    registerId(previousId, nextId);
     return {
       ...existing,
+      id: nextId,
       zipName: seedRecipe.zipName,
       zipUrl: seedRecipe.zipUrl || "",
       recipeTextEntryName: seedRecipe.recipeTextEntryName || "",
@@ -854,6 +878,40 @@ function mergeSeedRecipes(existingState, seedRecipes) {
     };
   });
   existingState.recipes = [...customRecipes, ...mergedSeeds];
+
+  (existingState.devices || []).forEach((device) => {
+    if (!Array.isArray(device.allowedRecipeIds)) return;
+    device.allowedRecipeIds = Array.from(
+      new Set(device.allowedRecipeIds.flatMap((id) => idExpansions.get(id) || [id]))
+    );
+  });
+
+  const recipeNameKey = (value) => String(value || "").trim().toLowerCase();
+  const findMatchingSeed = (order, candidateIds) => {
+    const names = [order.itemName, order.recipeLookup, order.currentRunRecipeName, order.currentRunFirmwareName]
+      .map(recipeNameKey)
+      .filter(Boolean);
+    return mergedSeeds.find(
+      (recipe) =>
+        candidateIds.includes(recipe.id) &&
+        [recipe.displayName, recipe.firmwareName, ...(recipe.aliases || [])]
+          .map(recipeNameKey)
+          .some((name) => names.includes(name))
+    );
+  };
+  [existingState.orders?.current, existingState.orders?.incoming, existingState.orders?.previous]
+    .filter(Array.isArray)
+    .forEach((orders) => {
+      orders.forEach((order) => {
+        const candidates = idExpansions.get(order.activeRecipeId) || [];
+        if (candidates.length < 2) return;
+        order.activeRecipeId = findMatchingSeed(order, candidates)?.id || candidates[0];
+      });
+    });
+  const selectedCandidates = idExpansions.get(existingState.ui?.manualMode?.recipeId) || [];
+  if (selectedCandidates.length && existingState.ui?.manualMode) {
+    existingState.ui.manualMode.recipeId = selectedCandidates[0];
+  }
   return existingState;
 }
 

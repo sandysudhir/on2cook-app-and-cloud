@@ -6732,6 +6732,699 @@ textarea.field-input {
   }
 }
 
+/* Active recipe view inside the device-level Manual Mode screen. */
+.native-cooking-screen {
+  overflow-x: hidden;
+}
+
+.native-cook-body {
+  display: grid;
+  gap: 16px;
+  padding: 16px 22px 30px;
+  color: #536064;
+}
+
+.native-cook-control-panel {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 62px 62px;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.native-cook-run-indicator {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  color: #fff;
+  background: #12965c;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.native-cook-run-indicator.paused {
+  background: #f97e00;
+}
+
+.native-cook-title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.native-cook-title strong {
+  color: #253237;
+  font-size: 1.45rem;
+}
+
+.native-cook-title span,
+.native-cook-title small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.native-cook-source-status {
+  display: grid;
+  place-items: center;
+  min-height: 54px;
+  padding: 6px;
+  border: 1px solid rgba(83, 96, 100, 0.16);
+  border-radius: 999px;
+  color: #667174;
+  background: #eef2f5;
+  text-align: center;
+}
+
+.native-cook-source-status b {
+  font-size: 0.76rem;
+}
+
+.native-cook-source-status span {
+  font-size: 0.72rem;
+}
+
+.native-cook-source-status.active {
+  border-color: rgba(18, 150, 92, 0.42);
+  color: #0a7042;
+  background: rgba(18, 150, 92, 0.12);
+}
+
+.native-cook-progress-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.native-cook-progress-summary span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.76);
+  text-align: center;
+}
+
+.native-cook-progress-summary b {
+  color: #253237;
+}
+
+.native-cook-progress-summary small {
+  color: #7b878b;
+  font-size: 0.68rem;
+}
+
+.native-cook-timeline {
+  overflow: hidden;
+  border: 1px solid rgba(83, 96, 100, 0.16);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.native-cook-timeline-head,
+.native-cook-stage {
+  display: grid;
+  grid-template-columns: 42px minmax(62px, 1fr) minmax(62px, 1fr) minmax(110px, 1.45fr);
+}
+
+.native-cook-timeline-head {
+  padding: 9px 10px;
+  color: #667174;
+  background: #e4eaee;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.native-cook-timeline-head span:not(:first-child) {
+  text-align: center;
+}
+
+.native-cook-stage {
+  position: relative;
+  min-height: var(--stage-height);
+  border-top: 1px solid rgba(83, 96, 100, 0.12);
+}
+
+.native-cook-stage.current {
+  background: rgba(249, 126, 0, 0.07);
+  box-shadow: inset 4px 0 0 #f97e00;
+}
+
+.native-cook-stage.done {
+  background: rgba(18, 150, 92, 0.04);
+}
+
+.native-cook-stage.upcoming {
+  opacity: 0.58;
+}
+
+.native-cook-stage-axis {
+  position: relative;
+  display: grid;
+  place-items: start center;
+  padding-top: 12px;
+}
+
+.native-cook-stage-axis i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  transform: translateX(-50%);
+  background: #253237;
+}
+
+.native-cook-stage-axis b {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border-radius: 999px;
+  color: #fff;
+  background: #667174;
+  font-size: 0.72rem;
+}
+
+.native-cook-stage.done .native-cook-stage-axis b {
+  background: #12965c;
+}
+
+.native-cook-stage.current .native-cook-stage-axis b {
+  background: #f97e00;
+}
+
+.native-cook-playhead {
+  position: absolute;
+  z-index: 2;
+  top: 44px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #253237;
+  font-size: 1.2rem;
+}
+
+.native-cook-wave {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 12px 6px;
+  border-left: 1px solid rgba(83, 96, 100, 0.1);
+}
+
+.native-cook-wave span {
+  display: block;
+  min-width: 3px;
+  height: calc(var(--stage-height) - 24px);
+  max-height: 96px;
+  border-radius: 3px;
+}
+
+.native-cook-wave.induction span {
+  background: repeating-linear-gradient(to bottom, #ffc400 0 5px, transparent 5px 9px);
+}
+
+.native-cook-wave.microwave span {
+  background: repeating-linear-gradient(to bottom, #f97e00 0 5px, transparent 5px 9px);
+}
+
+.native-cook-wave em {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  color: #536064;
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.native-cook-stage-copy {
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px;
+  border-left: 1px solid rgba(83, 96, 100, 0.1);
+}
+
+.native-cook-stage-copy strong,
+.native-cook-stage-copy small {
+  overflow-wrap: anywhere;
+}
+
+.native-cook-stage-copy strong {
+  color: #253237;
+  font-size: 0.78rem;
+}
+
+.native-cook-stage-copy small {
+  color: #7b878b;
+  font-size: 0.66rem;
+}
+
+.native-cook-timeline-empty {
+  padding: 24px;
+  color: #667174;
+  text-align: center;
+}
+
+.native-cook-current-action {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 14px;
+  color: #fff;
+  background: #f97e00;
+}
+
+.native-cook-current-action > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.native-cook-current-action strong,
+.native-cook-current-action small {
+  overflow-wrap: anywhere;
+}
+
+.native-cook-current-action small {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.native-cook-confirm-button {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 10px;
+  color: #f97e00;
+  background: #fff;
+  font-weight: 900;
+}
+
+.native-cook-next-action {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid rgba(83, 96, 100, 0.14);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.native-cook-next-action > span {
+  color: #f97e00;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.native-cook-next-action > div {
+  display: grid;
+  min-width: 0;
+}
+
+.native-cook-next-action strong,
+.native-cook-next-action small {
+  overflow-wrap: anywhere;
+}
+
+.native-cook-next-action small {
+  color: #7b878b;
+}
+
+.native-cook-queue-panel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(83, 96, 100, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.native-cook-queue-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.native-cook-queue-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.native-cook-queue-heading span {
+  color: #f97e00;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.native-cook-queue-heading strong {
+  color: #253237;
+}
+
+.native-cook-queue-heading > b {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  color: #fff;
+  background: #f97e00;
+}
+
+.native-cook-queue-list {
+  display: grid;
+  gap: 7px;
+}
+
+.native-cook-queue-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid rgba(83, 96, 100, 0.14);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.native-cook-queue-row > b {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: #f97e00;
+  background: rgba(249, 126, 0, 0.12);
+}
+
+.native-cook-queue-row > div:not(.native-cook-queue-actions) {
+  display: grid;
+  min-width: 0;
+}
+
+.native-cook-queue-row strong,
+.native-cook-queue-row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.native-cook-queue-row strong {
+  color: #253237;
+}
+
+.native-cook-queue-row small,
+.native-cook-queue-note {
+  color: #7b878b;
+}
+
+.native-cook-queue-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.native-cook-queue-actions button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(83, 96, 100, 0.18);
+  border-radius: 8px;
+  color: #536064;
+  background: #eef2f5;
+  font-weight: 900;
+}
+
+.native-cook-queue-empty {
+  padding: 12px;
+  border-radius: 10px;
+  color: #7b878b;
+  background: #eef2f5;
+  text-align: center;
+}
+
+.native-cook-queue-add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.native-cook-queue-add select,
+.native-cook-queue-add button {
+  min-width: 0;
+  min-height: 42px;
+  border-radius: 10px;
+  font: inherit;
+}
+
+.native-cook-queue-add select {
+  border: 1px solid rgba(83, 96, 100, 0.18);
+  padding: 0 10px;
+  color: #253237;
+  background: #fff;
+}
+
+.native-cook-queue-add button {
+  border: 0;
+  padding: 0 15px;
+  color: #fff;
+  background: #f97e00;
+  font-weight: 900;
+}
+
+.native-cook-queue-add button:disabled {
+  color: #7b878b;
+  background: #e4eaee;
+}
+
+.native-cook-queue-note {
+  line-height: 1.35;
+}
+
+.native-cook-intervention {
+  overflow: hidden;
+  border: 1px solid rgba(83, 96, 100, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.native-cook-intervention summary {
+  padding: 14px;
+  color: #536064;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.native-cook-live-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0 14px 12px;
+}
+
+.native-cook-live-tile {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(83, 96, 100, 0.16);
+  border-radius: 12px;
+  color: #667174;
+  background: #eef2f5;
+}
+
+.native-cook-live-tile.active {
+  border-color: rgba(18, 150, 92, 0.45);
+  color: #0a7042;
+  background: rgba(18, 150, 92, 0.12);
+}
+
+.native-cook-live-tile span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.native-cook-live-tile strong {
+  color: inherit;
+  font-size: 1rem;
+}
+
+.native-cook-live-tile small {
+  overflow-wrap: anywhere;
+}
+
+.native-cook-adjust {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 38px;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.native-cook-adjust button,
+.native-cook-stirrer-toggle,
+.native-cook-stirrer-speeds button {
+  min-height: 38px;
+  border: 1px solid rgba(83, 96, 100, 0.18);
+  border-radius: 9px;
+  color: #536064;
+  background: #fff;
+  font-weight: 900;
+}
+
+.native-cook-adjust b {
+  text-align: center;
+}
+
+.native-cook-stirrer-toggle {
+  margin-top: 7px;
+}
+
+.native-cook-stirrer-toggle.active,
+.native-cook-stirrer-speeds button.active {
+  border-color: #12965c;
+  color: #fff;
+  background: #12965c;
+}
+
+.native-cook-stirrer-speeds {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0 14px 12px;
+}
+
+.native-cook-intervention-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+
+.device-status-modal {
+  max-width: min(980px, calc(100vw - 24px));
+  overflow-x: hidden;
+}
+
+.device-status-modal .status-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.status-technical-details {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.status-technical-details summary {
+  padding: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.status-technical-details dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 12px 12px;
+}
+
+.status-technical-details dl div {
+  min-width: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(127, 140, 145, 0.1);
+}
+
+.status-technical-details dt {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.status-technical-details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.device-status-modal .activity-copy,
+.device-status-modal .activity-copy span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .device-status-modal .status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .native-cook-body {
+    padding: 12px 12px 24px;
+  }
+
+  .native-cook-control-panel {
+    grid-template-columns: 46px minmax(0, 1fr) 54px 54px;
+    gap: 7px;
+    padding: 10px;
+  }
+
+  .native-cook-run-indicator {
+    width: 42px;
+    height: 42px;
+  }
+
+  .native-cook-title strong {
+    font-size: 1.18rem;
+  }
+
+  .native-cook-timeline-head,
+  .native-cook-stage {
+    grid-template-columns: 34px minmax(54px, 0.82fr) minmax(54px, 0.82fr) minmax(104px, 1.5fr);
+  }
+
+  .native-cook-current-action {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .native-cook-confirm-button {
+    grid-column: 1 / -1;
+  }
+
+  .native-cook-live-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .native-cook-queue-add {
+    grid-template-columns: 1fr;
+  }
+
+  .device-status-modal .status-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .modal-form {
   display: grid;
   gap: 12px;
