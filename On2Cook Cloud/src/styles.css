@@ -2064,6 +2064,10 @@ button {
   gap: 12px;
 }
 
+.user-row {
+  flex-wrap: wrap;
+}
+
 .recipe-card {
   display: grid;
   grid-template-columns: 72px 1fr;
@@ -3761,6 +3765,77 @@ textarea.field-input {
 .queue-prep-list .muted {
   background: rgba(111, 92, 71, 0.08);
   color: var(--muted);
+}
+
+.next-prep-instruction {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.next-prep-actions,
+.queued-recipe-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.queue-auto-label,
+.queue-permission-note {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.queue-drag-handle {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(111, 92, 71, 0.18);
+  border-radius: 10px;
+  color: var(--muted);
+  background: rgba(111, 92, 71, 0.06);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  font-weight: 900;
+}
+
+.queue-drag-handle:active,
+[data-queue-drag-item].queue-dragging .queue-drag-handle {
+  cursor: grabbing;
+}
+
+[data-queue-drag-item] {
+  position: relative;
+}
+
+[data-queue-drag-item].queue-dragging {
+  opacity: 0.68;
+  transform: scale(0.985);
+}
+
+[data-queue-drag-item].queue-drop-target::before {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  left: 8px;
+  right: 8px;
+  top: -5px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(244, 123, 32, 0.12);
+}
+
+[data-queue-drag-item].queue-drop-target.drop-after::before {
+  top: auto;
+  bottom: -5px;
 }
 
 .compact-empty {
@@ -6732,6 +6807,20 @@ textarea.field-input {
   }
 }
 
+.surface:not(.login-surface) .device-phone .next-prep-instruction,
+.surface:not(.login-surface) .device-phone .queue-auto-label,
+.surface:not(.login-surface) .device-phone .queue-permission-note,
+.surface:not(.login-surface) .modal-card .queue-permission-note {
+  color: #c9c0b8;
+}
+
+.surface:not(.login-surface) .device-phone .queue-drag-handle,
+.surface:not(.login-surface) .modal-card .queue-drag-handle {
+  color: #fffaf5;
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+}
+
 /* Active recipe view inside the device-level Manual Mode screen. */
 .native-cooking-screen {
   overflow-x: hidden;
@@ -7188,6 +7277,13 @@ textarea.field-input {
   color: #536064;
   background: #eef2f5;
   font-weight: 900;
+}
+
+.native-cook-queue-actions button[data-action="queue-move-next"],
+.native-cook-queue-actions button[data-action="queue-start-now"] {
+  width: auto;
+  min-width: 62px;
+  padding: 0 8px;
 }
 
 .native-cook-queue-empty {

@@ -496,7 +496,8 @@ function createDefaultUsers() {
         managerMode: true,
         canAddRecipes: true,
         canEditRecipes: true,
-        canManageRecipeAccess: true
+        canManageRecipeAccess: true,
+        canManageQueues: true
       },
       {
         id: managerId,
@@ -510,7 +511,8 @@ function createDefaultUsers() {
         managerMode: true,
         canAddRecipes: false,
         canEditRecipes: true,
-        canManageRecipeAccess: true
+        canManageRecipeAccess: true,
+        canManageQueues: true
       },
       {
         id: operatorId,
@@ -524,7 +526,8 @@ function createDefaultUsers() {
         managerMode: false,
         canAddRecipes: false,
         canEditRecipes: false,
-        canManageRecipeAccess: false
+        canManageRecipeAccess: false,
+        canManageQueues: false
       }
     ],
     currentUserId: mainAdminId,
@@ -797,7 +800,8 @@ function normalizeUserRecord(user, fallbackFacilityId = "") {
     managerMode: Boolean(user.managerMode),
     canAddRecipes: user.canAddRecipes ?? user.can_add_recipes ?? adminLike,
     canEditRecipes: user.canEditRecipes ?? user.can_edit_recipes ?? managerLike,
-    canManageRecipeAccess: user.canManageRecipeAccess ?? user.can_manage_recipe_access ?? managerLike
+    canManageRecipeAccess: user.canManageRecipeAccess ?? user.can_manage_recipe_access ?? managerLike,
+    canManageQueues: user.canManageQueues ?? user.can_manage_queues ?? managerLike
   };
 }
 
@@ -1030,6 +1034,9 @@ export function loadState(seedRecipes) {
         }
       : hydrateOrders(merged.orders || {}, merged.recipes);
     merged.devices = hydrateDevices(merged.devices, merged.recipes);
+    merged.users = Array.isArray(merged.users)
+      ? merged.users.map((user) => normalizeUserRecord(user, merged.currentFacilityId || merged.facilities?.[0]?.id || ""))
+      : [];
     normalizeRuntimeState(merged);
     writeStateToStorage(merged);
     return merged;
@@ -1083,6 +1090,12 @@ export function currentPermissions(state) {
   const canEditRecipes = role === "main_admin" || role === "admin" || (managerLike && user.canEditRecipes !== false) || operatorManager;
   const canManageRecipeAccess =
     role === "main_admin" || role === "admin" || (managerLike && user.canManageRecipeAccess !== false) || operatorManager;
+  const canManageQueues =
+    role === "main_admin" ||
+    role === "admin" ||
+    operatorManager ||
+    Boolean(user.canManageQueues) ||
+    (role === "kitchen_manager" && user.canManageQueues !== false);
   return {
     user,
     canManageUsers: role === "main_admin" || role === "admin",
@@ -1092,6 +1105,7 @@ export function currentPermissions(state) {
     canSelectGlobalRecipes: canAddRecipes,
     canCreateFinalRecipes: canEditRecipes,
     canEditDevicePermissions: canManageRecipeAccess,
+    canManageQueues,
     canAbortOrRestart: true
   };
 }

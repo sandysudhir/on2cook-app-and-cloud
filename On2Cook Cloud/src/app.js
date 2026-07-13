@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260713c";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260713c";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260713d";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260713d";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260713c";
+} from "./ncb-services.js?v=20260713d";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,13 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260713c";
+} from "./data-store.js?v=20260713d";
+import {
+  canStartQueuedIndex,
+  moveQueueIdBeside,
+  reorderQueueIds,
+  shouldStartQueuedWork
+} from "./queue-logic.js?v=20260713d";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -30,7 +36,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260713c";
+const APP_ASSET_VERSION = "20260713d";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -2948,7 +2954,8 @@ function userRecordFromCloudProfile(profile, sessionUser, fallbackFacilityId = "
     managerMode: Boolean(profile?.manager_mode),
     canAddRecipes: Boolean(profile?.can_add_recipes ?? adminLike),
     canEditRecipes: Boolean(profile?.can_edit_recipes ?? managerLike),
-    canManageRecipeAccess: Boolean(profile?.can_manage_recipe_access ?? managerLike)
+    canManageRecipeAccess: Boolean(profile?.can_manage_recipe_access ?? managerLike),
+    canManageQueues: Boolean(profile?.can_manage_queues ?? managerLike)
   };
 }
 
@@ -4910,7 +4917,19 @@ async function runDeviceRecipe(slot, recipeId) {
   return startOrderFlow(order.id, Number(slot));
 }
 
+function canManageDeviceQueue(snapshot = state()) {
+  return Boolean(currentPermissions(snapshot).canManageQueues);
+}
+
+function denyQueuePriorityChange() {
+  showToast("Your login can run the next recipe, but cannot change queue priority.", "warning");
+}
+
 function reorderDeviceQueueItem(slot, orderId, mode) {
+  if (!canManageDeviceQueue()) {
+    denyQueuePriorityChange();
+    return false;
+  }
   let label = "";
   mutate((draft) => {
     const device = draft.devices.find((item) => item.slot === Number(slot));
@@ -4918,27 +4937,64 @@ function reorderDeviceQueueItem(slot, orderId, mode) {
     const ids = getDeviceQueuedOrderIds(draft, device);
     const index = ids.indexOf(orderId);
     if (index < 0) return draft;
-    const [picked] = ids.splice(index, 1);
     if (mode === "up") {
-      ids.splice(Math.max(0, index - 1), 0, picked);
       label = "moved up";
     } else if (mode === "down") {
-      ids.splice(Math.min(ids.length, index + 1), 0, picked);
       label = "moved down";
     } else {
-      ids.unshift(picked);
       label = "moved to next";
     }
-    device.queueOrderIds = ids;
+    const ordered = reorderQueueIds(ids, orderId, mode);
+    if (ordered.every((item, queueIndex) => item === ids[queueIndex])) {
+      label = "";
+      return draft;
+    }
+    device.queueOrderIds = ordered;
     appendActivity(device, `Queue item ${label}`, "info");
   });
   if (label) showToast(`Queue item ${label}`, "success");
+  return Boolean(label);
+}
+
+function moveDeviceQueueItemBeside(slot, orderId, targetOrderId, position = "before") {
+  if (!canManageDeviceQueue()) {
+    denyQueuePriorityChange();
+    return false;
+  }
+  let moved = false;
+  mutate((draft) => {
+    const device = draft.devices.find((item) => item.slot === Number(slot));
+    if (!device || orderId === targetOrderId) return draft;
+    const ids = getDeviceQueuedOrderIds(draft, device);
+    if (!ids.includes(orderId) || !ids.includes(targetOrderId)) return draft;
+    const ordered = moveQueueIdBeside(ids, orderId, targetOrderId, position);
+    if (ordered.every((item, index) => item === ids[index])) return draft;
+    device.queueOrderIds = ordered;
+    appendActivity(device, "Queue priority changed by drag and drop", "info");
+    moved = true;
+  });
+  if (moved) showToast("Queue priority updated", "success");
+  return moved;
 }
 
 async function startQueuedOrderNow(slot, orderId) {
   const snapshot = state();
   const device = snapshot.devices.find((item) => item.slot === Number(slot));
   if (!device) return;
+  if (!currentPermissions(snapshot).canRunRecipes) {
+    showToast("Your login cannot start recipes.", "warning");
+    return;
+  }
+  const queuedIds = getDeviceQueuedOrderIds(snapshot, device);
+  const queueIndex = queuedIds.indexOf(orderId);
+  if (queueIndex < 0) {
+    showToast("This recipe is no longer in the device queue.", "warning");
+    return;
+  }
+  if (!canStartQueuedIndex(queueIndex, canManageDeviceQueue(snapshot))) {
+    denyQueuePriorityChange();
+    return;
+  }
   if (device.connection !== "connected") {
     showToast(`Device ${slot} is offline. Connect it before starting queued work.`, "warning");
     return;
@@ -4952,6 +5008,8 @@ async function startQueuedOrderNow(slot, orderId) {
     const draftOrder = draft.orders.current.find((item) => item.id === orderId);
     if (!draftDevice || !draftOrder) return draft;
     draftDevice.queueOrderIds = getDeviceQueuedOrderIds(draft, draftDevice).filter((item) => item !== orderId);
+    draftDevice.startQueuedAfterCurrent = "";
+    draftDevice.startQueuedAfterCurrentAt = "";
     draftOrder.status = "pending";
     appendActivity(draftDevice, `${draftOrder.itemName} selected as current from queue timeline`, "info");
   });
@@ -4962,11 +5020,21 @@ async function stopCurrentAndStartQueued(slot, orderId) {
   const snapshot = state();
   const device = snapshot.devices.find((item) => item.slot === Number(slot));
   if (!device) return;
+  if (!canManageDeviceQueue(snapshot)) {
+    denyQueuePriorityChange();
+    return;
+  }
   reorderDeviceQueueItem(slot, orderId, "next");
   if (!isDeviceActivelyCooking(device)) {
     await startQueuedOrderNow(slot, orderId);
     return;
   }
+  mutate((draft) => {
+    const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
+    if (!draftDevice) return draft;
+    draftDevice.startQueuedAfterCurrent = orderId;
+    draftDevice.startQueuedAfterCurrentAt = nowIso();
+  });
   await abortCurrentRecipe(Number(slot));
   showToast(`Device ${slot} will start the selected queued recipe after the abort is acknowledged.`, "warning");
 }
@@ -5751,15 +5819,35 @@ function queueIdleWork() {
       return;
     }
     const queuedOrderId = device.queueOrderIds[0];
-    if (queuedOrderId) {
+    const explicitHandoffAge = device.startQueuedAfterCurrentAt
+      ? elapsedSecondsBetween(device.startQueuedAfterCurrentAt, nowIso())
+      : Number.POSITIVE_INFINITY;
+    const explicitHandoff = shouldStartQueuedWork({
+      pendingAssignmentMode: snapshot.settings.pendingAssignmentMode,
+      queuedOrderId,
+      explicitOrderId: device.startQueuedAfterCurrent,
+      explicitHandoffAgeSeconds: explicitHandoffAge
+    });
+    if (queuedOrderId && explicitHandoff) {
       mutate((draft) => {
         const draftDevice = draft.devices.find((item) => item.slot === device.slot);
         if (!draftDevice) return draft;
         draftDevice.queueOrderIds = draftDevice.queueOrderIds.filter((item) => item !== queuedOrderId);
+        draftDevice.startQueuedAfterCurrent = "";
+        draftDevice.startQueuedAfterCurrentAt = "";
       });
       startOrderFlow(queuedOrderId, device.slot);
       return;
     }
+    if (device.startQueuedAfterCurrent && explicitHandoffAge > 90) {
+      mutate((draft) => {
+        const draftDevice = draft.devices.find((item) => item.slot === device.slot);
+        if (!draftDevice) return draft;
+        draftDevice.startQueuedAfterCurrent = "";
+        draftDevice.startQueuedAfterCurrentAt = "";
+      });
+    }
+    if (queuedOrderId) return;
     const latest = state();
     if (latest.settings.pendingAssignmentMode !== "auto_route") return;
     const pending = latest.orders.current
@@ -8960,6 +9048,9 @@ function getNativeCookingTimelineState(device, recipe) {
 function renderNativeCookingQueue(snapshot, device, activeRecipe, options = {}) {
   const includePicker = options.includePicker !== false;
   const queueOrders = getQueueOrders(snapshot, device);
+  const permissions = currentPermissions(snapshot);
+  const canManageQueue = permissions.canManageQueues;
+  const deviceBusy = isDeviceActivelyCooking(device);
   const allowedRecipes = getSelectedRecipes(snapshot).filter((recipe) => isRecipeAllowedOnDevice(snapshot, device, recipe.id));
   const selectedRecipeId = String(snapshot.ui.manualMode?.recipeId || "");
   const selectedRecipe = allowedRecipes.find((recipe) => recipe.id === selectedRecipeId) || null;
@@ -8971,15 +9062,18 @@ function renderNativeCookingQueue(snapshot, device, activeRecipe, options = {}) 
       const startsIn = cursorSeconds;
       cursorSeconds += duration;
       return `
-        <article class="native-cook-queue-row">
+        <article class="native-cook-queue-row" data-queue-drag-item data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">
           <b>${index + 1}</b>
           <div>
             <strong>${escapeHtml(order.itemName)}</strong>
             <small>Starts in ${escapeHtml(startsIn > 0 ? formatProClock(startsIn) : "next")} | cook time ${escapeHtml(secondsLabel(duration))}</small>
           </div>
           <div class="native-cook-queue-actions">
-            <button type="button" data-action="queue-move-up" data-slot="${device.slot}" data-order-id="${order.id}" ${index === 0 ? "disabled" : ""} aria-label="Move ${escapeHtml(order.itemName)} up">&uarr;</button>
-            <button type="button" data-action="queue-move-down" data-slot="${device.slot}" data-order-id="${order.id}" ${index === queueOrders.length - 1 ? "disabled" : ""} aria-label="Move ${escapeHtml(order.itemName)} down">&darr;</button>
+            ${canManageQueue ? `<button class="queue-drag-handle" type="button" data-queue-drag-handle title="Hold and drag to change priority" aria-label="Hold and drag ${escapeHtml(order.itemName)}">&#8942;&#8942;</button>` : ""}
+            ${canManageQueue ? `<button type="button" data-action="queue-move-up" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${index === 0 ? "disabled" : ""} aria-label="Move ${escapeHtml(order.itemName)} up">&uarr;</button>` : ""}
+            ${canManageQueue ? `<button type="button" data-action="queue-move-down" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${index === queueOrders.length - 1 ? "disabled" : ""} aria-label="Move ${escapeHtml(order.itemName)} down">&darr;</button>` : ""}
+            ${deviceBusy && canManageQueue && index > 0 ? `<button type="button" data-action="queue-move-next" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" aria-label="Make ${escapeHtml(order.itemName)} next">Next</button>` : ""}
+            ${!deviceBusy && permissions.canRunRecipes && (index === 0 || canManageQueue) ? `<button type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Cook now</button>` : ""}
           </div>
         </article>
       `;
@@ -9003,10 +9097,10 @@ function renderNativeCookingQueue(snapshot, device, activeRecipe, options = {}) 
                   .map((recipe) => `<option value="${recipe.id}" ${recipe.id === selectedRecipeId ? "selected" : ""}>${escapeHtml(recipe.displayName)}</option>`)
                   .join("")}
               </select>
-              <button type="button" data-action="manual-run-selected-recipe" data-slot="${device.slot}" ${selectedRecipe ? "" : "disabled"}>Add to queue</button>
+              <button type="button" data-action="manual-run-selected-recipe" data-slot="${device.slot}" ${selectedRecipe && permissions.canRunRecipes ? "" : "disabled"}>Add to queue</button>
             </div>
-            <small class="native-cook-queue-note">Select another recipe at any time. It will be checked and sent only when it is ready to cook.</small>`
-          : `<small class="native-cook-queue-note">Queued here and from Orders use this same Device ${device.slot} queue.</small>`
+            <small class="native-cook-queue-note">Add recipes while cooking. ${canManageQueue ? "Hold the grip or use the arrows to change priority." : "Queue priority is fixed for this login."}</small>`
+          : `<small class="native-cook-queue-note">Orders and Manual Mode share this Device ${device.slot} queue.</small>`
       }
     </section>
   `;
@@ -9430,6 +9524,7 @@ function renderMoreTab(snapshot, perms) {
           <span class="${perms.canSelectGlobalRecipes ? "yes" : "no"}">Add/select recipes</span>
           <span class="${perms.canCreateFinalRecipes ? "yes" : "no"}">Edit recipes</span>
           <span class="${perms.canRunRecipes ? "yes" : "no"}">Run recipes</span>
+          <span class="${perms.canManageQueues ? "yes" : "no"}">Change queue priority</span>
         </div>
         <div class="toggle-row">
           <label><input type="checkbox" data-setting-path="orderScreenEnabled" ${snapshot.settings.orderScreenEnabled ? "checked" : ""}> Order screen enabled</label>
@@ -9449,17 +9544,23 @@ function renderMoreTab(snapshot, perms) {
       <div class="settings-card">
         <div class="subtle">Facility: ${escapeHtml(snapshot.facilities[0]?.name || "Kitchen")}</div>
         ${snapshot.users
-          .map(
-            (user) => `
+          .map((user) => {
+            const userQueueManager = ["main_admin", "admin"].includes(user.role) || Boolean(user.canManageQueues);
+            return `
               <div class="user-row">
                 <span>
                   <strong>${escapeHtml(user.displayName)}</strong>
                   <span class="subtle">${escapeHtml(user.mobilePhone || user.email || "No contact")}</span>
                 </span>
-                <span class="subtle">${escapeHtml(user.role)} | ${user.canAddRecipes ? "can add recipes" : "selected only"} | ${user.canEditRecipes ? "can edit" : "run only"}</span>
+                <span class="subtle">${escapeHtml(user.role)} | ${user.canAddRecipes ? "can add recipes" : "selected only"} | ${user.canEditRecipes ? "can edit" : "run only"} | ${userQueueManager ? "queue priority" : "fixed queue"}</span>
+                ${
+                  perms.canManageUsers && !["main_admin", "admin"].includes(user.role)
+                    ? `<button class="secondary-button micro" type="button" data-action="toggle-user-queue-permission" data-user-id="${escapeHtml(user.id)}">${userQueueManager ? "Disable queue changes" : "Allow queue changes"}</button>`
+                    : ""
+                }
               </div>
-            `
-          )
+            `;
+          })
           .join("")}
         ${perms.canManageUsers ? `<button class="primary-button small" data-action="open-add-user">Add user</button>` : ""}
       </div>
@@ -9964,29 +10065,49 @@ function renderQueuePrepItems(recipe) {
   `;
 }
 
-function renderNextQueuedPrepPrompt(snapshot, queueOrders) {
+function renderNextQueuedPrepPrompt(snapshot, device, queueOrders) {
   if (!queueOrders.length) return "";
   const nextOrder = queueOrders[0];
   const recipe = getEffectiveRecipe(snapshot, nextOrder);
+  const permissions = currentPermissions(snapshot);
+  const connected = device.connection === "connected";
+  const canStart = connected && permissions.canRunRecipes && !device.completionConfirmationPending;
+  const automatic = snapshot.settings.pendingAssignmentMode === "auto_route";
   return `
     <article class="next-prep-prompt">
       <div>
         <span>Prepare next</span>
         <strong>${escapeHtml(nextOrder.itemName)}</strong>
-        <small>${escapeHtml(nextOrder.orderId)} | starts when this device is free</small>
+        <small>${escapeHtml(nextOrder.orderId)} | ${automatic ? "starts automatically when ready" : "waiting for operator start"}</small>
       </div>
       ${renderQueuePrepItems(recipe)}
+      <p class="next-prep-instruction">${escapeHtml(
+        connected
+          ? automatic
+            ? "Prepare these ingredients now. The device will start this recipe when the automatic handoff is ready."
+            : "Prepare these ingredients, then tap Cook now. The app checks and uploads only this recipe if it is missing."
+          : `Reconnect Device ${device.slot} before starting this recipe.`
+      )}</p>
+      <div class="next-prep-actions">
+        <button class="primary-button small" type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${escapeHtml(nextOrder.id)}" ${canStart ? "" : "disabled"}>Cook now</button>
+        ${automatic ? `<span class="queue-auto-label">Automatic handoff on</span>` : `<span class="queue-auto-label">Manual start required</span>`}
+      </div>
     </article>
   `;
 }
 
-function renderQueuedRecipeCard(snapshot, order, index, startInSeconds) {
+function renderQueuedRecipeCard(snapshot, device, order, index, startInSeconds, totalItems) {
   const recipe = getEffectiveRecipe(snapshot, order);
   const duration = getRecipeDuration(recipe);
   const startsAtIso = new Date(Date.now() + startInSeconds * 1000).toISOString();
   const imageUrl = safeOptionalUrl(recipe?.imageDataUrl || "", "queued recipe image");
+  const permissions = currentPermissions(snapshot);
+  const canManageQueue = permissions.canManageQueues;
+  const busy = isDeviceActivelyCooking(device);
+  const connected = device.connection === "connected";
+  const canStart = connected && !busy && permissions.canRunRecipes && (index === 0 || canManageQueue);
   return `
-    <article class="next-recipe-card ${index === 0 ? "primary-next" : ""}">
+    <article class="next-recipe-card ${index === 0 ? "primary-next" : ""}" data-queue-drag-item data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">
       <div class="next-recipe-main">
         ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(order.itemName)}">` : ""}
         <div>
@@ -10007,6 +10128,15 @@ function renderQueuedRecipeCard(snapshot, order, index, startInSeconds) {
       </div>
       <div class="mini-title">Prep before start</div>
       ${renderQueuePrepItems(recipe)}
+      <div class="queued-recipe-actions">
+        ${canManageQueue ? `<button class="queue-drag-handle" type="button" data-queue-drag-handle title="Hold and drag to change priority" aria-label="Hold and drag ${escapeHtml(order.itemName)}">&#8942;&#8942;</button>` : ""}
+        ${canManageQueue ? `<button class="icon-button tiny" type="button" data-action="queue-move-up" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${index === 0 ? "disabled" : ""} aria-label="Move ${escapeHtml(order.itemName)} up">&uarr;</button>` : ""}
+        ${canManageQueue ? `<button class="icon-button tiny" type="button" data-action="queue-move-down" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${index === totalItems - 1 ? "disabled" : ""} aria-label="Move ${escapeHtml(order.itemName)} down">&darr;</button>` : ""}
+        ${busy && canManageQueue && index > 0 ? `<button class="secondary-button micro" type="button" data-action="queue-move-next" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Make next</button>` : ""}
+        ${canStart ? `<button class="primary-button micro" type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Cook now</button>` : ""}
+        ${connected && busy && canManageQueue ? `<button class="danger-button micro" type="button" data-action="queue-force-start" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Stop current &amp; cook now</button>` : ""}
+        ${!canManageQueue ? `<span class="queue-permission-note">${index === 0 && !busy ? "Next recipe can be started" : "Priority locked"}</span>` : ""}
+      </div>
     </article>
   `;
 }
@@ -10018,7 +10148,7 @@ function renderDeviceQueuePlan(snapshot, device, queueOrders, activeRecipe) {
     <div class="device-queue-plan">
       ${queueOrders
         .map((order, index) => {
-          const card = renderQueuedRecipeCard(snapshot, order, index, cursorSeconds);
+          const card = renderQueuedRecipeCard(snapshot, device, order, index, cursorSeconds, queueOrders.length);
           cursorSeconds += getRecipeDuration(getEffectiveRecipe(snapshot, order));
           return card;
         })
@@ -10066,12 +10196,15 @@ function renderQueueTimelineNow(model) {
   `;
 }
 
-function renderQueueTimelineUpcomingRow(item, device, isBusy) {
+function renderQueueTimelineUpcomingRow(snapshot, item, device, isBusy) {
   const order = item.order;
-  const canStartNow = device.connection === "connected" && !isBusy;
-  const canForceStart = device.connection === "connected" && isBusy;
+  const permissions = currentPermissions(snapshot);
+  const canManageQueue = permissions.canManageQueues;
+  const canStartNow =
+    device.connection === "connected" && !isBusy && permissions.canRunRecipes && (item.index === 0 || canManageQueue);
+  const canForceStart = device.connection === "connected" && isBusy && canManageQueue;
   return `
-    <article class="queue-timeline-row upcoming ${order.recook ? "recook" : ""}">
+    <article class="queue-timeline-row upcoming ${order.recook ? "recook" : ""}" data-queue-drag-item data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">
       <span class="queue-timeline-marker pending"></span>
       <div class="queue-timeline-copy">
         <strong>${escapeHtml(order.itemName)}</strong>
@@ -10079,15 +10212,18 @@ function renderQueueTimelineUpcomingRow(item, device, isBusy) {
         ${order.recook ? `<span class="queue-tag recook">Re-cook</span>` : ""}
       </div>
       <div class="queue-timeline-controls" aria-label="Queue controls for ${escapeHtml(order.itemName)}">
-        <button class="icon-button tiny" type="button" data-action="queue-move-up" data-slot="${device.slot}" data-order-id="${order.id}" ${item.index === 0 ? "disabled" : ""} aria-label="Move up">&uarr;</button>
-        <button class="icon-button tiny" type="button" data-action="queue-move-down" data-slot="${device.slot}" data-order-id="${order.id}" ${item.index === item.total - 1 ? "disabled" : ""} aria-label="Move down">&darr;</button>
-        <button class="secondary-button micro" type="button" data-action="queue-move-next" data-slot="${device.slot}" data-order-id="${order.id}" ${item.index === 0 ? "disabled" : ""}>Next</button>
+        ${canManageQueue ? `<button class="queue-drag-handle" type="button" data-queue-drag-handle title="Hold and drag to change priority" aria-label="Hold and drag ${escapeHtml(order.itemName)}">&#8942;&#8942;</button>` : ""}
+        ${canManageQueue ? `<button class="icon-button tiny" type="button" data-action="queue-move-up" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${item.index === 0 ? "disabled" : ""} aria-label="Move up">&uarr;</button>` : ""}
+        ${canManageQueue ? `<button class="icon-button tiny" type="button" data-action="queue-move-down" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${item.index === item.total - 1 ? "disabled" : ""} aria-label="Move down">&darr;</button>` : ""}
+        ${canManageQueue ? `<button class="secondary-button micro" type="button" data-action="queue-move-next" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${item.index === 0 ? "disabled" : ""}>Next</button>` : ""}
         ${
           canStartNow
-            ? `<button class="primary-button micro" type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${order.id}">Start now</button>`
+            ? `<button class="primary-button micro" type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Cook now</button>`
             : canForceStart
-              ? `<button class="danger-button micro" type="button" data-action="queue-force-start" data-slot="${device.slot}" data-order-id="${order.id}">Stop Current & Start Selected</button>`
-              : `<button class="secondary-button micro" type="button" disabled>Connect first</button>`
+              ? `<button class="danger-button micro" type="button" data-action="queue-force-start" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Stop Current &amp; Start Selected</button>`
+              : device.connection !== "connected"
+                ? `<button class="secondary-button micro" type="button" disabled>Connect first</button>`
+                : `<span class="queue-permission-note">${isBusy ? "Waiting behind current recipe" : "Priority locked"}</span>`
         }
       </div>
     </article>
@@ -10123,7 +10259,7 @@ function renderQueueTimelineCard(snapshot, device) {
         ${
           model.upcoming.length
             ? model.upcoming
-                .map((item) => renderQueueTimelineUpcomingRow({ ...item, total: model.upcoming.length }, device, isBusy))
+                .map((item) => renderQueueTimelineUpcomingRow(snapshot, { ...item, total: model.upcoming.length }, device, isBusy))
                 .join("")
             : `<div class="empty-card compact-empty">Queue is empty. Cook Again or assign an order to add work here.</div>`
         }
@@ -10597,13 +10733,13 @@ function renderDevicePhone(snapshot, device) {
                 ? `
                   <section class="stack-section">
                     <div class="mini-title">Ready for next</div>
-                    ${renderNextQueuedPrepPrompt(snapshot, queueOrders)}
+                    ${renderNextQueuedPrepPrompt(snapshot, device, queueOrders)}
                   </section>
                 `
               : ""
           }
           <section class="stack-section queue-stack">
-            <div class="mini-title">Next recipe and prep</div>
+            <div class="mini-title">Queue priority</div>
             ${renderDeviceQueuePlan(snapshot, device, queueOrders, timelineRecipe)}
           </section>
         </div>
@@ -11422,6 +11558,7 @@ function renderModal(snapshot) {
             <label class="toggle-row"><input type="checkbox" name="canAddRecipes"> Can add/select recipes from Global Recipes</label>
             <label class="toggle-row"><input type="checkbox" name="canEditRecipes" checked> Can optimize/edit selected recipes</label>
             <label class="toggle-row"><input type="checkbox" name="canManageRecipeAccess" checked> Can assign recipes to devices/operators</label>
+            <label class="toggle-row"><input type="checkbox" name="canManageQueues" checked> Can reorder device queues and start a selected queued job</label>
             <label class="toggle-row"><input type="checkbox" name="managerMode"> Operator acts as kitchen manager in small kitchen</label>
             <p class="subtle">Operators normally run only the recipes selected by the master admin or kitchen manager. Leave edit/add unchecked for a run-only cook/operator.</p>
             <div class="action-row">
@@ -12284,6 +12421,7 @@ async function handleSubmit(event) {
       canAddRecipes: adminLike || Boolean(formData.get("canAddRecipes")),
       canEditRecipes: managerLike || Boolean(formData.get("canEditRecipes")),
       canManageRecipeAccess: managerLike || Boolean(formData.get("canManageRecipeAccess")),
+      canManageQueues: adminLike || Boolean(formData.get("canManageQueues")),
       createdAt: nowIso()
     };
     if (!localUser.email && !localUser.mobilePhone) {
@@ -13385,6 +13523,23 @@ async function handleClick(event) {
     openModal("add-user");
     return;
   }
+  if (action === "toggle-user-queue-permission") {
+    if (!currentPermissions(state()).canManageUsers) {
+      showToast("Only an administrator can change queue permissions.", "warning");
+      return;
+    }
+    let enabled = false;
+    let displayName = "User";
+    mutate((draft) => {
+      const user = draft.users.find((item) => item.id === button.dataset.userId);
+      if (!user || ["main_admin", "admin"].includes(user.role)) return draft;
+      user.canManageQueues = !Boolean(user.canManageQueues);
+      enabled = user.canManageQueues;
+      displayName = user.displayName || displayName;
+    });
+    showToast(`${displayName}: queue priority changes ${enabled ? "enabled" : "disabled"}`, "success");
+    return;
+  }
   if (action === "open-cloud-login") {
     openModal("cloud-auth", { mode: "login" });
     return;
@@ -13731,6 +13886,96 @@ function bindStore(initialScrollState = null) {
   restoreScrollState(initialScrollState || takeSavedScrollState());
 }
 
+function bindQueueDragGestures() {
+  let drag = null;
+
+  const clearDrag = () => {
+    if (drag?.timer) window.clearTimeout(drag.timer);
+    drag?.sourceCard?.classList.remove("queue-dragging");
+    drag?.targetCard?.classList.remove("queue-drop-target", "drop-after");
+    drag = null;
+  };
+
+  app.addEventListener(
+    "pointerdown",
+    (event) => {
+      if (!event.isPrimary) return;
+      const handle = event.target.closest?.("[data-queue-drag-handle]");
+      const sourceCard = handle?.closest?.("[data-queue-drag-item]");
+      if (!handle || !sourceCard || !canManageDeviceQueue()) return;
+      clearDrag();
+      drag = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        slot: Number(sourceCard.dataset.slot),
+        orderId: sourceCard.dataset.orderId || "",
+        sourceCard,
+        targetCard: null,
+        targetOrderId: "",
+        position: "before",
+        active: false,
+        timer: window.setTimeout(() => {
+          if (!drag || drag.pointerId !== event.pointerId) return;
+          drag.active = true;
+          drag.sourceCard.classList.add("queue-dragging");
+          navigator.vibrate?.(30);
+        }, 240)
+      };
+    },
+    { passive: true }
+  );
+
+  app.addEventListener(
+    "pointermove",
+    (event) => {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+      if (!drag.active && distance > 12) {
+        clearDrag();
+        return;
+      }
+      if (!drag.active) return;
+      event.preventDefault();
+      const targetCard = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-queue-drag-item]");
+      if (
+        !targetCard ||
+        Number(targetCard.dataset.slot) !== drag.slot ||
+        targetCard.dataset.orderId === drag.orderId
+      ) {
+        drag.targetCard?.classList.remove("queue-drop-target", "drop-after");
+        drag.targetCard = null;
+        drag.targetOrderId = "";
+        return;
+      }
+      drag.targetCard?.classList.remove("queue-drop-target", "drop-after");
+      const rect = targetCard.getBoundingClientRect();
+      drag.position = event.clientY > rect.top + rect.height / 2 ? "after" : "before";
+      drag.targetCard = targetCard;
+      drag.targetOrderId = targetCard.dataset.orderId || "";
+      targetCard.classList.add("queue-drop-target");
+      targetCard.classList.toggle("drop-after", drag.position === "after");
+    },
+    { passive: false }
+  );
+
+  const finishDrag = (event) => {
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    const completed = drag.active && drag.targetOrderId;
+    const drop = completed
+      ? { slot: drag.slot, orderId: drag.orderId, targetOrderId: drag.targetOrderId, position: drag.position }
+      : null;
+    clearDrag();
+    if (drop) {
+      event.preventDefault();
+      moveDeviceQueueItemBeside(drop.slot, drop.orderId, drop.targetOrderId, drop.position);
+    }
+  };
+
+  app.addEventListener("pointerup", finishDrag, { passive: false });
+  app.addEventListener("pointercancel", clearDrag, { passive: true });
+}
+
 function bindApkRailGestures() {
   if (!IS_APK_MODE) return;
   const swipe = {
@@ -13871,6 +14116,7 @@ async function init() {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") saveUiSessionState();
   });
+  bindQueueDragGestures();
   bindApkRailGestures();
   queueIdleWork();
 }
