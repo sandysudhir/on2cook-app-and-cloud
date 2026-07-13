@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260713b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260713b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260713c";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260713c";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260713b";
+} from "./ncb-services.js?v=20260713c";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260713b";
+} from "./data-store.js?v=20260713c";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -30,7 +30,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260713b";
+const APP_ASSET_VERSION = "20260713c";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -9122,6 +9122,11 @@ function renderNativeCookingTimeline(snapshot, device) {
         <b>${nextStep ? formatProClock(timeline.currentRemaining) : "--:--"}</b>
       </div>
 
+      <div class="native-cook-primary-actions">
+        <button class="danger-button" data-action="abort-device" data-slot="${device.slot}" ${disabledAttr}>Abort recipe</button>
+        <button class="secondary-button" data-action="open-device-sheet" data-slot="${device.slot}">Full details</button>
+      </div>
+
       ${renderNativeCookingQueue(snapshot, device, recipe)}
 
       <details class="native-cook-intervention">
@@ -9164,10 +9169,6 @@ function renderNativeCookingTimeline(snapshot, device) {
               ([speed, label]) => `<button class="${presentation.stirrerRunning && presentation.stirrer === speed ? "active" : ""}" data-action="manual-stirrer-speed" data-slot="${device.slot}" data-speed="${speed}" ${disabledAttr}>${label}</button>`
             )
             .join("")}
-        </div>
-        <div class="native-cook-intervention-actions">
-          <button class="danger-button" data-action="abort-device" data-slot="${device.slot}" ${disabledAttr}>Abort recipe</button>
-          <button class="secondary-button" data-action="open-device-sheet" data-slot="${device.slot}">Full details</button>
         </div>
       </details>
     </section>
@@ -10211,6 +10212,46 @@ function renderQuickAssignConfirmModal(snapshot, modal) {
   `;
 }
 
+function renderAbortRecipeConfirmModal(snapshot, modal) {
+  const slot = Number(modal.payload?.slot || 0);
+  const device = snapshot.devices.find((item) => item.slot === slot);
+  const recipe = device ? getRuntimeRecipe(snapshot, device) : null;
+  const order = device ? getCurrentJob(snapshot, device) : null;
+  const recipeName = recipe?.displayName || order?.itemName || device?.telemetry?.currentRecipe || "Current recipe";
+  const canAbort = Boolean(
+    device &&
+      device.connection === "connected" &&
+      (device.currentJobId || hasLiveRuntime(device) || device.activeRun?.recipeId || device.telemetry?.currentRecipe)
+  );
+  const returnTo = ["device-manual", "device-sheet"].includes(modal.payload?.returnTo) ? modal.payload.returnTo : "";
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card abort-recipe-confirm-modal">
+        <div class="row space">
+          <div>
+            <div class="eyebrow">Confirm abort</div>
+            <h3>${escapeHtml(recipeName)}</h3>
+          </div>
+          <button class="icon-button" data-action="cancel-abort-device" data-slot="${slot}" data-return-to="${returnTo}" aria-label="Cancel abort">x</button>
+        </div>
+        <div class="settings-card compact-note">
+          <strong>Device ${slot}: ${escapeHtml(device?.displayName || "Unknown device")}</strong>
+          <p class="subtle">The current recipe will be marked as aborted. Recipes waiting in this device queue will remain queued.</p>
+        </div>
+        ${
+          canAbort
+            ? ""
+            : `<div class="status-message warning">Connect this device with an active recipe before aborting.</div>`
+        }
+        <div class="action-row">
+          <button class="secondary-button" type="button" data-action="cancel-abort-device" data-slot="${slot}" data-return-to="${returnTo}">Continue cooking</button>
+          <button class="danger-button" type="button" data-action="confirm-abort-device" data-slot="${slot}" data-return-to="${returnTo}" ${canAbort ? "" : "disabled"}>Abort recipe</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderAssignRecipeModal(snapshot, modal) {
   const slot = Number(modal.payload?.slot || 0);
   const device = snapshot.devices.find((item) => item.slot === slot);
@@ -11118,6 +11159,10 @@ function renderModal(snapshot) {
 
   if (modal.type === "quick-assign-confirm") {
     return renderQuickAssignConfirmModal(snapshot, modal);
+  }
+
+  if (modal.type === "abort-recipe-confirm") {
+    return renderAbortRecipeConfirmModal(snapshot, modal);
   }
 
   if (modal.type === "assign-recipe") {
@@ -13301,7 +13346,35 @@ async function handleClick(event) {
     return;
   }
   if (action === "abort-device") {
-    await abortCurrentRecipe(Number(button.dataset.slot));
+    const slot = Number(button.dataset.slot);
+    const activeModal = state().ui.activeModal;
+    const returnTo = ["device-manual", "device-sheet"].includes(activeModal?.type) ? activeModal.type : "";
+    openModal("abort-recipe-confirm", { slot, returnTo });
+    return;
+  }
+  if (action === "cancel-abort-device") {
+    const slot = Number(button.dataset.slot);
+    const returnTo = ["device-manual", "device-sheet"].includes(button.dataset.returnTo) ? button.dataset.returnTo : "";
+    if (returnTo) {
+      openModal(returnTo, { slot });
+    } else {
+      closeModal();
+    }
+    return;
+  }
+  if (action === "confirm-abort-device") {
+    const slot = Number(button.dataset.slot);
+    const returnTo = ["device-manual", "device-sheet"].includes(button.dataset.returnTo) ? button.dataset.returnTo : "";
+    try {
+      await abortCurrentRecipe(slot);
+    } catch (error) {
+      showToast(error?.message || `Could not abort Device ${slot}`, "error");
+    }
+    if (returnTo) {
+      openModal(returnTo, { slot });
+    } else {
+      closeModal();
+    }
     return;
   }
   if (action === "restart-device") {

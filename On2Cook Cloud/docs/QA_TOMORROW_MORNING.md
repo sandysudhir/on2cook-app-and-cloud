@@ -37,10 +37,11 @@ Date prepared: July 13, 2026
 - Queue actions do not trigger recipe inventory checks or BLE file uploads; recipe availability is checked only when the item is about to start.
 - Saved duplicate seed-recipe IDs are migrated to unique IDs, and the tested VEG HAKKA NOODLE selection resolved to VEG HAKKA NOODLE rather than VEGETABLE UPMA.
 - The active-cooking Manual Mode screen was checked at 390 x 844 with no page, modal, or queue horizontal overflow.
+- Active Manual Mode now keeps a prominent Abort recipe action visible while scrolling. It opens a device/recipe confirmation, keeps queued recipes intact, and cancelling returns to the same cooking screen.
 - Closing Live Logs while offline no longer attempts to send `livelog=OFF`.
 - The latest firmware manifest is available at `firmware/latest/manifest.json` with version `IN-V9-260626`.
 - The web UI blocks recipe/manual commands while firmware is being checked or updated.
-- The Android APK build completed successfully: `On2Cook-Cloud-Mobile-APK-2026-07-13-cooking-timeline-queue.apk`.
+- The Android APK build completed successfully: `On2Cook-Cloud-Mobile-APK-2026-07-13-manual-abort.apk`.
 
 ## Not Verified Tonight
 
@@ -58,14 +59,14 @@ Physical BLE/device behavior still needs the cooker:
 ## Tomorrow Morning Device Test Sequence
 
 1. Open Chrome or Edge on Windows and load `https://www.on2cook.net/`.
-2. Hard refresh once so `app.js?v=20260713b` and service worker `on2cook-cloud-v91` are active.
+2. Hard refresh once so `app.js?v=20260713c` and service worker `on2cook-cloud-v92` are active.
 3. Turn on only the first cooker and wait for BLE advertising.
 4. Open Device Details for D1, click Connect, and select the intended cooker.
 5. Confirm D1 shows Connected and locks to that exact Bluetooth name.
 6. If the same cooker appears connected under D2/D3, click the D1 repair action (`Use Device X cooker here`) and confirm the cooker moves back to D1.
 7. Confirm the firmware notice appears while the app sends `Firmware=?`.
 8. In Chrome/Edge browser mode, confirm the app warns that automatic OTA requires the Android APK if the connected firmware is older than `IN-V9-260626`.
-9. Install/open `On2Cook-Cloud-Mobile-APK-2026-07-13-cooking-timeline-queue.apk` for the actual OTA test.
+9. Install/open `On2Cook-Cloud-Mobile-APK-2026-07-13-manual-abort.apk` for the actual OTA test.
 10. Connect D1 in the APK. If the device firmware is older, confirm the app blocks cooking, starts OTA, sends `OTA:true,SIZE=<bytes>`, waits for `USE_WIFI`, switches to `ON2COOK_OTA`, uploads to `http://192.168.4.1/update`, and shows the updated firmware version.
 11. If Android asks to allow the temporary `ON2COOK_OTA` Wi-Fi, approve it and keep the phone close to the cooker.
 12. After firmware completes, reconnect D1 and click Status and Firmware. Confirm `WORKSTATUS=IDLE` and firmware `IN-V9-260626` appear.
@@ -80,7 +81,7 @@ Physical BLE/device behavior still needs the cooker:
 21. Move PAAL PAYASAM up. Confirm the same order appears in the main D1 Next Recipe and Prep section, then add another D1 order from the main Orders screen and confirm it appears in the same Manual Mode queue.
 22. Open Live Logs. Confirm `livelog=ON` starts streaming values. Close it and confirm `livelog=OFF`.
 23. Use View Queue to confirm cooked history, NOW, and upcoming queue are separated.
-24. Abort from the screen. Confirm the app sends `stop=100`, shows aborted status, and D1 becomes ready for the next recipe.
+24. In D1 Manual Mode, tap the visible Abort recipe action. Cancel once and confirm cooking continues on the same screen. Open it again, confirm the device/recipe details, then abort. Confirm the app sends `stop=100`, keeps upcoming recipes queued, shows aborted status, and D1 becomes ready for the next recipe.
 25. Let one recipe complete normally. Confirm last cooked recipe appears at the top with since-completion time.
 26. While idle, open bottom Logs. Confirm `LOGSTATUS=?`, then `LISTLOGS`, then `READLOG=<filename>` work.
 27. Repeat the same connection lock and recipe run test for D2 with a second cooker if available.

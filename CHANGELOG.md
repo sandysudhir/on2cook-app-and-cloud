@@ -2,6 +2,10 @@
 
 ## 2026-07-13
 
+- Added a prominent, sticky `Abort recipe` action to the active device Manual Mode screen instead of hiding it inside collapsed cooking diagnostics.
+- Added an abort confirmation step that identifies the device and recipe, preserves upcoming queue jobs, and only then uses the existing firmware `stop=100` command.
+- Verified the Manual Mode abort and cancel flow at desktop and 390 x 844 mobile sizes without horizontal overflow; cancelling returns to the active cooking screen.
+- Bumped web cache version to `20260713c` / service-worker cache `v92` and refreshed the APK cloud URL.
 - Replaced the idle Manual Mode controls with the original-style live cooking timeline whenever a device is running a recipe.
 - Mapped recipe-mode status from the firmware `MODE`, `IND_RUN`, `MAG_RUN`, power, stirrer, and pump fields so active induction/microwave/stirrer states no longer appear idle; inactive sources stay neutral and an active stirrer is green.
 - Kept manual intervention controls collapsed during cooking and removed inappropriate Start/Play controls for sources that are already running.
