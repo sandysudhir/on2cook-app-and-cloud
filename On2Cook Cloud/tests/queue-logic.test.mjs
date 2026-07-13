@@ -5,6 +5,7 @@ import { currentPermissions } from "../src/data-store.js";
 import {
   canStartQueuedIndex,
   moveQueueIdBeside,
+  removeQueueId,
   reorderQueueIds,
   shouldStartQueuedWork
 } from "../src/queue-logic.js";
@@ -20,6 +21,11 @@ test("arrow controls reorder only the upcoming queue", () => {
 test("drag placement supports before and after without losing jobs", () => {
   assert.deepEqual(moveQueueIdBeside(["a", "b", "c"], "c", "a", "before"), ["c", "a", "b"]);
   assert.deepEqual(moveQueueIdBeside(["a", "b", "c"], "a", "b", "after"), ["b", "a", "c"]);
+});
+
+test("queue removal preserves every other queued job in order", () => {
+  assert.deepEqual(removeQueueId(["a", "b", "c"], "b"), ["a", "c"]);
+  assert.deepEqual(removeQueueId(["a", "b"], "missing"), ["a", "b"]);
 });
 
 test("run-only users may start the first item but cannot skip priority", () => {
@@ -54,6 +60,13 @@ test("queued handoff bypasses the remaining queue busy check", () => {
     /startOrderFlow\(queuedOrderId, device\.slot, \{ ignoreQueuedWork: true \}\)/,
     "The first queued job must start even when more jobs remain behind it."
   );
+});
+
+test("removed queue work returns to Pending without being auto-routed immediately", () => {
+  const appSource = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
+  assert.match(appSource, /order\.status = "pending";[\s\S]*?order\.queueHold = true;/);
+  assert.match(appSource, /filter\(\(order\) => !order\.queueHold\)/);
+  assert.match(appSource, /draftOrder\.queueHold = false;/);
 });
 
 test("queue priority permission follows administrator configuration", () => {

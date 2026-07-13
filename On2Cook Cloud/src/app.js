@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260713e";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260713e";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260713e";
+} from "./ncb-services.js?v=20260714a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,13 +21,14 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260713e";
+} from "./data-store.js?v=20260714a";
 import {
   canStartQueuedIndex,
   moveQueueIdBeside,
+  removeQueueId,
   reorderQueueIds,
   shouldStartQueuedWork
-} from "./queue-logic.js?v=20260713e";
+} from "./queue-logic.js?v=20260714a";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -36,7 +37,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260713e";
+const APP_ASSET_VERSION = "20260714a";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -4703,6 +4704,7 @@ async function startOrderFlow(orderId, preferredSlot = null, options = {}) {
         draftDevice.queueOrderIds.push(orderId);
       }
       draftOrder.status = "queued";
+      draftOrder.queueHold = false;
       draftOrder.assignedSlot = device.slot;
       draftOrder.assignedMode = preferredSlot ? "device" : "auto";
       draftOrder.activeRecipeId = recipe.id;
@@ -4730,6 +4732,7 @@ async function startOrderFlow(orderId, preferredSlot = null, options = {}) {
     const runStartedAt = nowIso();
     clearOrderFromDeviceAssignments(draft, orderId, device.slot);
     draftOrder.status = "starting";
+    draftOrder.queueHold = false;
     draftOrder.assignedSlot = device.slot;
     draftOrder.assignedMode = preferredSlot ? "device" : "auto";
     draftOrder.activeRecipeId = recipe.id;
@@ -4975,6 +4978,55 @@ function moveDeviceQueueItemBeside(slot, orderId, targetOrderId, position = "bef
   });
   if (moved) showToast("Queue priority updated", "success");
   return moved;
+}
+
+function removeDeviceQueueItem(slot, orderId) {
+  if (!canManageDeviceQueue()) {
+    denyQueuePriorityChange();
+    return false;
+  }
+  let removedName = "";
+  let displayOrderId = "";
+  mutate((draft) => {
+    const device = draft.devices.find((item) => item.slot === Number(slot));
+    const order = draft.orders.current.find((item) => item.id === orderId);
+    if (!device || !order || order.status !== "queued" || order.assignedSlot !== device.slot) return draft;
+    const queuedIds = getDeviceQueuedOrderIds(draft, device);
+    if (!queuedIds.includes(orderId)) return draft;
+    draft.devices.forEach((candidate) => {
+      candidate.queueOrderIds = removeQueueId(candidate.queueOrderIds, orderId);
+      if (candidate.startQueuedAfterCurrent === orderId) {
+        candidate.startQueuedAfterCurrent = "";
+        candidate.startQueuedAfterCurrentAt = "";
+      }
+    });
+    order.status = "pending";
+    order.assignedSlot = null;
+    order.assignedMode = "auto";
+    order.targetSlot = null;
+    order.queueHold = true;
+    order.currentRunRecipeName = "";
+    order.currentRunFirmwareName = "";
+    order.historyNote = `Removed from Device ${device.slot} queue; waiting in Pending.`;
+    removedName = order.itemName;
+    displayOrderId = order.orderId;
+    appendActivity(device, `${order.itemName} removed from queue and returned to Pending`, "warning");
+    pushDraftNotification(draft, {
+      type: "order",
+      title: "Order returned to Pending",
+      deviceSlot: device.slot,
+      orderId: order.orderId,
+      recipeName: order.itemName,
+      message: `${order.itemName} was removed from Device ${device.slot} queue.`,
+      action: { type: "order", label: "Open order", orderId: order.id }
+    });
+  });
+  if (!removedName) {
+    showToast("This recipe is no longer in the device queue.", "warning");
+    return false;
+  }
+  showToast(`${displayOrderId} ${removedName} returned to Pending`, "success");
+  return true;
 }
 
 async function startQueuedOrderNow(slot, orderId) {
@@ -5852,6 +5904,7 @@ function queueIdleWork() {
     if (latest.settings.pendingAssignmentMode !== "auto_route") return;
     const pending = latest.orders.current
       .filter((order) => order.status === "pending")
+      .filter((order) => !order.queueHold)
       .filter((order) => canRunOnDevice(latest, order, device, getEffectiveRecipe(latest, order)))
       .filter((order) => !order.targetSlot || order.targetSlot === device.slot)
       .sort((left, right) => new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
@@ -7195,6 +7248,7 @@ async function startDeviceOnlyOrderFlow(orderId, preferredSlot, recipeName, opti
         draftDevice.queueOrderIds.push(orderId);
       }
       draftOrder.status = "queued";
+      draftOrder.queueHold = false;
       draftOrder.assignedSlot = device.slot;
       draftOrder.assignedMode = "device";
       draftOrder.targetSlot = device.slot;
@@ -7222,6 +7276,7 @@ async function startDeviceOnlyOrderFlow(orderId, preferredSlot, recipeName, opti
     if (!draftOrder || !draftDevice) return draft;
     clearOrderFromDeviceAssignments(draft, orderId, device.slot);
     draftOrder.status = "starting";
+    draftOrder.queueHold = false;
     draftOrder.assignedSlot = device.slot;
     draftOrder.assignedMode = "device";
     draftOrder.targetSlot = device.slot;
@@ -8790,6 +8845,8 @@ function renderQueueTab(snapshot) {
   const pending = snapshot.orders.current.filter((order) => order.status === "pending");
   const queued = snapshot.orders.current.filter((order) => order.status === "queued");
   const incoming = Array.isArray(snapshot.orders.incoming) ? snapshot.orders.incoming : [];
+  const permissions = currentPermissions(snapshot);
+  const canManageQueue = permissions.canManageQueues;
   return `
     <section class="stack-section">
       <div class="mini-title">Pending and queue strategy</div>
@@ -8824,6 +8881,7 @@ function renderQueueTab(snapshot) {
         snapshot.devices
           .map((device) => {
             const queueOrders = getQueueOrders(snapshot, device);
+            const busy = isDeviceActivelyCooking(device);
             return `
               <article class="queue-device-card">
                 <div class="row space">
@@ -8834,10 +8892,20 @@ function renderQueueTab(snapshot) {
                   queueOrders.length
                     ? queueOrders
                         .map(
-                          (order) => `
-                            <div class="queue-item">
-                              <span>${escapeHtml(order.itemName)}</span>
-                              <span class="subtle">${escapeHtml(order.orderId)}</span>
+                          (order, index) => `
+                            <div class="queue-item queue-tab-item" data-queue-drag-item data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">
+                              <div class="queue-tab-copy">
+                                <strong>${index + 1}. ${escapeHtml(order.itemName)}</strong>
+                                <span class="subtle">${escapeHtml(order.orderId)} | Device ${device.slot}</span>
+                              </div>
+                              <div class="queue-tab-actions">
+                                ${canManageQueue ? `<button class="queue-drag-handle" type="button" data-queue-drag-handle title="Hold and drag to change priority" aria-label="Hold and drag ${escapeHtml(order.itemName)}">&#8942;&#8942;</button>` : ""}
+                                ${canManageQueue ? `<button class="icon-button tiny" type="button" data-action="queue-move-up" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${index === 0 ? "disabled" : ""} aria-label="Move up">&uarr;</button>` : ""}
+                                ${canManageQueue ? `<button class="icon-button tiny" type="button" data-action="queue-move-down" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${index === queueOrders.length - 1 ? "disabled" : ""} aria-label="Move down">&darr;</button>` : ""}
+                                ${busy && canManageQueue && index > 0 ? `<button class="secondary-button micro" type="button" data-action="queue-move-next" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Next</button>` : ""}
+                                ${!busy && permissions.canRunRecipes && (index === 0 || canManageQueue) ? `<button class="primary-button micro" type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Cook now</button>` : ""}
+                                ${canManageQueue ? `<button class="danger-button micro" type="button" data-action="queue-remove-request" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Remove</button>` : ""}
+                              </div>
                             </div>
                           `
                         )
@@ -9074,6 +9142,7 @@ function renderNativeCookingQueue(snapshot, device, activeRecipe, options = {}) 
             ${canManageQueue ? `<button type="button" data-action="queue-move-down" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" ${index === queueOrders.length - 1 ? "disabled" : ""} aria-label="Move ${escapeHtml(order.itemName)} down">&darr;</button>` : ""}
             ${deviceBusy && canManageQueue && index > 0 ? `<button type="button" data-action="queue-move-next" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" aria-label="Make ${escapeHtml(order.itemName)} next">Next</button>` : ""}
             ${!deviceBusy && permissions.canRunRecipes && (index === 0 || canManageQueue) ? `<button type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Cook now</button>` : ""}
+            ${canManageQueue ? `<button class="queue-remove-button" type="button" data-action="queue-remove-request" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}" title="Remove from queue">Remove</button>` : ""}
           </div>
         </article>
       `;
@@ -10090,6 +10159,7 @@ function renderNextQueuedPrepPrompt(snapshot, device, queueOrders) {
       )}</p>
       <div class="next-prep-actions">
         <button class="primary-button small" type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${escapeHtml(nextOrder.id)}" ${canStart ? "" : "disabled"}>Cook now</button>
+        ${permissions.canManageQueues ? `<button class="danger-button small" type="button" data-action="queue-remove-request" data-slot="${device.slot}" data-order-id="${escapeHtml(nextOrder.id)}">Remove from queue</button>` : ""}
         ${automatic ? `<span class="queue-auto-label">Automatic handoff on</span>` : `<span class="queue-auto-label">Manual start required</span>`}
       </div>
     </article>
@@ -10135,6 +10205,7 @@ function renderQueuedRecipeCard(snapshot, device, order, index, startInSeconds, 
         ${busy && canManageQueue && index > 0 ? `<button class="secondary-button micro" type="button" data-action="queue-move-next" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Make next</button>` : ""}
         ${canStart ? `<button class="primary-button micro" type="button" data-action="queue-start-now" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Cook now</button>` : ""}
         ${connected && busy && canManageQueue ? `<button class="danger-button micro" type="button" data-action="queue-force-start" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Stop current &amp; cook now</button>` : ""}
+        ${canManageQueue ? `<button class="danger-button micro" type="button" data-action="queue-remove-request" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Remove</button>` : ""}
         ${!canManageQueue ? `<span class="queue-permission-note">${index === 0 && !busy ? "Next recipe can be started" : "Priority locked"}</span>` : ""}
       </div>
     </article>
@@ -10225,6 +10296,7 @@ function renderQueueTimelineUpcomingRow(snapshot, item, device, isBusy) {
                 ? `<button class="secondary-button micro" type="button" disabled>Connect first</button>`
                 : `<span class="queue-permission-note">${isBusy ? "Waiting behind current recipe" : "Priority locked"}</span>`
         }
+        ${canManageQueue ? `<button class="danger-button micro" type="button" data-action="queue-remove-request" data-slot="${device.slot}" data-order-id="${escapeHtml(order.id)}">Remove</button>` : ""}
       </div>
     </article>
   `;
@@ -10382,6 +10454,48 @@ function renderAbortRecipeConfirmModal(snapshot, modal) {
         <div class="action-row">
           <button class="secondary-button" type="button" data-action="cancel-abort-device" data-slot="${slot}" data-return-to="${returnTo}">Continue cooking</button>
           <button class="danger-button" type="button" data-action="confirm-abort-device" data-slot="${slot}" data-return-to="${returnTo}" ${canAbort ? "" : "disabled"}>Abort recipe</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderRemoveQueuedOrderConfirmModal(snapshot, modal) {
+  const slot = Number(modal.payload?.slot || 0);
+  const orderId = String(modal.payload?.orderId || "");
+  const device = snapshot.devices.find((item) => item.slot === slot);
+  const order = snapshot.orders.current.find((item) => item.id === orderId);
+  const isQueuedHere = Boolean(
+    device &&
+      order &&
+      order.status === "queued" &&
+      Number(order.assignedSlot) === slot &&
+      getDeviceQueuedOrderIds(snapshot, device).includes(orderId)
+  );
+  const canRemove = Boolean(isQueuedHere && currentPermissions(snapshot).canManageQueues);
+  const returnTo = ["device-manual", "device-sheet"].includes(modal.payload?.returnTo) ? modal.payload.returnTo : "";
+  return `
+    <div class="modal-backdrop">
+      <div class="modal-card remove-queue-confirm-modal">
+        <div class="row space">
+          <div>
+            <div class="eyebrow">Remove from queue</div>
+            <h3>${escapeHtml(order?.itemName || "Queued recipe")}</h3>
+          </div>
+          <button class="icon-button" data-action="cancel-queue-remove" data-slot="${slot}" data-return-to="${returnTo}" aria-label="Cancel queue removal">x</button>
+        </div>
+        <div class="settings-card compact-note">
+          <strong>${escapeHtml(order?.orderId || "Order")} on Device ${slot}</strong>
+          <p class="subtle">This item will leave ${escapeHtml(device?.displayName || `Device ${slot}`)}'s queue and return to Pending. The order and its history will not be deleted.</p>
+        </div>
+        ${
+          canRemove
+            ? ""
+            : `<div class="status-message warning">This item is no longer queued here, or your login cannot manage queue priority.</div>`
+        }
+        <div class="action-row">
+          <button class="secondary-button" type="button" data-action="cancel-queue-remove" data-slot="${slot}" data-return-to="${returnTo}">Keep in queue</button>
+          <button class="danger-button" type="button" data-action="confirm-queue-remove" data-slot="${slot}" data-order-id="${escapeHtml(orderId)}" data-return-to="${returnTo}" ${canRemove ? "" : "disabled"}>Return to Pending</button>
         </div>
       </div>
     </div>
@@ -11299,6 +11413,10 @@ function renderModal(snapshot) {
 
   if (modal.type === "abort-recipe-confirm") {
     return renderAbortRecipeConfirmModal(snapshot, modal);
+  }
+
+  if (modal.type === "remove-queue-confirm") {
+    return renderRemoveQueuedOrderConfirmModal(snapshot, modal);
   }
 
   if (modal.type === "assign-recipe") {
@@ -12916,6 +13034,17 @@ async function handleClick(event) {
     await stopCurrentAndStartQueued(Number(button.dataset.slot), button.dataset.orderId || "");
     return;
   }
+  if (action === "queue-remove-request") {
+    const slot = Number(button.dataset.slot);
+    const activeModal = state().ui.activeModal;
+    const returnTo = ["device-manual", "device-sheet"].includes(activeModal?.type) ? activeModal.type : "";
+    openModal("remove-queue-confirm", {
+      slot,
+      orderId: button.dataset.orderId || "",
+      returnTo
+    });
+    return;
+  }
   if (action === "queue-cook-again") {
     queueCookAgainFromHistory(Number(button.dataset.slot), button.dataset.historyKey || "");
     return;
@@ -13508,6 +13637,27 @@ async function handleClick(event) {
     } catch (error) {
       showToast(error?.message || `Could not abort Device ${slot}`, "error");
     }
+    if (returnTo) {
+      openModal(returnTo, { slot });
+    } else {
+      closeModal();
+    }
+    return;
+  }
+  if (action === "cancel-queue-remove") {
+    const slot = Number(button.dataset.slot);
+    const returnTo = ["device-manual", "device-sheet"].includes(button.dataset.returnTo) ? button.dataset.returnTo : "";
+    if (returnTo) {
+      openModal(returnTo, { slot });
+    } else {
+      closeModal();
+    }
+    return;
+  }
+  if (action === "confirm-queue-remove") {
+    const slot = Number(button.dataset.slot);
+    const returnTo = ["device-manual", "device-sheet"].includes(button.dataset.returnTo) ? button.dataset.returnTo : "";
+    removeDeviceQueueItem(slot, button.dataset.orderId || "");
     if (returnTo) {
       openModal(returnTo, { slot });
     } else {

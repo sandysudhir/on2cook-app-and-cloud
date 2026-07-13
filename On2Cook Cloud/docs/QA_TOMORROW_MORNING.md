@@ -1,6 +1,6 @@
 # On2Cook Cloud QA - Tomorrow Morning Runbook
 
-Date prepared: July 13, 2026
+Date prepared: July 14, 2026
 
 ## Verified Tonight Without Physical Device
 
@@ -41,7 +41,8 @@ Date prepared: July 13, 2026
 - Manual routing now leaves the first queued recipe in `Ready for next` with prep details and an explicit `Cook now` action; automatic routing still starts it automatically.
 - Upcoming recipes expose the same device-specific priority in the device card, Device Details, and Manual Mode, with long-press drag, up/down controls, Make Next, and explicit Stop Current & Cook Now.
 - Queue priority controls follow the logged-in user's `canManageQueues` permission; a run-only operator can start the first idle item but cannot skip or reorder jobs.
-- Six automated queue-policy tests pass for arrow reorder, drag placement, run-only priority enforcement, manual/automatic handoff, multi-item handoff, and administrator permission defaults.
+- Queue items can be removed from the Queue tab, device card, Device Details, and Manual Mode after confirmation. Removal returns the order to Pending, preserves history, and prevents immediate automatic reassignment.
+- Eight automated queue-policy tests pass for arrow reorder, drag placement, removal order preservation, run-only priority enforcement, manual/automatic handoff, multi-item handoff, removal hold behavior, and administrator permission defaults.
 - Closing Live Logs while offline no longer attempts to send `livelog=OFF`.
 - The latest firmware manifest is available at `firmware/latest/manifest.json` with version `IN-V9-260626`.
 - The web UI blocks recipe/manual commands while firmware is being checked or updated.
@@ -63,14 +64,14 @@ Physical BLE/device behavior still needs the cooker:
 ## Tomorrow Morning Device Test Sequence
 
 1. Open Chrome or Edge on Windows and load `https://www.on2cook.net/`.
-2. Hard refresh once so `app.js?v=20260713e` and service worker `on2cook-cloud-v94` are active.
+2. Hard refresh once so `app.js?v=20260714a` and service worker `on2cook-cloud-v95` are active.
 3. Turn on only the first cooker and wait for BLE advertising.
 4. Open Device Details for D1, click Connect, and select the intended cooker.
 5. Confirm D1 shows Connected and locks to that exact Bluetooth name.
 6. If the same cooker appears connected under D2/D3, click the D1 repair action (`Use Device X cooker here`) and confirm the cooker moves back to D1.
 7. Confirm the firmware notice appears while the app sends `Firmware=?`.
 8. In Chrome/Edge browser mode, confirm the app warns that automatic OTA requires the Android APK if the connected firmware is older than `IN-V9-260626`.
-9. Install/open `On2Cook-Cloud-Mobile-APK-2026-07-13-queue-control.apk` for the actual OTA test.
+9. Install/open `On2Cook-Cloud-Mobile-APK-2026-07-14-queue-remove.apk` for the actual OTA test.
 10. Connect D1 in the APK. If the device firmware is older, confirm the app blocks cooking, starts OTA, sends `OTA:true,SIZE=<bytes>`, waits for `USE_WIFI`, switches to `ON2COOK_OTA`, uploads to `http://192.168.4.1/update`, and shows the updated firmware version.
 11. If Android asks to allow the temporary `ON2COOK_OTA` Wi-Fi, approve it and keep the phone close to the cooker.
 12. After firmware completes, reconnect D1 and click Status and Firmware. Confirm `WORKSTATUS=IDLE` and firmware `IN-V9-260626` appear.
@@ -84,10 +85,11 @@ Physical BLE/device behavior still needs the cooker:
 20. Select VEG HAKKA NOODLE and tap Add to queue, then select PAAL PAYASAM and add it. Confirm both appear under Device 1 queue in that order without any recipe upload starting.
 21. Hold and drag PAAL PAYASAM above VEG HAKKA NOODLE, then repeat with the arrow fallback. Confirm the same order appears in the main D1 Queue Priority section and Device Details. Add another D1 order from the main Orders screen and confirm it appears in that same queue.
 22. With manual routing selected, let the active recipe complete or abort. Confirm `Ready for next` explains what to prepare and waits for `Cook now`; tap it and verify only that recipe is checked/uploaded and started. With auto-routing selected, repeat and confirm the next recipe starts automatically.
-23. Switch to an operator without queue permission. Confirm drag/arrows/Make Next are hidden, but the first queued item can still be started when D1 is idle. As Main Admin, enable queue changes for that operator in Settings and confirm the controls appear.
-24. Open Live Logs. Confirm `livelog=ON` starts streaming values. Close it and confirm `livelog=OFF`.
-25. Use View Queue to confirm cooked history, NOW, and upcoming queue are separated.
-26. In D1 Manual Mode, tap the visible Abort recipe action. Cancel once and confirm cooking continues on the same screen. Open it again, confirm the device/recipe details, then abort. Confirm the app sends `stop=100`, keeps upcoming recipes queued, shows aborted status, and D1 becomes ready for the next recipe.
+23. As Main Admin, remove PAAL PAYASAM from D1's upcoming queue. Confirm the dialog says it will return to Pending without deleting history; confirm removal and verify it disappears from every D1 queue view and reappears under Pending. Wait briefly and verify auto-routing does not silently add it back. Assign it again and verify it can be queued normally.
+24. Switch to an operator without queue permission. Confirm drag/arrows/Make Next/Remove are hidden, but the first queued item can still be started when D1 is idle. As Main Admin, enable queue changes for that operator in Settings and confirm the controls appear.
+25. Open Live Logs. Confirm `livelog=ON` starts streaming values. Close it and confirm `livelog=OFF`.
+26. Use View Queue to confirm cooked history, NOW, and upcoming queue are separated.
+27. In D1 Manual Mode, tap the visible Abort recipe action. Cancel once and confirm cooking continues on the same screen. Open it again, confirm the device/recipe details, then abort. Confirm the app sends `stop=100`, keeps upcoming recipes queued, shows aborted status, and D1 becomes ready for the next recipe.
 27. Let one recipe complete normally. Confirm last cooked recipe appears at the top with since-completion time.
 28. While idle, open bottom Logs. Confirm `LOGSTATUS=?`, then `LISTLOGS`, then `READLOG=<filename>` work.
 29. Repeat the same connection lock and recipe run test for D2 with a second cooker if available.

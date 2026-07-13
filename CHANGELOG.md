@@ -1,5 +1,14 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-07-14
+
+- Added permission-controlled `Remove` actions to every device queue surface, including the Queue tab, device card, Device Details, and the native-style Manual Mode queue.
+- Added a confirmation step that returns the selected queued order to Pending without deleting the order, completed history, or current cook.
+- Held manually removed orders out of automatic routing until an operator explicitly assigns or starts them again.
+- Upgraded the Queue tab from a read-only list to the same device-specific drag, up/down, Make Next, Cook Now, and Remove controls used elsewhere.
+- Added queue-removal regression coverage; all eight queue-policy tests now pass.
+- Bumped web cache version to `20260714a` / service-worker cache `v95` and refreshed the APK cloud URL.
+
 ## 2026-07-13
 
 - Unified post-completion queue handling: manual routing now waits at `Ready for next` with an explicit `Cook now` action, while auto-routing keeps automatic handoff.

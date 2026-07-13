@@ -22,6 +22,10 @@ export function moveQueueIdBeside(queueIds, orderId, targetOrderId, position = "
   return ordered;
 }
 
+export function removeQueueId(queueIds, orderId) {
+  return Array.from(queueIds || []).filter((item) => item !== orderId);
+}
+
 export function canStartQueuedIndex(index, canManageQueues) {
   return Number(index) === 0 || Boolean(canManageQueues);
 }

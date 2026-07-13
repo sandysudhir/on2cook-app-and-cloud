@@ -2064,6 +2064,31 @@ button {
   gap: 12px;
 }
 
+.queue-tab-item {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.queue-tab-copy {
+  display: grid;
+  flex: 1 1 180px;
+  min-width: 0;
+  gap: 3px;
+}
+
+.queue-tab-copy strong,
+.queue-tab-copy span {
+  overflow-wrap: anywhere;
+}
+
+.queue-tab-actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 .user-row {
   flex-wrap: wrap;
 }
@@ -7280,10 +7305,17 @@ textarea.field-input {
 }
 
 .native-cook-queue-actions button[data-action="queue-move-next"],
-.native-cook-queue-actions button[data-action="queue-start-now"] {
+.native-cook-queue-actions button[data-action="queue-start-now"],
+.native-cook-queue-actions button[data-action="queue-remove-request"] {
   width: auto;
   min-width: 62px;
   padding: 0 8px;
+}
+
+.native-cook-queue-actions button.queue-remove-button {
+  color: #b32f27;
+  border-color: rgba(179, 47, 39, 0.28);
+  background: rgba(214, 93, 78, 0.1);
 }
 
 .native-cook-queue-empty {
