@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260710a";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260710a";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260713a";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260713a";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260710a";
+} from "./ncb-services.js?v=20260713a";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260710a";
+} from "./data-store.js?v=20260713a";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -30,7 +30,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260710a";
+const APP_ASSET_VERSION = "20260713a";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -44,6 +44,7 @@ let orderFeedTimer = 0;
 let kotBridgeTimer = 0;
 let proLiveTimer = 0;
 let uiSessionSaveTimer = 0;
+const statusRefreshTimers = new Map();
 let lastApkScreenIndex = 0;
 let proStudioShellOrientation = "portrait";
 let proStudioRoutePath = "";
@@ -164,8 +165,8 @@ function captureUiSessionState(snapshot = null) {
     manualMode: {
       slot: Math.max(1, Number(ui.manualMode?.slot) || 1),
       recipeId: ui.manualMode?.recipeId || "",
-      pumpUnits: Math.max(1, Number(ui.manualMode?.pumpUnits) || 10),
-      sprayMl: Math.max(10, Number(ui.manualMode?.sprayMl) || 10)
+      sprayCount: Math.max(1, Number(ui.manualMode?.sprayCount) || 1),
+      slotState: ui.manualMode?.slotState || {}
     },
     apkScreenIndex: Math.max(0, Math.trunc(activeApkIndex)),
     activeModal: sanitizeModalForSession(ui.activeModal),
@@ -695,6 +696,8 @@ function secondsLabel(seconds) {
 }
 
 const DEFAULT_STIRRER_LEVEL = "MED";
+const MANUAL_UI_HOLD_MS = 4500;
+const MANUAL_SPRINKLE_UNITS = 1;
 
 function toMoney(value) {
   return Number((Number(value) || 0).toFixed(2));
@@ -5077,10 +5080,21 @@ async function acknowledgeInstructionStep(slot) {
   showToast(`Acknowledgement sent for step ${stepNo} on Device ${slot}`, "success");
 }
 
-function refreshStatusSoon(slot, delayMs = 350) {
-  window.setTimeout(() => {
-    ble.requestStatus(Number(slot)).catch(() => {});
-  }, delayMs);
+function refreshStatusSoon(slot, delayMs = 1200) {
+  const normalizedSlot = Number(slot);
+  if (!normalizedSlot) return;
+  const existing = statusRefreshTimers.get(normalizedSlot);
+  if (existing) window.clearTimeout(existing);
+  const timer = window.setTimeout(() => {
+    statusRefreshTimers.delete(normalizedSlot);
+    const snapshot = state();
+    const device = snapshot.devices.find((item) => item.slot === normalizedSlot);
+    if (!device || device.connection !== "connected") return;
+    const session = ble.getSession(normalizedSlot);
+    if (session?.transfer || session?.recipeListRequest) return;
+    ble.requestStatus(normalizedSlot).catch(() => {});
+  }, Math.max(500, Number(delayMs) || 1200));
+  statusRefreshTimers.set(normalizedSlot, timer);
 }
 
 function mapStirrerSpeedLabel(level) {
@@ -5102,7 +5116,10 @@ function normalizeStirrerTelemetryValue(value, currentLevel = DEFAULT_STIRRER_LE
   if (normalizedValue.startsWith("ON,")) {
     return mapStirrerSpeedLabel(normalizedValue.split(",")[1] || DEFAULT_STIRRER_LEVEL);
   }
-  if (["LOW", "MED", "HIGH", "VERY_HIGH", "VHIGH", "1", "2", "3", "4"].includes(normalizedValue)) {
+  if (["1", "2", "3", "4"].includes(normalizedValue)) {
+    return current === "OFF" ? DEFAULT_STIRRER_LEVEL : current;
+  }
+  if (["LOW", "MED", "HIGH", "VERY_HIGH", "VHIGH"].includes(normalizedValue)) {
     return mapStirrerSpeedLabel(normalizedValue);
   }
   if (normalizedValue === "ON") {
@@ -5123,6 +5140,75 @@ function formatStirrerDisplay(level) {
 
 function formatManualTime(seconds) {
   return secondsLabel(seconds || 0).replace(":", " : ");
+}
+
+function getManualSlotUi(snapshot, slot) {
+  return snapshot?.ui?.manualMode?.slotState?.[String(slot)] || {};
+}
+
+function manualSlotUiIsFresh(slotUi) {
+  return Number(slotUi?.holdUntil || 0) > Date.now();
+}
+
+function getManualDisplayTelemetry(snapshot, device) {
+  const telemetry = { ...getDisplayTelemetry(device) };
+  const slotUi = getManualSlotUi(snapshot, device.slot);
+  if (!manualSlotUiIsFresh(slotUi)) return telemetry;
+  if (slotUi.indPower !== undefined) telemetry.indPower = Number(slotUi.indPower) || 0;
+  if (slotUi.magPower !== undefined) telemetry.magPower = Number(slotUi.magPower) || 0;
+  if (slotUi.indTime !== undefined) telemetry.indTime = Number(slotUi.indTime) || 0;
+  if (slotUi.magTime !== undefined) telemetry.magTime = Number(slotUi.magTime) || 0;
+  if (slotUi.inductionStatus) telemetry.inductionStatus = slotUi.inductionStatus;
+  if (slotUi.magnetronStatus) telemetry.magnetronStatus = slotUi.magnetronStatus;
+  if (slotUi.stirrer) telemetry.stirrer = slotUi.stirrer;
+  if (slotUi.pumpOn !== undefined) telemetry.pumpOn = Boolean(slotUi.pumpOn);
+  if (slotUi.purgeOn !== undefined) telemetry.purgeOn = Boolean(slotUi.purgeOn);
+  return telemetry;
+}
+
+function setManualSlotUi(draft, slot, patch = {}, holdMs = MANUAL_UI_HOLD_MS) {
+  draft.ui.manualMode = {
+    ...(draft.ui.manualMode || {}),
+    slotState: {
+      ...(draft.ui.manualMode?.slotState || {})
+    }
+  };
+  const key = String(slot);
+  draft.ui.manualMode.slotState[key] = {
+    ...(draft.ui.manualMode.slotState[key] || {}),
+    ...patch,
+    holdUntil: Date.now() + Math.max(1000, Number(holdMs) || MANUAL_UI_HOLD_MS)
+  };
+}
+
+function getRecipeByKnownName(snapshot, name) {
+  const key = normalizeRecipeNameKey(name);
+  if (!key) return null;
+  return (
+    snapshot.recipes.find((recipe) =>
+      [
+        recipe.displayName,
+        recipe.firmwareName,
+        ...(recipe.aliases || [])
+      ].some((candidate) => normalizeRecipeNameKey(candidate) === key)
+    ) || null
+  );
+}
+
+function getDeviceRecommendedRecipes(snapshot, device, limit = 8) {
+  const picked = [];
+  const seen = new Set();
+  const add = (recipe) => {
+    if (!recipe?.id || seen.has(recipe.id)) return;
+    seen.add(recipe.id);
+    picked.push(recipe);
+  };
+  getDeviceCookedHistoryRows(snapshot, device, 20).forEach((row) => {
+    add((row.recipeId ? findRecipeById(snapshot, row.recipeId) : null) || getRecipeByKnownName(snapshot, row.firmwareName || row.displayName));
+  });
+  [...(device.availableRecipeNames || []), ...(device.syncedRecipeNames || [])].forEach((name) => add(getRecipeByKnownName(snapshot, name)));
+  (device.allowedRecipeIds || []).forEach((id) => add(findRecipeById(snapshot, id)));
+  return picked.slice(0, limit);
 }
 
 function manualQuickState(value) {
@@ -5165,9 +5251,16 @@ function renderManualStepButton(action, slot, label, options = {}) {
   return `<button ${attrs.join(" ")}>${escapeHtml(label)}</button>`;
 }
 
-function renderNativeManualRecipeStrip(snapshot, className = "native-manual-recipes-strip") {
-  const recipes = getSelectedRecipes(snapshot).slice(0, 4);
-  const cards = recipes.length ? recipes : snapshot.recipes.slice(0, 4);
+function renderNativeManualRecipeStrip(snapshot, className = "native-manual-recipes-strip", device = null) {
+  const recipes = device ? getDeviceRecommendedRecipes(snapshot, device, 8) : getSelectedRecipes(snapshot).slice(0, 4);
+  const cards = recipes.length ? recipes : [];
+  if (!cards.length) {
+    return `
+      <div class="${className} empty">
+        <div class="native-manual-recipe-empty">Recipes will appear here after they are assigned to this device or sent for cooking.</div>
+      </div>
+    `;
+  }
   return `
     <div class="${className}">
       ${cards
@@ -5176,14 +5269,14 @@ function renderNativeManualRecipeStrip(snapshot, className = "native-manual-reci
           const imageUrl = safeOptionalUrl(recipe.imageDataUrl, "manual recommended recipe image");
           const duration = secondsLabel(getRecipeDuration(recipe) || 420).replace("00:", "");
           return `
-            <article class="native-manual-recipe-card">
+            <button class="native-manual-recipe-card" type="button" data-action="manual-pick-recipe" data-recipe-id="${recipe.id}" ${device ? `data-slot="${device.slot}"` : ""}>
               <div class="native-manual-recipe-image ${imageUrl ? "has-image" : ""}">
                 ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(recipe.displayName)}">` : `<span>${escapeHtml(recipe.displayName.slice(0, 1))}</span>`}
                 <b>Easy</b>
               </div>
               <strong>${escapeHtml(recipe.displayName)}</strong>
               <small>${escapeHtml(duration)} mins</small>
-            </article>
+            </button>
           `;
         })
         .join("")}
@@ -5204,6 +5297,11 @@ async function startManualInduction(slot) {
     if (!draftDevice) return draft;
     draftDevice.telemetry.inductionStatus = "START";
     draftDevice.telemetry.workStatus = "manual";
+    setManualSlotUi(draft, slot, {
+      inductionStatus: "START",
+      indPower: Number(draftDevice.telemetry.indPower || 0),
+      indTime: Number(draftDevice.telemetry.indTime || 0)
+    });
     appendActivity(draftDevice, "Manual Mode: induction start sent", "success");
   });
   refreshStatusSoon(slot);
@@ -5223,6 +5321,7 @@ async function stopManualInduction(slot) {
     if (!draftDevice) return draft;
     draftDevice.telemetry.inductionStatus = "STOP";
     draftDevice.telemetry.indTime = 0;
+    setManualSlotUi(draft, slot, { inductionStatus: "STOP", indTime: 0 });
     appendActivity(draftDevice, "Manual Mode: induction stop sent", "warning");
   });
   refreshStatusSoon(slot);
@@ -5243,6 +5342,7 @@ async function pauseResumeManualInduction(slot) {
     if (!draftDevice) return draft;
     draftDevice.telemetry.inductionStatus = paused ? "START" : "PAUSE";
     draftDevice.telemetry.workStatus = "manual";
+    setManualSlotUi(draft, slot, { inductionStatus: paused ? "START" : "PAUSE" });
     appendActivity(draftDevice, paused ? "Manual Mode: induction resume sent" : "Manual Mode: induction pause sent", "info");
   });
   refreshStatusSoon(slot);
@@ -5265,6 +5365,10 @@ async function adjustManualInductionTime(slot, deltaSeconds) {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
     draftDevice.telemetry.indTime = Math.max(0, Number(draftDevice.telemetry.indTime || 0) + Number(deltaSeconds || 0));
+    setManualSlotUi(draft, slot, {
+      inductionStatus: "START",
+      indTime: draftDevice.telemetry.indTime
+    });
     appendActivity(draftDevice, `Manual Mode: induction time ${deltaSeconds > 0 ? "+" : ""}${deltaSeconds}s`, "info");
   });
   refreshStatusSoon(slot);
@@ -5286,6 +5390,11 @@ async function adjustManualInductionPower(slot, delta) {
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
+    draftDevice.telemetry.indPower = Math.max(0, Math.min(100, Number(draftDevice.telemetry.indPower || 0) + Number(delta || 0)));
+    setManualSlotUi(draft, slot, {
+      inductionStatus: draftDevice.telemetry.inductionStatus || "START",
+      indPower: draftDevice.telemetry.indPower
+    });
     appendActivity(draftDevice, `Manual Mode: induction power ${delta > 0 ? "+" : ""}${delta}`, "info");
   });
   refreshStatusSoon(slot);
@@ -5305,6 +5414,11 @@ async function startManualMagnetron(slot) {
     if (!draftDevice) return draft;
     draftDevice.telemetry.magnetronStatus = "START";
     draftDevice.telemetry.workStatus = "manual";
+    setManualSlotUi(draft, slot, {
+      magnetronStatus: "START",
+      magPower: Number(draftDevice.telemetry.magPower || 0),
+      magTime: Number(draftDevice.telemetry.magTime || 0)
+    });
     appendActivity(draftDevice, "Manual Mode: microwave start sent", "success");
   });
   refreshStatusSoon(slot);
@@ -5324,6 +5438,7 @@ async function stopManualMagnetron(slot) {
     if (!draftDevice) return draft;
     draftDevice.telemetry.magnetronStatus = "STOP";
     draftDevice.telemetry.magTime = 0;
+    setManualSlotUi(draft, slot, { magnetronStatus: "STOP", magTime: 0 });
     appendActivity(draftDevice, "Manual Mode: microwave stop sent", "warning");
   });
   refreshStatusSoon(slot);
@@ -5344,6 +5459,7 @@ async function pauseResumeManualMagnetron(slot) {
     if (!draftDevice) return draft;
     draftDevice.telemetry.magnetronStatus = paused ? "START" : "PAUSE";
     draftDevice.telemetry.workStatus = "manual";
+    setManualSlotUi(draft, slot, { magnetronStatus: paused ? "START" : "PAUSE" });
     appendActivity(draftDevice, paused ? "Manual Mode: microwave resume sent" : "Manual Mode: microwave pause sent", "info");
   });
   refreshStatusSoon(slot);
@@ -5366,6 +5482,10 @@ async function adjustManualMagnetronPower(slot, delta) {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
     draftDevice.telemetry.magPower = Math.max(0, Math.min(100, Number(draftDevice.telemetry.magPower || 0) + Number(delta || 0)));
+    setManualSlotUi(draft, slot, {
+      magnetronStatus: draftDevice.telemetry.magnetronStatus || "START",
+      magPower: draftDevice.telemetry.magPower
+    });
     appendActivity(draftDevice, `Manual Mode: microwave power ${delta > 0 ? "+" : ""}${delta}`, "info");
   });
   refreshStatusSoon(slot);
@@ -5388,6 +5508,10 @@ async function adjustManualMagnetronTime(slot, deltaSeconds) {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
     draftDevice.telemetry.magTime = Math.max(0, Number(draftDevice.telemetry.magTime || 0) + Number(deltaSeconds || 0));
+    setManualSlotUi(draft, slot, {
+      magnetronStatus: "START",
+      magTime: draftDevice.telemetry.magTime
+    });
     appendActivity(draftDevice, `Manual Mode: microwave time ${deltaSeconds > 0 ? "+" : ""}${deltaSeconds}s`, "info");
   });
   refreshStatusSoon(slot);
@@ -5410,6 +5534,7 @@ async function setManualStirrer(slot, speedLabel) {
     if (normalized !== "OFF") {
       draftDevice.telemetry.workStatus = "manual";
     }
+    setManualSlotUi(draft, slot, { stirrer: normalized });
     appendActivity(
       draftDevice,
       normalized === "OFF" ? "Manual Mode: stirrer stop sent" : `Manual Mode: stirrer ${normalized} sent`,
@@ -5423,21 +5548,22 @@ async function setManualStirrer(slot, speedLabel) {
   );
 }
 
-async function startManualPump(slot, units) {
+async function startManualPump(slot, units = MANUAL_SPRINKLE_UNITS) {
   const device = getDevice(slot);
   if (!device || device.connection !== "connected") {
     showToast(`Device ${slot} is not connected`, "warning");
     return;
   }
   ensureDeviceCommandAllowed(device, "Manual pump");
-  const safeUnits = Math.max(1, Math.trunc(Number(units) || 0));
+  const safeUnits = MANUAL_SPRINKLE_UNITS;
   await ble.startPump(Number(slot), safeUnits);
   mutate((draft) => {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
     draftDevice.telemetry.pumpOn = true;
     draftDevice.telemetry.workStatus = "manual";
-    appendActivity(draftDevice, `Manual Mode: pump start sent (${safeUnits} x 10 ml)`, "success");
+    setManualSlotUi(draft, slot, { pumpOn: true }, 2500);
+    appendActivity(draftDevice, `Manual Mode: 10 ml sprinkle sent`, "success");
   });
   refreshStatusSoon(slot);
   showToast(`Pump started on Device ${slot}`, "success");
@@ -5455,6 +5581,7 @@ async function stopManualPump(slot) {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
     draftDevice.telemetry.pumpOn = false;
+    setManualSlotUi(draft, slot, { pumpOn: false });
     appendActivity(draftDevice, "Manual Mode: pump stop sent", "warning");
   });
   refreshStatusSoon(slot);
@@ -5475,6 +5602,7 @@ async function startManualPurge(slot, ml) {
     if (!draftDevice) return draft;
     draftDevice.telemetry.purgeOn = true;
     draftDevice.telemetry.workStatus = "manual";
+    setManualSlotUi(draft, slot, { purgeOn: true }, 2500);
     appendActivity(draftDevice, `Manual Mode: spray start sent (${safeMl} ml)`, "success");
   });
   refreshStatusSoon(slot);
@@ -5493,6 +5621,7 @@ async function stopManualPurge(slot) {
     const draftDevice = draft.devices.find((item) => item.slot === Number(slot));
     if (!draftDevice) return draft;
     draftDevice.telemetry.purgeOn = false;
+    setManualSlotUi(draft, slot, { purgeOn: false });
     appendActivity(draftDevice, "Manual Mode: spray stop sent", "warning");
   });
   refreshStatusSoon(slot);
@@ -6474,7 +6603,7 @@ function getDeviceLiveLogSnapshot(device) {
 }
 
 function renderDeviceStatusModal(snapshot, device) {
-  const telemetry = getDisplayTelemetry(device);
+  const telemetry = getManualDisplayTelemetry(snapshot, device);
   const liveSnapshot = getDeviceLiveLogSnapshot(device);
   const live = liveSnapshot.latest;
   const liveSensor = liveSnapshot.latestSensor?.sensor || {};
@@ -8525,8 +8654,7 @@ function renderManualModeTab(snapshot, fixedDevice = null) {
   const indState = manualQuickState(telemetry.inductionStatus);
   const magState = manualQuickState(telemetry.magnetronStatus);
   const stirrerSpeed = mapStirrerSpeedLabel(telemetry.stirrer || DEFAULT_STIRRER_LEVEL);
-  const pumpUnits = Math.max(1, Number(snapshot.ui.manualMode?.pumpUnits) || 10);
-  const sprayMl = Math.max(10, Number(snapshot.ui.manualMode?.sprayMl) || 10);
+  const sprayCount = Math.max(1, Number(snapshot.ui.manualMode?.sprayCount) || 1);
   const manualRunMessage = !selectedRecipe
     ? "Choose a recipe first."
     : !recipeAllowedOnSelectedDevice
@@ -8534,7 +8662,7 @@ function renderManualModeTab(snapshot, fixedDevice = null) {
       : selectedRunState?.note || "";
   return `
     <section class="native-manual-body">
-      ${renderNativeManualRecipeStrip(snapshot)}
+      ${renderNativeManualRecipeStrip(snapshot, "native-manual-recipes-strip", device)}
       <div class="native-manual-section-title"><span>Manual</span><i></i></div>
       <div class="native-manual-status-note ${isConnected ? "connected" : "offline"}">
         <b>${escapeHtml(isConnected ? "Connected" : "Reconnect required")}</b>
@@ -8629,14 +8757,14 @@ function renderManualModeTab(snapshot, fixedDevice = null) {
 
       <div class="native-liquid-grid">
         <label>Sprinkle</label>
-        <input type="number" min="1" step="1" value="${pumpUnits}" placeholder="count" data-input="manual-pump-units" ${disabledAttr}>
+        <div class="native-fixed-dose">10 ml</div>
         ${renderManualRoundButton(telemetry.pumpOn ? "manual-pump-stop" : "manual-pump-start", device.slot, "⏻", {
           active: telemetry.pumpOn,
           disabled,
-          label: telemetry.pumpOn ? "Stop sprinkle" : "Start sprinkle"
+          label: telemetry.pumpOn ? "Stop sprinkle" : "Start 10 ml sprinkle"
         })}
         <label>Spray</label>
-        <input type="number" min="10" step="1" value="${sprayMl}" placeholder="ml" data-input="manual-spray-ml" ${disabledAttr}>
+        <input type="number" min="1" step="1" value="${sprayCount}" placeholder="count" data-input="manual-spray-count" ${disabledAttr}>
         ${renderManualRoundButton(telemetry.purgeOn ? "manual-spray-stop" : "manual-spray-start", device.slot, "⏻", {
           active: telemetry.purgeOn,
           disabled,
@@ -8656,7 +8784,7 @@ function renderManualModeTab(snapshot, fixedDevice = null) {
       </div>
 
       <div class="native-manual-section-title recommended"><span>Recommended</span><i></i></div>
-      ${renderNativeManualRecipeStrip(snapshot, "native-manual-recipes-strip bottom")}
+      ${renderNativeManualRecipeStrip(snapshot, "native-manual-recipes-strip bottom", device)}
       <div class="native-manual-live-status">
         <span>Induction ${escapeHtml(getManualStatus(telemetry.inductionStatus || "IDLE"))}</span>
         <span>Microwave ${escapeHtml(getManualStatus(telemetry.magnetronStatus || "IDLE"))}</span>
@@ -12707,6 +12835,15 @@ async function handleClick(event) {
     await adjustManualInductionPower(Number(button.dataset.slot), Number(button.dataset.delta || 0)).catch((error) => showToast(error.message, "error"));
     return;
   }
+  if (action === "manual-pick-recipe") {
+    const recipeId = String(button.dataset.recipeId || "");
+    const slot = Number(button.dataset.slot || state().ui.manualMode?.slot || 1);
+    mutate((draft) => {
+      draft.ui.manualMode.slot = slot;
+      draft.ui.manualMode.recipeId = recipeId;
+    });
+    return;
+  }
   if (action === "manual-induction-time") {
     await adjustManualInductionTime(Number(button.dataset.slot), Number(button.dataset.delta || 0)).catch((error) => showToast(error.message, "error"));
     return;
@@ -12744,12 +12881,7 @@ async function handleClick(event) {
     return;
   }
   if (action === "manual-pump-start") {
-    const input = app.querySelector('[data-input="manual-pump-units"]');
-    const units = Math.max(1, Number(input?.value || state().ui.manualMode?.pumpUnits) || 10);
-    mutate((draft) => {
-      draft.ui.manualMode.pumpUnits = units;
-    });
-    await startManualPump(Number(button.dataset.slot), units).catch((error) => showToast(error.message, "error"));
+    await startManualPump(Number(button.dataset.slot), MANUAL_SPRINKLE_UNITS).catch((error) => showToast(error.message, "error"));
     return;
   }
   if (action === "manual-pump-stop") {
@@ -12757,10 +12889,11 @@ async function handleClick(event) {
     return;
   }
   if (action === "manual-spray-start") {
-    const input = app.querySelector('[data-input="manual-spray-ml"]');
-    const ml = Math.max(10, Number(input?.value || state().ui.manualMode?.sprayMl) || 10);
+    const input = app.querySelector('[data-input="manual-spray-count"]');
+    const count = Math.max(1, Math.trunc(Number(input?.value || state().ui.manualMode?.sprayCount) || 1));
+    const ml = count * 10;
     mutate((draft) => {
-      draft.ui.manualMode.sprayMl = ml;
+      draft.ui.manualMode.sprayCount = count;
     });
     await startManualPurge(Number(button.dataset.slot), ml).catch((error) => showToast(error.message, "error"));
     return;
@@ -13016,16 +13149,9 @@ async function handleChange(event) {
     return;
   }
 
-  if (input.dataset.input === "manual-pump-units") {
+  if (input.dataset.input === "manual-spray-count") {
     mutate((draft) => {
-      draft.ui.manualMode.pumpUnits = Math.max(1, Math.trunc(Number(input.value) || 10));
-    });
-    return;
-  }
-
-  if (input.dataset.input === "manual-spray-ml") {
-    mutate((draft) => {
-      draft.ui.manualMode.sprayMl = Math.max(10, Math.trunc(Number(input.value) || 10));
+      draft.ui.manualMode.sprayCount = Math.max(1, Math.trunc(Number(input.value) || 1));
     });
     return;
   }

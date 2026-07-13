@@ -674,7 +674,8 @@ function createUiState() {
     manualMode: {
       slot: 1,
       recipeId: "",
-      pumpUnits: 10
+      sprayCount: 1,
+      slotState: {}
     },
     demoAuthBypass: false,
     activeModal: null,
@@ -941,7 +942,9 @@ export function loadState(seedRecipes) {
       notificationDrawerOpen: false,
       manualMode: {
         ...createUiState().manualMode,
-        ...(merged.ui?.manualMode || {})
+        ...(merged.ui?.manualMode || {}),
+        sprayCount: Math.max(1, Number(merged.ui?.manualMode?.sprayCount || 1) || 1),
+        slotState: merged.ui?.manualMode?.slotState || {}
       }
     };
     merged.settings = {
@@ -1114,7 +1117,9 @@ export function importState(rawText, seedRecipes) {
     notificationDrawerOpen: false,
     manualMode: {
       ...createUiState().manualMode,
-      ...(merged.ui?.manualMode || {})
+      ...(merged.ui?.manualMode || {}),
+      sprayCount: Math.max(1, Number(merged.ui?.manualMode?.sprayCount || 1) || 1),
+      slotState: merged.ui?.manualMode?.slotState || {}
     }
   };
   merged.settings = {

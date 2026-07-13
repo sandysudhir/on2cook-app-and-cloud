@@ -1,5 +1,14 @@
 # On2Cook App and Cloud Change Log
 
+## 2026-07-13
+
+- Stabilized device Manual Mode so induction/magnetron/stirrer changes keep their selected UI value while the device acknowledgement/status refresh catches up.
+- Changed manual status refreshes from immediate repeated polling to a coalesced delayed refresh, reducing screen jumps while operators tap controls.
+- Fixed Manual Mode Sprinkle/Spray semantics: Sprinkle is fixed at one 10 ml shot, while Spray uses a visible count starting at 1 and sends count x 10 ml.
+- Made Manual Mode recipe cards clickable and restricted Recommended recipes to the selected device's cooked history, device inventory, or explicitly allowed recipes.
+- Improved Manual Mode contrast and scrollbars so pump/spray values and vertical movement are visible on the native-style screen.
+- Bumped web cache version to `20260713a` / service-worker cache `v90` and refreshed the APK cloud URL.
+
 ## 2026-07-10
 
 - Rebuilt device Manual Mode from the old native Android manual screen instead of the cloud settings screen.
