@@ -2,6 +2,11 @@
 
 ## 2026-07-14
 
+- Fixed the Recipe Sheet contrast regression by isolating its light report palette from the dark dashboard, including readable ingredient, cooking-step, profile, and timing cards.
+- Replaced ambiguous completion values with exact outcome metrics: actual cook time, remaining time at abort, time since abort/completion, planned duration, exact finish clock, and relative finish age.
+- Started recorded cook time only when firmware reports recipe execution, rather than when the recipe selection is acknowledged; legacy abort records are also normalized from their saved device note.
+- Added deterministic timing tests for a 03:14 abort from a 05:00 recipe, the resulting 01:46 remaining time, the live since-abort timer, and the frozen idle interval when the next recipe starts.
+- Bumped web cache version to `20260714c` / service-worker cache `v97` and refreshed the APK cloud URL.
 - Fixed the Order Details contrast regression by isolating its light color scheme from the dark dashboard, using opaque cards and dark text for headings, labels, values, and item details.
 - Bumped web cache version to `20260714b` / service-worker cache `v96` and refreshed the APK cloud URL.
 - Added permission-controlled `Remove` actions to every device queue surface, including the Queue tab, device card, Device Details, and the native-style Manual Mode queue.

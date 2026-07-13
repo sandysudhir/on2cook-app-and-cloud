@@ -6897,6 +6897,92 @@ textarea.field-input {
   box-shadow: none;
 }
 
+/* Recipe Sheet is a readable light report inside the dark dashboard. */
+.surface:not(.login-surface) .modal-card.recipe-sheet-modal,
+.surface:not(.login-surface) .recipe-sheet-phone {
+  color: #172033;
+  border-color: rgba(45, 91, 216, 0.16);
+  background: #f3f7ff;
+}
+
+.surface:not(.login-surface) .recipe-sheet-nav strong,
+.surface:not(.login-surface) .recipe-sheet-status strong,
+.surface:not(.login-surface) .recipe-sheet-list span,
+.surface:not(.login-surface) .recipe-sheet-list strong {
+  color: #172033;
+}
+
+.surface:not(.login-surface) .recipe-sheet-nav .subtle,
+.surface:not(.login-surface) .recipe-sheet-status p,
+.surface:not(.login-surface) .recipe-sheet-stat-grid span,
+.surface:not(.login-surface) .recipe-sheet-stat-grid small,
+.surface:not(.login-surface) .recipe-sheet-profile span {
+  color: #5c667a;
+}
+
+.surface:not(.login-surface) .recipe-sheet-nav .secondary-button {
+  color: #172033;
+  border-color: rgba(45, 91, 216, 0.18);
+  background: #fff;
+  box-shadow: none;
+}
+
+.surface:not(.login-surface) .recipe-sheet-status {
+  color: #172033;
+  border-color: rgba(33, 122, 90, 0.26);
+  background: #eefaf4;
+}
+
+.surface:not(.login-surface) .recipe-sheet-status.aborted {
+  border-color: rgba(180, 59, 45, 0.28);
+  background: #fff1ef;
+}
+
+.surface:not(.login-surface) .recipe-sheet-status.aborted > strong,
+.surface:not(.login-surface) .recipe-sheet-status.aborted .run-icon {
+  color: var(--danger);
+}
+
+.surface:not(.login-surface) .recipe-sheet-status.completed > strong,
+.surface:not(.login-surface) .recipe-sheet-status.completed .run-icon {
+  color: var(--success);
+}
+
+.surface:not(.login-surface) .recipe-sheet-stat-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.surface:not(.login-surface) .recipe-sheet-profile {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.surface:not(.login-surface) .recipe-sheet-stat-grid div,
+.surface:not(.login-surface) .recipe-sheet-profile span,
+.surface:not(.login-surface) .recipe-sheet-list > div,
+.surface:not(.login-surface) .recipe-sheet-list .empty-card {
+  color: #5c667a;
+  border-color: rgba(45, 91, 216, 0.14);
+  background: #fff;
+  box-shadow: none;
+}
+
+.surface:not(.login-surface) .recipe-sheet-stat-grid strong,
+.surface:not(.login-surface) .recipe-sheet-profile strong {
+  color: #2e5bd8;
+}
+
+.surface:not(.login-surface) .recipe-sheet-stat-grid small {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.68rem;
+  line-height: 1.3;
+}
+
+.surface:not(.login-surface) .recipe-sheet-hero,
+.surface:not(.login-surface) .recipe-sheet-hero h2 {
+  color: #fff;
+}
+
 /* Active recipe view inside the device-level Manual Mode screen. */
 .native-cooking-screen {
   overflow-x: hidden;

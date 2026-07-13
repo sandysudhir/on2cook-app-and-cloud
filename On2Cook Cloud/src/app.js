@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714b";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714b";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714c";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714c";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260714b";
+} from "./ncb-services.js?v=20260714c";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,14 +21,15 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260714b";
+} from "./data-store.js?v=20260714c";
 import {
   canStartQueuedIndex,
+  getRunTimingMetrics,
   moveQueueIdBeside,
   removeQueueId,
   reorderQueueIds,
   shouldStartQueuedWork
-} from "./queue-logic.js?v=20260714b";
+} from "./queue-logic.js?v=20260714c";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -37,7 +38,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260714b";
+const APP_ASSET_VERSION = "20260714c";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -470,6 +471,7 @@ function emptyActiveRun() {
     displayName: "",
     firmwareName: "",
     startedAt: "",
+    cookingStartedAt: "",
     durationSeconds: 0
   };
 }
@@ -3421,6 +3423,12 @@ function applyTelemetry(device, parsed, message, at, draft = null) {
     device.telemetry.workStatus === "cooking" ||
     mode.toLowerCase().includes("cooking") ||
     instructionRun.toUpperCase() === "START";
+  if (device.currentJobId && recipeExecutionSignal && !device.activeRun?.cookingStartedAt) {
+    device.activeRun = {
+      ...device.activeRun,
+      cookingStartedAt: at
+    };
+  }
   device.telemetry.inductionStatus =
     inductionStatus ||
     (recipeExecutionSignal && (indTime !== null || indPower !== null)
@@ -3465,6 +3473,9 @@ function applyTelemetry(device, parsed, message, at, draft = null) {
   device.lastMessage = message;
   if (!draft) return;
   const activeOrder = draft.orders.current.find((item) => item.id === device.currentJobId) || null;
+  if (activeOrder && recipeExecutionSignal) {
+    activeOrder.status = "cooking";
+  }
   const activeRecipeName = device.telemetry.currentRecipe || device.activeRun?.displayName || activeOrder?.itemName || "";
   const currentStepNo = Number(device.telemetry.stepNo) || 0;
   if (currentStepNo > 0 && currentStepNo !== previousStepNo) {
@@ -3564,7 +3575,7 @@ function markSelectionAcknowledged(slot, recipeName) {
     if (!order) return draft;
     device.currentJobId = order.id;
     device.startupGuardUntil = "";
-    order.status = "cooking";
+    order.status = device.activeRun?.cookingStartedAt ? "cooking" : "awaiting_confirmation";
     order.currentRunFirmwareName = recipeName;
     device.activeRun = {
       ...device.activeRun,
@@ -3621,15 +3632,16 @@ function markRecipeComplete(slot, message, at = nowIso()) {
       recipe?.displayName ||
       device.telemetry.currentRecipe ||
       "Recipe";
+    const cookingStartedAt = device.activeRun?.cookingStartedAt || device.activeRun?.startedAt || at;
     device.lastRun = {
       orderId: device.activeRun?.orderId || order?.id || "",
       recipeId: device.activeRun?.recipeId || order?.activeRecipeId || recipe?.id || "",
       displayName,
       firmwareName: device.activeRun?.firmwareName || order?.currentRunFirmwareName || recipe?.firmwareName || "",
-      startedAt: device.activeRun?.startedAt || nowIso(),
+      startedAt: cookingStartedAt,
       finishedAt: at,
       durationSeconds: device.activeRun?.durationSeconds || getRecipeDuration(recipe),
-      actualDurationSeconds: elapsedSecondsBetween(device.activeRun?.startedAt || nowIso(), at),
+      actualDurationSeconds: elapsedSecondsBetween(cookingStartedAt, at),
       outcome: "completed",
       note: "Completed on device",
       stepNo: Array.isArray(recipe?.recipeJson?.Instruction) ? recipe.recipeJson.Instruction.length : Number(device.telemetry.stepNo) || 0
@@ -3721,15 +3733,16 @@ function markRecipeAborted(slot, message, at = nowIso()) {
       recipe?.displayName ||
       device.telemetry.currentRecipe ||
       "Recipe";
+    const cookingStartedAt = device.activeRun?.cookingStartedAt || device.activeRun?.startedAt || at;
     device.lastRun = {
       orderId: device.activeRun?.orderId || order?.id || "",
       recipeId: device.activeRun?.recipeId || order?.activeRecipeId || recipe?.id || "",
       displayName,
       firmwareName: device.activeRun?.firmwareName || order?.currentRunFirmwareName || recipe?.firmwareName || "",
-      startedAt: device.activeRun?.startedAt || nowIso(),
+      startedAt: cookingStartedAt,
       finishedAt: at,
       durationSeconds: device.activeRun?.durationSeconds || getRecipeDuration(recipe),
-      actualDurationSeconds: elapsedSecondsBetween(device.activeRun?.startedAt || nowIso(), at),
+      actualDurationSeconds: elapsedSecondsBetween(cookingStartedAt, at),
       outcome: "aborted",
       note: `Aborted by device (${message})`,
       stepNo: Number(device.telemetry.stepNo) || 0
@@ -8435,11 +8448,11 @@ function elapsedSecondsBetween(startAt, endAt = nowIso()) {
 }
 
 function getRunActualSeconds(run) {
-  return Number(run?.actualDurationSeconds) || elapsedSecondsBetween(run?.startedAt, run?.finishedAt);
+  return getRunTimingMetrics(run).actualSeconds;
 }
 
 function getSinceRunFinishedSeconds(run) {
-  return run?.finishedAt ? elapsedSecondsBetween(run.finishedAt, run.nextStartedAt || nowIso()) : 0;
+  return getRunTimingMetrics(run).sinceFinishedSeconds;
 }
 
 function markLastRunWaitClosed(device, at = nowIso()) {
@@ -10565,17 +10578,17 @@ function renderAssignRecipeModal(snapshot, modal) {
 
 function renderLastRunMetrics(run) {
   if (!run?.finishedAt) return "";
-  const actualSeconds = getRunActualSeconds(run);
-  const plannedSeconds = Number(run.durationSeconds) || actualSeconds;
-  const sinceSeconds = getSinceRunFinishedSeconds(run);
-  const sinceLabel = run.nextStartedAt ? "Idle before next" : `Since ${run.outcome === "aborted" ? "abort" : "completion"}`;
+  const timing = getRunTimingMetrics(run);
+  const { actualSeconds, plannedSeconds, sinceFinishedSeconds: sinceSeconds } = timing;
+  const aborted = timing.outcome === "aborted";
+  const sinceLabel = run.nextStartedAt ? "Idle before next" : `Since ${aborted ? "abort" : "completion"}`;
   const sinceSmall = run.nextStartedAt
     ? "Next recipe has started"
     : "No next recipe started yet";
   return `
     <div class="last-run-metrics">
       <div>
-        <span>${run.outcome === "aborted" ? "Ran before abort" : "Cook time"}</span>
+        <span>${aborted ? "Ran before abort" : "Cook time"}</span>
         <strong>${formatProClock(actualSeconds)}</strong>
         <small>of ${formatProClock(plannedSeconds)} planned</small>
       </div>
@@ -10590,17 +10603,19 @@ function renderLastRunMetrics(run) {
 
 function renderLastRunTab(device, label = "Last recipe sheet") {
   if (!device?.lastRun?.finishedAt) return "";
-  const actualSeconds = getRunActualSeconds(device.lastRun);
-  const sinceSeconds = getSinceRunFinishedSeconds(device.lastRun);
+  const timing = getRunTimingMetrics(device.lastRun);
+  const actualSeconds = timing.actualSeconds;
+  const sinceSeconds = timing.sinceFinishedSeconds;
+  const aborted = timing.outcome === "aborted";
   const sinceCopy = device.lastRun.nextStartedAt
     ? `idle ${formatProClock(sinceSeconds)} before next`
-    : `${formatProClock(sinceSeconds)} since ${device.lastRun.outcome === "aborted" ? "abort" : "completion"}`;
+    : `${formatProClock(sinceSeconds)} since ${aborted ? "abort" : "completion"}`;
   return `
     <button class="last-recipe-tab" data-action="open-device-recipe-sheet" data-slot="${device.slot}">
-      <span class="status-dot ${device.lastRun.outcome === "aborted" ? "failed" : "complete"}"></span>
+      <span class="status-dot ${aborted ? "failed" : "complete"}"></span>
       <span>
         <strong>${escapeHtml(device.lastRun.displayName || device.lastRun.firmwareName || "Last recipe")}</strong>
-        <small>${escapeHtml(device.lastRun.outcome === "aborted" ? "Aborted" : "Completed")} | ran ${formatProClock(actualSeconds)} | ${escapeHtml(sinceCopy)}</small>
+        <small>${escapeHtml(aborted ? "Aborted" : "Completed")} | ran ${formatProClock(actualSeconds)} | ${escapeHtml(sinceCopy)}</small>
       </span>
       <span class="chevron">›</span>
     </button>
@@ -10611,7 +10626,7 @@ function renderLastCookedCard(device) {
   if (!device?.lastRun?.finishedAt) {
     return `<div class="empty-card compact-empty">No recipe has run on this device yet.</div>`;
   }
-  const outcome = device.lastRun.outcome === "aborted" ? "aborted" : "completed";
+  const outcome = getRunTimingMetrics(device.lastRun).outcome;
   return `
     <article class="last-cooked-card ${outcome}">
       <button class="last-cooked-main" data-action="open-device-recipe-sheet" data-slot="${device.slot}">
@@ -10629,7 +10644,7 @@ function renderLastCookedCard(device) {
 
 function renderTimelineIdleState(device) {
   if (device?.lastRun?.finishedAt) {
-    const outcome = device.lastRun.outcome === "aborted" ? "aborted" : "completed";
+    const outcome = getRunTimingMetrics(device.lastRun).outcome;
     return `
       <div class="empty-card timeline-idle-card">
         Last recipe ${escapeHtml(outcome)}. Open the recipe sheet above the queue to review what happened.
@@ -10668,12 +10683,18 @@ function recipeSheetIngredientsFromRecipe(recipe) {
 function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On2Cook Pro" }) {
   const displayName = title || run?.displayName || recipe?.displayName || draft?.displayName || "Recipe";
   const imageUrl = safeOptionalUrl(recipe?.imageDataUrl || "", "recipe sheet image");
-  const plannedSeconds = Number(run?.durationSeconds) || (draft?.minutes?.length ? draft.minutes.length * 60 : getRecipeDuration(recipe));
-  const actualSeconds = getRunActualSeconds(run) || Number(run?.actualDurationSeconds) || Number(run?.elapsed || 0);
-  const sinceSeconds = getSinceRunFinishedSeconds(run);
-  const outcome = run?.outcome || "completed";
-  const sinceSheetLabel = run?.nextStartedAt ? "Idle before next" : `Since ${outcome === "aborted" ? "abort" : "completion"}`;
-  const sinceSheetPrefix = run?.nextStartedAt ? "" : "+";
+  const fallbackPlannedSeconds = draft?.minutes?.length ? draft.minutes.length * 60 : getRecipeDuration(recipe);
+  const timing = getRunTimingMetrics({
+    ...(run || {}),
+    durationSeconds: Number(run?.durationSeconds) || fallbackPlannedSeconds
+  });
+  const { actualSeconds, plannedSeconds, remainingSeconds, sinceFinishedSeconds, progressPercent } = timing;
+  const outcome = timing.outcome;
+  const aborted = outcome === "aborted";
+  const sinceSheetLabel = timing.waitClosed ? "Idle before next" : `Since ${aborted ? "abort" : "completion"}`;
+  const sinceSheetPrefix = timing.waitClosed ? "" : "+";
+  const finishedAtLabel = run?.finishedAt ? formatShortTime(run.finishedAt) : "Time unavailable";
+  const finishedAgoLabel = run?.finishedAt ? formatAgo(run.finishedAt) : "Timestamp unavailable";
   const ingredients = draft?.ingredients || recipeSheetIngredientsFromRecipe(recipe);
   const steps = draft?.minutes
     ? draft.minutes.map((minute, index) => ({
@@ -10694,6 +10715,12 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
           slurry: getLiquidStepValue(step.purge_on).label
         }))
       : [];
+  const quantityLabel = draft
+    ? `${draft.quantity || 0}${draft.quantityUnit || "g"}`
+    : recipe?.recipeJson?.quantity || recipe?.recipeJson?.finalQuantity || recipe?.recipeJson?.weight || "Not recorded";
+  const profileLabel = recipe?.recipeJson?.profile || recipe?.recipeJson?.healthProfile || "Standard";
+  const stepNo = Math.max(0, Number(run?.stepNo) || 0);
+  const stepsReachedLabel = steps.length ? `${Math.min(stepNo, steps.length)}/${steps.length}` : stepNo ? String(stepNo) : "Not recorded";
   return `
     <div class="recipe-sheet-phone">
       <div class="recipe-sheet-nav">
@@ -10711,24 +10738,25 @@ function renderRecipeSheetContent({ title, recipe, run, draft, sourceLabel = "On
           <h2>${escapeHtml(displayName)}</h2>
         </div>
       </div>
-      <section class="recipe-sheet-status">
-        <div class="run-icon">${outcome === "aborted" ? "!" : "›"}</div>
+      <section class="recipe-sheet-status ${aborted ? "aborted" : "completed"}">
+        <div class="run-icon">${aborted ? "!" : "&#10003;"}</div>
         <div>
-          <strong>${outcome === "aborted" ? "Manually Ended Early" : "Completed"}</strong>
-          <p>${Math.max(0, Math.round(actualSeconds / 60))} of ${Math.max(1, Math.round(plannedSeconds / 60))} planned minutes cooked</p>
+          <strong>${aborted ? "Recipe Aborted" : "Recipe Completed"}</strong>
+          <p>${aborted ? "Aborted" : "Completed"} at ${escapeHtml(finishedAtLabel)} &middot; ${escapeHtml(finishedAgoLabel)} &middot; ${progressPercent}% of planned cook</p>
         </div>
         <strong>${formatProClock(actualSeconds)}</strong>
       </section>
       <div class="recipe-sheet-stat-grid">
-        <div><span>On2Cook</span><strong>${formatProClock(actualSeconds)}</strong></div>
-        <div><span>${escapeHtml(sinceSheetLabel)}</span><strong>${sinceSheetPrefix}${formatProClock(sinceSeconds)}</strong></div>
-        <div><span>Normal cooking</span><strong>${formatProClock(plannedSeconds)}</strong></div>
+        <div><span>${aborted ? "Ran before abort" : "Actual cook time"}</span><strong>${formatProClock(actualSeconds)}</strong><small>${progressPercent}% of planned duration</small></div>
+        <div><span>${aborted ? "Remaining at abort" : "Remaining"}</span><strong>${formatProClock(remainingSeconds)}</strong><small>${aborted ? "Not cooked" : "Recipe finished"}</small></div>
+        <div><span>${escapeHtml(sinceSheetLabel)}</span><strong>${sinceSheetPrefix}${formatProClock(sinceFinishedSeconds)}</strong><small>${timing.waitClosed ? "Stopped when next recipe started" : "Still counting"}</small></div>
+        <div><span>Planned cook</span><strong>${formatProClock(plannedSeconds)}</strong><small>Original recipe duration</small></div>
       </div>
       <div class="recipe-sheet-profile">
-        <span>Quantity<strong>${escapeHtml(recipe?.recipeJson?.quantity || (draft ? `${draft.quantity}${draft.quantityUnit}` : ""))}</strong></span>
+        <span>Quantity<strong>${escapeHtml(quantityLabel)}</strong></span>
         <span>Consistency<strong>${escapeHtml(recipe?.recipeJson?.consistency || draft?.consistency || "medium")}</strong></span>
-        <span>Profile<strong>Healthy</strong></span>
-        <span>Minutes<strong>${Math.ceil(actualSeconds / 60)}/${Math.ceil(plannedSeconds / 60)}</strong></span>
+        <span>Profile<strong>${escapeHtml(profileLabel)}</strong></span>
+        <span>Steps reached<strong>${escapeHtml(stepsReachedLabel)}</strong></span>
       </div>
       <section class="stack-section">
         <div class="mini-title">Ingredients</div>

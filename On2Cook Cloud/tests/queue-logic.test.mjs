@@ -4,11 +4,60 @@ import { readFileSync } from "node:fs";
 import { currentPermissions } from "../src/data-store.js";
 import {
   canStartQueuedIndex,
+  getRunTimingMetrics,
   moveQueueIdBeside,
   removeQueueId,
   reorderQueueIds,
   shouldStartQueuedWork
 } from "../src/queue-logic.js";
+
+test("aborted run metrics preserve elapsed, remaining, and time since abort", () => {
+  const metrics = getRunTimingMetrics(
+    {
+      outcome: "aborted",
+      startedAt: "2026-07-14T06:00:00.000Z",
+      finishedAt: "2026-07-14T06:03:14.000Z",
+      durationSeconds: 300,
+      actualDurationSeconds: 194
+    },
+    "2026-07-14T06:04:47.000Z"
+  );
+  assert.deepEqual(metrics, {
+    outcome: "aborted",
+    actualSeconds: 194,
+    plannedSeconds: 300,
+    remainingSeconds: 106,
+    sinceFinishedSeconds: 93,
+    progressPercent: 65,
+    waitClosed: false
+  });
+});
+
+test("time after an aborted run stops when the next recipe starts", () => {
+  const metrics = getRunTimingMetrics(
+    {
+      outcome: "aborted",
+      startedAt: "2026-07-14T06:00:00.000Z",
+      finishedAt: "2026-07-14T06:03:14.000Z",
+      nextStartedAt: "2026-07-14T06:03:44.000Z",
+      durationSeconds: 300
+    },
+    "2026-07-14T08:00:00.000Z"
+  );
+  assert.equal(metrics.sinceFinishedSeconds, 30);
+  assert.equal(metrics.waitClosed, true);
+});
+
+test("legacy abort notes cannot be presented as completed runs", () => {
+  const metrics = getRunTimingMetrics({
+    outcome: "completed",
+    note: "Aborted by device (stop=100)",
+    actualDurationSeconds: 30,
+    durationSeconds: 120
+  });
+  assert.equal(metrics.outcome, "aborted");
+  assert.equal(metrics.remainingSeconds, 90);
+});
 
 test("arrow controls reorder only the upcoming queue", () => {
   const queue = ["a", "b", "c"];

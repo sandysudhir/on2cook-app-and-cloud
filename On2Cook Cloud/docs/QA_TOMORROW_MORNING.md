@@ -65,14 +65,14 @@ Physical BLE/device behavior still needs the cooker:
 ## Tomorrow Morning Device Test Sequence
 
 1. Open Chrome or Edge on Windows and load `https://www.on2cook.net/`.
-2. Hard refresh once so `app.js?v=20260714b` and service worker `on2cook-cloud-v96` are active.
+2. Hard refresh once so `app.js?v=20260714c` and service worker `on2cook-cloud-v97` are active.
 3. Turn on only the first cooker and wait for BLE advertising.
 4. Open Device Details for D1, click Connect, and select the intended cooker.
 5. Confirm D1 shows Connected and locks to that exact Bluetooth name.
 6. If the same cooker appears connected under D2/D3, click the D1 repair action (`Use Device X cooker here`) and confirm the cooker moves back to D1.
 7. Confirm the firmware notice appears while the app sends `Firmware=?`.
 8. In Chrome/Edge browser mode, confirm the app warns that automatic OTA requires the Android APK if the connected firmware is older than `IN-V9-260626`.
-9. Install/open `On2Cook-Cloud-Mobile-APK-2026-07-14-queue-remove.apk` for the actual OTA test.
+9. Install/open `On2Cook-Cloud-Mobile-APK-2026-07-14-recipe-sheet-abort-timing.apk` for the actual OTA test.
 10. Connect D1 in the APK. If the device firmware is older, confirm the app blocks cooking, starts OTA, sends `OTA:true,SIZE=<bytes>`, waits for `USE_WIFI`, switches to `ON2COOK_OTA`, uploads to `http://192.168.4.1/update`, and shows the updated firmware version.
 11. If Android asks to allow the temporary `ON2COOK_OTA` Wi-Fi, approve it and keep the phone close to the cooker.
 12. After firmware completes, reconnect D1 and click Status and Firmware. Confirm `WORKSTATUS=IDLE` and firmware `IN-V9-260626` appear.
@@ -91,10 +91,11 @@ Physical BLE/device behavior still needs the cooker:
 25. Open Live Logs. Confirm `livelog=ON` starts streaming values. Close it and confirm `livelog=OFF`.
 26. Use View Queue to confirm cooked history, NOW, and upcoming queue are separated.
 27. In D1 Manual Mode, tap the visible Abort recipe action. Cancel once and confirm cooking continues on the same screen. Open it again, confirm the device/recipe details, then abort. Confirm the app sends `stop=100`, keeps upcoming recipes queued, shows aborted status, and D1 becomes ready for the next recipe.
-27. Let one recipe complete normally. Confirm last cooked recipe appears at the top with since-completion time.
-28. While idle, open bottom Logs. Confirm `LOGSTATUS=?`, then `LISTLOGS`, then `READLOG=<filename>` work.
-29. Repeat the same connection lock and recipe run test for D2 with a second cooker if available.
-30. Verify D1 actions never affect D2, and D2 actions never affect D1.
+28. Let one recipe complete normally. Confirm last cooked recipe appears at the top with since-completion time.
+29. Open the last Recipe Sheet after one abort. Confirm it says `Recipe Aborted`, uses readable dark text, and shows the exact actual cook time, remaining time at abort, since-abort time, planned duration, finish clock, and finish age. Confirm actual cook time starts at firmware execution rather than order assignment.
+30. While idle, open bottom Logs. Confirm `LOGSTATUS=?`, then `LISTLOGS`, then `READLOG=<filename>` work.
+31. Repeat the same connection lock and recipe run test for D2 with a second cooker if available.
+32. Verify D1 actions never affect D2, and D2 actions never affect D1.
 
 ## Known Expected States
 
