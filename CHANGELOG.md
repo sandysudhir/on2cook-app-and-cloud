@@ -6,7 +6,8 @@
 - Added device-specific queue controls to the main device card, Device Details, and Manual Mode, including hold-and-drag priority changes, up/down fallbacks, Make Next, Cook Now, and explicit Stop Current & Cook Now.
 - Added administrator-controlled queue permissions. Main admins always control priority, kitchen managers are enabled by default, and operators can be granted or denied queue changes independently while still being able to start the first idle item.
 - Added automated queue-policy tests covering reorder, drag placement, manual/automatic handoff, explicit abort handoff, and role permissions.
-- Bumped web cache version to `20260713d` / service-worker cache `v93` and refreshed the APK cloud URL.
+- Fixed multi-item handoff so the first queued recipe starts without being requeued behind the remaining jobs.
+- Bumped web cache version to `20260713e` / service-worker cache `v94` and refreshed the APK cloud URL.
 - Added a prominent, sticky `Abort recipe` action to the active device Manual Mode screen instead of hiding it inside collapsed cooking diagnostics.
 - Added an abort confirmation step that identifies the device and recipe, preserves upcoming queue jobs, and only then uses the existing firmware `stop=100` command.
 - Verified the Manual Mode abort and cancel flow at desktop and 390 x 844 mobile sizes without horizontal overflow; cancelling returns to the active cooking screen.

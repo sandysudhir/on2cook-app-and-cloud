@@ -41,7 +41,7 @@ Date prepared: July 13, 2026
 - Manual routing now leaves the first queued recipe in `Ready for next` with prep details and an explicit `Cook now` action; automatic routing still starts it automatically.
 - Upcoming recipes expose the same device-specific priority in the device card, Device Details, and Manual Mode, with long-press drag, up/down controls, Make Next, and explicit Stop Current & Cook Now.
 - Queue priority controls follow the logged-in user's `canManageQueues` permission; a run-only operator can start the first idle item but cannot skip or reorder jobs.
-- Five automated queue-policy tests pass for arrow reorder, drag placement, run-only priority enforcement, manual/automatic handoff, and administrator permission defaults.
+- Six automated queue-policy tests pass for arrow reorder, drag placement, run-only priority enforcement, manual/automatic handoff, multi-item handoff, and administrator permission defaults.
 - Closing Live Logs while offline no longer attempts to send `livelog=OFF`.
 - The latest firmware manifest is available at `firmware/latest/manifest.json` with version `IN-V9-260626`.
 - The web UI blocks recipe/manual commands while firmware is being checked or updated.
@@ -63,7 +63,7 @@ Physical BLE/device behavior still needs the cooker:
 ## Tomorrow Morning Device Test Sequence
 
 1. Open Chrome or Edge on Windows and load `https://www.on2cook.net/`.
-2. Hard refresh once so `app.js?v=20260713d` and service worker `on2cook-cloud-v93` are active.
+2. Hard refresh once so `app.js?v=20260713e` and service worker `on2cook-cloud-v94` are active.
 3. Turn on only the first cooker and wait for BLE advertising.
 4. Open Device Details for D1, click Connect, and select the intended cooker.
 5. Confirm D1 shows Connected and locks to that exact Bluetooth name.

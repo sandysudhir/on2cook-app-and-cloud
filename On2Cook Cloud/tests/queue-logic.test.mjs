@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { currentPermissions } from "../src/data-store.js";
 import {
   canStartQueuedIndex,
@@ -43,6 +44,15 @@ test("manual queues wait, while auto and explicit stop-and-start handoffs run", 
   assert.equal(
     shouldStartQueuedWork({ pendingAssignmentMode: "manual_review", queuedOrderId: "a", explicitOrderId: "a", explicitHandoffAgeSeconds: 91 }),
     false
+  );
+});
+
+test("queued handoff bypasses the remaining queue busy check", () => {
+  const appSource = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
+  assert.match(
+    appSource,
+    /startOrderFlow\(queuedOrderId, device\.slot, \{ ignoreQueuedWork: true \}\)/,
+    "The first queued job must start even when more jobs remain behind it."
   );
 });
 
