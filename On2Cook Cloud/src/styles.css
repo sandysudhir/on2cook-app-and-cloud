@@ -6846,6 +6846,57 @@ textarea.field-input {
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* Order Details intentionally stays light inside the dark dashboard. */
+.surface:not(.login-surface) .modal-card.detail-sheet {
+  color: var(--ink);
+  border-color: rgba(111, 92, 71, 0.18);
+  background: #fffaf5;
+}
+
+.surface:not(.login-surface) .detail-sheet h3,
+.surface:not(.login-surface) .detail-sheet .detail-order-id,
+.surface:not(.login-surface) .detail-sheet .detail-info-row strong,
+.surface:not(.login-surface) .detail-sheet .detail-item-card strong {
+  color: var(--ink);
+}
+
+.surface:not(.login-surface) .detail-sheet .settings-card.detail-section,
+.surface:not(.login-surface) .detail-sheet .detail-item-card {
+  color: var(--ink);
+  border-color: rgba(111, 92, 71, 0.18);
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(66, 42, 17, 0.1);
+}
+
+.surface:not(.login-surface) .detail-sheet .detail-hero {
+  color: var(--ink);
+  border-color: rgba(111, 92, 71, 0.18);
+  background: linear-gradient(180deg, #fffdf9, #f8f1e9);
+}
+
+.surface:not(.login-surface) .detail-sheet .subtle,
+.surface:not(.login-surface) .detail-sheet .detail-info-row span,
+.surface:not(.login-surface) .detail-sheet .detail-item-meta {
+  color: var(--muted);
+}
+
+.surface:not(.login-surface) .detail-sheet .detail-info-row.negative strong,
+.surface:not(.login-surface) .detail-sheet .detail-item-meta.negative {
+  color: var(--danger);
+}
+
+.surface:not(.login-surface) .detail-sheet .detail-info-row.total strong {
+  color: var(--success);
+}
+
+.surface:not(.login-surface) .detail-sheet .secondary-button,
+.surface:not(.login-surface) .detail-sheet > .row .icon-button {
+  color: var(--ink);
+  border-color: rgba(111, 92, 71, 0.18);
+  background: #fff;
+  box-shadow: none;
+}
+
 /* Active recipe view inside the device-level Manual Mode screen. */
 .native-cooking-screen {
   overflow-x: hidden;

@@ -989,7 +989,7 @@ class CloudWebActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "CloudWebActivity"
-        private const val CLOUD_URL = "https://www.on2cook.net/?apk=1&build=20260714a"
+        private const val CLOUD_URL = "https://www.on2cook.net/?apk=1&build=20260714b"
         private const val WIFI_OTA_SSID = "ON2COOK_OTA"
         private const val WIFI_OTA_PASSWORD = "12345678"
         private const val OTA_UPDATE_URL = "http://192.168.4.1/update"

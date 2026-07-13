@@ -19,6 +19,7 @@ Date prepared: July 14, 2026
 - Recipes on Device opens as a device-specific page and disables Refresh/Add while offline.
 - Notifications drawer opens with Order, Device, Cooking, Error, and Logs/Sync categories, timestamps, and action buttons.
 - Order Details opens with customer details, order summary, items, and order info.
+- Order Details uses opaque light cards with dark headings, values, and labels; discounts remain red and totals remain green.
 - Recipes, Queue, Manual, and Global Recipes tabs switch correctly.
 - Edit Recipe now opens the native editor instead of the blank embedded Pro Studio shell.
 - Recipe editor configure screen shows Diet Type, Recipe Type, Quantity, Consistency, Ingredients, and Open Pro Timeline Editor.
@@ -64,7 +65,7 @@ Physical BLE/device behavior still needs the cooker:
 ## Tomorrow Morning Device Test Sequence
 
 1. Open Chrome or Edge on Windows and load `https://www.on2cook.net/`.
-2. Hard refresh once so `app.js?v=20260714a` and service worker `on2cook-cloud-v95` are active.
+2. Hard refresh once so `app.js?v=20260714b` and service worker `on2cook-cloud-v96` are active.
 3. Turn on only the first cooker and wait for BLE advertising.
 4. Open Device Details for D1, click Connect, and select the intended cooker.
 5. Confirm D1 shows Connected and locks to that exact Bluetooth name.

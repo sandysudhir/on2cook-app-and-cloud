@@ -2,6 +2,8 @@
 
 ## 2026-07-14
 
+- Fixed the Order Details contrast regression by isolating its light color scheme from the dark dashboard, using opaque cards and dark text for headings, labels, values, and item details.
+- Bumped web cache version to `20260714b` / service-worker cache `v96` and refreshed the APK cloud URL.
 - Added permission-controlled `Remove` actions to every device queue surface, including the Queue tab, device card, Device Details, and the native-style Manual Mode queue.
 - Added a confirmation step that returns the selected queued order to Pending without deleting the order, completed history, or current cook.
 - Held manually removed orders out of automatic routing until an operator explicitly assigns or starts them again.
