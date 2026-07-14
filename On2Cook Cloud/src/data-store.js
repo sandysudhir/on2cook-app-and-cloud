@@ -671,6 +671,7 @@ function createUiState() {
     activeTab: "orders",
     orderMode: "current",
     recipeMode: "selected",
+    recipeScaleId: "",
     globalRecipeSearch: "",
     globalRecipePickedIds: [],
     apkScreenIndex: 0,

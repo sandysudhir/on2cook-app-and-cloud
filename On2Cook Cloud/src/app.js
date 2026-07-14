@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714e";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714e";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714f";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714f";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260714e";
+} from "./ncb-services.js?v=20260714f";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260714e";
+} from "./data-store.js?v=20260714f";
 import {
   canStartQueuedIndex,
   getRunTimingMetrics,
@@ -29,7 +29,7 @@ import {
   removeQueueId,
   reorderQueueIds,
   shouldStartQueuedWork
-} from "./queue-logic.js?v=20260714e";
+} from "./queue-logic.js?v=20260714f";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -38,7 +38,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260714e";
+const APP_ASSET_VERSION = "20260714f";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -321,6 +321,7 @@ function captureUiSessionState(snapshot = null) {
     activeTab,
     orderMode: ui.orderMode || "current",
     recipeMode: ui.recipeMode || "selected",
+    recipeScaleId: ui.recipeScaleId || "",
     globalRecipeSearch: ui.globalRecipeSearch || "",
     globalRecipePickedIds: Array.isArray(ui.globalRecipePickedIds) ? ui.globalRecipePickedIds.slice(0, 200) : [],
     manualMode: {
@@ -378,6 +379,7 @@ function applySavedUiSessionState(initialState, sessionState) {
   if (validRecipeModes.has(sessionState.recipeMode)) {
     initialState.ui.recipeMode = sessionState.recipeMode;
   }
+  initialState.ui.recipeScaleId = String(sessionState.recipeScaleId || "");
   initialState.ui.globalRecipeSearch = String(sessionState.globalRecipeSearch || "");
   initialState.ui.globalRecipePickedIds = Array.isArray(sessionState.globalRecipePickedIds)
     ? sessionState.globalRecipePickedIds.slice(0, 200)
@@ -8375,7 +8377,8 @@ async function saveScaledRecipe(recipeId, targetQuantity, intensity = "medium") 
     const baseDraft = draft.recipes.find((recipe) => recipe.id === baseRecipe.id);
     if (baseDraft) baseDraft.selected = true;
     draft.recipes.unshift(finalRecipe);
-    draft.ui.recipeMode = "scale";
+    draft.ui.recipeMode = "final";
+    draft.ui.recipeScaleId = "";
     syncSelectedRecipesToAllDevices(draft);
   });
   const saved = state().recipes.find((recipe) => recipe.id === finalRecipe.id) || finalRecipe;
@@ -9533,6 +9536,17 @@ function renderRecipeCard(snapshot, recipe, perms) {
   const selectedClass = recipe.selected ? "selected" : "";
   const recipeImageUrl = safeOptionalUrl(recipe.imageDataUrl, "recipe image");
   const summary = summarizeRecipeForCard(recipe);
+  const baseRecipe = recipe.baseRecipeId ? findRecipeById(snapshot, recipe.baseRecipeId) : null;
+  const recipeKind =
+    recipe.source === "scaled-final"
+      ? "Scaled custom recipe"
+      : recipe.source === "live-final"
+        ? "Live-cook custom recipe"
+        : recipe.type === "final"
+          ? "Edited custom recipe"
+          : recipe.source === "seed"
+            ? "Standard kitchen recipe"
+            : "Imported kitchen recipe";
   const connectedDevices = snapshot.devices.filter((device) => device.connection === "connected");
   const availableDevices = connectedDevices.filter((device) => isRecipeAllowedOnDevice(snapshot, device, recipe.id));
   const blockedConnectedDevices = connectedDevices.filter((device) => !isRecipeAllowedOnDevice(snapshot, device, recipe.id));
@@ -9555,9 +9569,13 @@ function renderRecipeCard(snapshot, recipe, perms) {
       <div class="recipe-copy">
         <div class="row space">
           <h3>${escapeHtml(recipe.displayName)}</h3>
-          ${renderStatusPill(recipe.type === "final" ? "completed" : recipe.selected ? "cooking" : "pending")}
+          <span class="status-pill ${recipe.selected ? "complete" : "pending"}">${recipe.selected ? "Enabled" : "Disabled"}</span>
         </div>
-        <div class="subtle">${escapeHtml(recipe.firmwareName)} | ${escapeHtml(recipe.source)}</div>
+        <div class="recipe-lineage">
+          <strong>${escapeHtml(recipeKind)}</strong>
+          ${baseRecipe ? `<span>Based on ${escapeHtml(baseRecipe.displayName)}</span>` : ""}
+        </div>
+        <div class="subtle">Firmware: ${escapeHtml(recipe.firmwareName)}</div>
         <div class="subtle">Aliases: ${escapeHtml(recipe.aliases.join(", "))}</div>
         ${renderRecipeNutritionLine(summary)}
         ${renderIngredientSummary(summary)}
@@ -9565,21 +9583,21 @@ function renderRecipeCard(snapshot, recipe, perms) {
           ${
             perms.canCreateBaseRecipes
               ? `<button class="secondary-button small" data-action="toggle-recipe-selected" data-recipe-id="${recipe.id}">
-                  ${recipe.selected ? "Disable" : "Enable"}
+                  ${recipe.selected ? "Remove from Kitchen" : "Add to Kitchen"}
                 </button>`
               : ""
           }
           ${
             perms.canCreateFinalRecipes
               ? `<button class="primary-button small" data-action="open-professional-editor" data-recipe-id="${recipe.id}">
-                  ${recipe.type === "final" ? "Edit Final" : "Edit Recipe"}
+                  ${recipe.type === "final" ? "Edit / Rename" : "Edit & Save Copy"}
                 </button>`
               : ""
           }
           ${
             perms.canCreateFinalRecipes
               ? `<button class="secondary-button small" data-action="switch-recipe-mode" data-mode="scale" data-recipe-id="${recipe.id}">
-                  Scale
+                  ${recipe.type === "final" ? "Scale New Size" : "Scale & Save Copy"}
                 </button>`
               : ""
           }
@@ -9624,30 +9642,34 @@ function renderRecipeScaleCard(snapshot, recipe, perms) {
             <h3>${escapeHtml(recipe.displayName)}</h3>
             <div class="subtle">Base: ${escapeHtml(formatScaledWeight(quantity.quantity, quantity.unit))} | Time uses square-root scaling</div>
           </div>
-          ${renderStatusPill(recipe.type === "final" ? "completed" : "pending")}
+          <span class="status-pill pending">New custom copy</span>
         </div>
         ${renderRecipeNutritionLine(summary)}
         ${renderIngredientSummary(summary)}
-        <div class="scale-control-grid">
-          <label class="field-label">
-            Target final quantity
-            <input class="field-input" type="number" min="1" step="50" value="${escapeHtml(quantity.quantity)}" data-input="recipe-scale-quantity" data-recipe-id="${recipe.id}" data-intensity="${escapeHtml(intensity)}">
-          </label>
-          <label class="field-label">
-            Salt and intensity profile
-            <select class="field-input" data-input="recipe-scale-intensity" data-recipe-id="${recipe.id}" data-target-quantity="${escapeHtml(quantity.quantity)}">
-              <option value="mild" ${intensity === "mild" ? "selected" : ""}>Mild - 0.7% salt</option>
-              <option value="medium" ${intensity === "medium" ? "selected" : ""}>Medium - 0.9% salt</option>
-              <option value="rich" ${intensity === "rich" ? "selected" : ""}>Rich - 1.1% salt</option>
-            </select>
-          </label>
-        </div>
+        <form class="recipe-scale-form" data-form="scale-recipe" data-recipe-id="${recipe.id}">
+          <div class="scale-control-grid">
+            <label class="field-label">
+              Target final quantity
+              <input class="field-input" name="targetQuantity" type="number" min="1" step="50" value="${escapeHtml(quantity.quantity)}" required>
+            </label>
+            <label class="field-label">
+              Salt and intensity profile
+              <select class="field-input" name="intensity">
+                <option value="mild" ${intensity === "mild" ? "selected" : ""}>Mild - 0.7% salt</option>
+                <option value="medium" ${intensity === "medium" ? "selected" : ""}>Medium - 0.9% salt</option>
+                <option value="rich" ${intensity === "rich" ? "selected" : ""}>Rich - 1.1% salt</option>
+              </select>
+            </label>
+          </div>
+          <button class="primary-button small" type="submit">Save as Custom Recipe</button>
+        </form>
+        <div class="mini-title">Quick sizes</div>
         <div class="chip-row">
           ${previewQuantities
             .map(
               (target) => `
                 <button class="chip-button" data-action="scale-recipe-now" data-recipe-id="${recipe.id}" data-target-quantity="${target}" data-intensity="${escapeHtml(intensity)}">
-                  ${escapeHtml(formatScaledWeight(target, quantity.unit))}
+                  ${escapeHtml(formatScaledWeight(target, quantity.unit))} copy
                 </button>
               `
             )
@@ -9672,62 +9694,87 @@ function renderRecipeScaleTab(snapshot, perms) {
   if (!perms.canCreateFinalRecipes) {
     return `<div class="empty-card">Your login can run recipes only. Scaling is available to the master admin or kitchen manager.</div>`;
   }
-  const recipes = snapshot.recipes.filter((recipe) => recipe.selected || recipe.type === "final");
+  const recipe = findRecipeById(snapshot, snapshot.ui.recipeScaleId) || snapshot.recipes.find((item) => item.selected || item.type === "final");
+  if (!recipe) {
+    return `<div class="empty-card">Choose a recipe from Kitchen Recipes or Custom Recipes before scaling.</div>`;
+  }
+  const returnMode = recipe.type === "final" ? "final" : "selected";
+  const returnLabel = recipe.type === "final" ? "Custom Recipes" : "Kitchen Recipes";
   return `
-    <div class="settings-card recipe-scale-intro">
-      <div class="mini-title">Scale recipe output</div>
-      <p class="subtle">Choose the new final quantity. The app keeps the firmware JSON structure, scales raw ingredients by category, scales time by the square-root rule, and saves the result as a new final recipe named with the target size.</p>
+    <div class="recipe-scale-workspace-head">
+      <button class="secondary-button small" data-action="switch-recipe-mode" data-mode="${returnMode}">Back to ${returnLabel}</button>
+      <div>
+        <div class="eyebrow">Scale Recipe</div>
+        <h3>${escapeHtml(recipe.displayName)}</h3>
+      </div>
     </div>
-    ${recipes.map((recipe) => renderRecipeScaleCard(snapshot, recipe, perms)).join("") || `<div class="empty-card">No recipes are enabled for scaling.</div>`}
+    <div class="settings-card recipe-scale-intro">
+      <div class="mini-title">Create a custom-size copy</div>
+      <p class="subtle">The original recipe stays unchanged. The saved copy receives the target size in its name and appears in Custom Recipes.</p>
+    </div>
+    ${renderRecipeScaleCard(snapshot, recipe, perms)}
   `;
 }
 
 function renderRecipesTab(snapshot, perms) {
-  const selectedRecipes = snapshot.recipes.filter((recipe) => recipe.selected && recipe.type !== "final");
+  const selectedRecipes = snapshot.recipes.filter((recipe) => recipe.selected);
   const finalRecipes = snapshot.recipes.filter((recipe) => recipe.type === "final");
   const mode = snapshot.ui.recipeMode;
-  const recipeFinderUrl = safeOptionalUrl(snapshot.settings.recipeFinder.baseUrl, "recipe finder URL");
+  const modeTitle = mode === "final" ? "Custom Recipes" : mode === "import" ? "Import Recipe" : "Kitchen Recipes";
+  const modeNote =
+    mode === "final"
+      ? "Edited, scaled, renamed, and live-cook recipes saved as separate versions."
+      : mode === "import"
+        ? "Add a firmware-compatible recipe ZIP as a new kitchen recipe."
+        : "Recipes currently enabled for orders and device assignment.";
   return `
     <section class="stack-section">
-      <div class="section-head">
-        <div class="segment-row">
-          <button class="segment ${mode === "selected" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="selected">Selected</button>
-          <button class="segment ${mode === "final" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="final">Final Modified</button>
-          ${perms.canCreateFinalRecipes ? `<button class="segment ${mode === "scale" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="scale">Scale</button>` : ""}
-          ${perms.canCreateBaseRecipes ? `<button class="segment ${mode === "import" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="import">Import</button>` : ""}
+      ${
+        mode === "scale"
+          ? renderRecipeScaleTab(snapshot, perms)
+          : `
+      <div class="section-head recipe-library-head">
+        <div class="segment-row recipe-library-tabs ${perms.canCreateBaseRecipes ? "" : "two"}">
+          <button class="segment ${mode === "selected" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="selected">Kitchen Recipes <span>${selectedRecipes.length}</span></button>
+          <button class="segment ${mode === "final" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="final">Custom Recipes <span>${finalRecipes.length}</span></button>
+          ${perms.canCreateBaseRecipes ? `<button class="segment ${mode === "import" ? "active" : ""}" data-action="switch-recipe-mode" data-mode="import">Import Recipe</button>` : ""}
         </div>
+      </div>
+      <div class="recipe-library-summary">
+        <div><div class="eyebrow">${escapeHtml(modeTitle)}</div><strong>${escapeHtml(modeNote)}</strong></div>
       </div>
       ${
         mode === "selected"
-          ? selectedRecipes.map((recipe) => renderRecipeCard(snapshot, recipe, perms)).join("") || `<div class="empty-card">No selected recipes.</div>`
+          ? selectedRecipes.map((recipe) => renderRecipeCard(snapshot, recipe, perms)).join("") || `<div class="empty-card">No kitchen recipes yet. Add one from Global Recipes or Import Recipe.</div>`
           : ""
       }
       ${
         mode === "final"
-          ? finalRecipes.map((recipe) => renderRecipeCard(snapshot, recipe, perms)).join("") || `<div class="empty-card">No final modified recipes yet.</div>`
+          ? finalRecipes.map((recipe) => renderRecipeCard(snapshot, recipe, perms)).join("") || `<div class="empty-card">No custom recipes yet. Edit or scale a Kitchen Recipe to create one.</div>`
           : ""
       }
-      ${mode === "scale" ? renderRecipeScaleTab(snapshot, perms) : ""}
       ${
         mode === "import" && perms.canCreateBaseRecipes
           ? `
             <div class="settings-card">
-              <div class="mini-title">Recipe finder import</div>
-              ${recipeFinderUrl ? `<a class="link-button" href="${escapeHtml(recipeFinderUrl)}" target="_blank" rel="noreferrer">Open recipe finder</a>` : `<span class="subtle">Recipe finder URL is not configured.</span>`}
+              <div class="mini-title">Import Recipe ZIP</div>
+              <label class="file-field">
+                <span>Choose a local recipe ZIP</span>
+                <input type="file" accept=".zip" data-input="recipe-zip-file">
+              </label>
+              <div class="mini-title top-gap">Or import a direct ZIP URL</div>
               <form class="inline-form" data-form="import-zip-url">
                 <input class="field-input" type="url" name="zipUrl" placeholder="Paste a direct recipe ZIP URL" value="${escapeHtml(snapshot.settings.recipeFinder.lastZipUrl)}" required>
                 <button class="primary-button small" type="submit">Import URL</button>
               </form>
-              <label class="file-field">
-                <span>Import a local recipe ZIP</span>
-                <input type="file" accept=".zip" data-input="recipe-zip-file">
-              </label>
-              <p class="subtle">Imported ZIPs are added to the local recipe library, selected for cooking, and made available for device assignment. ZIP importer expects one JSON recipe file and can also pick up one image for the card thumbnail.</p>
+              <p class="subtle">The imported recipe is enabled in Kitchen Recipes without changing its firmware JSON. Use Edit or Scale from there to save a separate Custom Recipe.</p>
             </div>
           `
           : mode === "import"
             ? `<div class="empty-card">Your login can run selected recipes only. Recipe import is controlled by the master admin.</div>`
           : ""
+      }
+      `
       }
     </section>
   `;
@@ -12263,11 +12310,7 @@ function applyRecipeEditor(formData) {
     finalRecipe.createdAt = sourceRecipe.createdAt;
   }
   mutate((draft) => {
-    draft.recipes = draft.recipes.filter(
-      (recipe) =>
-        recipe.id !== sourceRecipe.id &&
-        !(recipe.type === "final" && recipe.baseRecipeId === baseRecipe.id && recipe.id !== finalRecipe.id)
-    );
+    draft.recipes = draft.recipes.filter((recipe) => recipe.id !== finalRecipe.id);
     const baseDraft = draft.recipes.find((recipe) => recipe.id === baseRecipe.id);
     if (baseDraft) baseDraft.selected = false;
     draft.recipes.unshift(finalRecipe);
@@ -12286,6 +12329,26 @@ function saveProfessionalRecipe() {
     showToast("Recipe not found", "error");
     return null;
   }
+  if (
+    sourceRecipe.type !== "final" &&
+    [sourceRecipe.displayName, sourceRecipe.firmwareName]
+      .map((name) => normalizeRecipeNameKey(name))
+      .includes(normalizeRecipeNameKey(draft.displayName))
+  ) {
+    showToast("Give the custom recipe a new name before saving. The kitchen recipe will remain unchanged.", "warning");
+    return null;
+  }
+  const desiredNameKey = normalizeRecipeNameKey(draft.displayName);
+  if (
+    snapshot.recipes.some(
+      (recipe) =>
+        recipe.id !== sourceRecipe.id &&
+        [recipe.displayName, recipe.firmwareName].map((name) => normalizeRecipeNameKey(name)).includes(desiredNameKey)
+    )
+  ) {
+    showToast("That recipe name already exists. Use a unique name for this custom recipe.", "warning");
+    return null;
+  }
   const baseRecipe =
     sourceRecipe.type === "final" && sourceRecipe.baseRecipeId ? findRecipeById(snapshot, sourceRecipe.baseRecipeId) || sourceRecipe : sourceRecipe;
   const recipeJson = proDraftToFirmwareRecipe(sourceRecipe, draft);
@@ -12300,11 +12363,7 @@ function saveProfessionalRecipe() {
     finalRecipe.createdAt = sourceRecipe.createdAt;
   }
   mutate((draftState) => {
-    draftState.recipes = draftState.recipes.filter(
-      (recipe) =>
-        recipe.id !== sourceRecipe.id &&
-        !(recipe.type === "final" && recipe.baseRecipeId === baseRecipe.id && recipe.id !== finalRecipe.id)
-    );
+    draftState.recipes = draftState.recipes.filter((recipe) => recipe.id !== finalRecipe.id);
     const baseDraft = draftState.recipes.find((recipe) => recipe.id === baseRecipe.id);
     if (baseDraft) baseDraft.selected = false;
     draftState.recipes.unshift(finalRecipe);
@@ -12703,6 +12762,14 @@ async function handleSubmit(event) {
     applyRecipeEditor(formData);
     return;
   }
+  if (formName === "scale-recipe") {
+    await saveScaledRecipe(
+      form.dataset.recipeId,
+      Number(formData.get("targetQuantity")),
+      String(formData.get("intensity") || "medium")
+    );
+    return;
+  }
   if (formName === "add-user") {
     const role = String(formData.get("role") || "operator");
     const adminLike = role === "admin" || role === "main_admin";
@@ -12969,7 +13036,9 @@ async function handleClick(event) {
   }
   if (action === "switch-recipe-mode") {
     mutate((draft) => {
-      draft.ui.recipeMode = button.dataset.mode;
+      const nextMode = button.dataset.mode;
+      draft.ui.recipeMode = nextMode;
+      draft.ui.recipeScaleId = nextMode === "scale" ? button.dataset.recipeId || draft.ui.recipeScaleId || "" : "";
     });
     return;
   }
@@ -13352,6 +13421,7 @@ async function handleClick(event) {
       draft.ui.activeTab = "recipes";
       draft.ui.activeModal = null;
       draft.ui.recipeMode = "import";
+      draft.ui.recipeScaleId = "";
     });
     return;
   }
@@ -14126,16 +14196,6 @@ async function handleChange(event) {
     mutate((draft) => {
       draft.ui.globalRecipeSearch = input.value;
     });
-    return;
-  }
-
-  if (input.dataset.input === "recipe-scale-quantity") {
-    await saveScaledRecipe(input.dataset.recipeId, Number(input.value), input.dataset.intensity || "medium");
-    return;
-  }
-
-  if (input.dataset.input === "recipe-scale-intensity") {
-    await saveScaledRecipe(input.dataset.recipeId, Number(input.dataset.targetQuantity), input.value || "medium");
     return;
   }
 

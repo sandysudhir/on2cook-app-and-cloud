@@ -2,6 +2,11 @@
 
 ## 2026-07-14
 
+- Reorganized Recipes into three clear destinations: `Kitchen Recipes` for enabled cooking recipes, `Custom Recipes` for edited/scaled versions, and `Import Recipe` for adding a firmware-compatible ZIP.
+- Removed Scale from the permanent tab bar. Scale now opens as a focused workspace for one chosen recipe and saves a separately named copy directly into Custom Recipes.
+- Clarified recipe cards with enabled/disabled status, standard/imported/edited/scaled lineage, and explicit actions for editing, renaming, scaling, kitchen availability, and deletion.
+- Preserved base recipes and sibling custom versions when another custom recipe is saved; standard/imported recipes require a new custom name, while existing custom recipes can be edited or renamed in place.
+- Added recipe-workflow regression tests and bumped the web cache to `20260714f` / service-worker cache `v100`.
 - Added click-outside dismissal to every standard popup, device Manual Mode overlay, and notification drawer while preserving the existing close cleanup for live logs and orientation.
 - Increased popup close controls to a reliable 44 x 44 touch target and replaced the small text `x` with a clearer close symbol and accessible labels.
 - Added regression coverage for backdrop dismissal and touch-target sizing; bumped the web cache to `20260714e` / service-worker cache `v99`.

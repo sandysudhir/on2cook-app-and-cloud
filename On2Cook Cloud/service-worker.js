@@ -1,4 +1,4 @@
-const CACHE_NAME = "on2cook-cloud-v99";
+const CACHE_NAME = "on2cook-cloud-v100";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -15,14 +15,14 @@ const CORE_ASSETS = [
   "./data/order_recipes/DAL%20MAKHANI.zip?v=20260612q",
   "./data/order_recipes/KUNG%20PAO%20CHICKEN.zip?v=20260612q",
   "./data/order_recipes/MASOOR%20DAL%20.zip?v=20260612q",
-  "./src/styles.css?v=20260714e",
-  "./src/app.js?v=20260714e",
-  "./src/ble-transport.js?v=20260714e",
-  "./src/data-store.js?v=20260714e",
-  "./src/queue-logic.js?v=20260714e",
-  "./src/zip-reader.js?v=20260714e",
-  "./src/ncb-services.js?v=20260714e",
-  "./firmware/latest/manifest.json?v=20260714e",
+  "./src/styles.css?v=20260714f",
+  "./src/app.js?v=20260714f",
+  "./src/ble-transport.js?v=20260714f",
+  "./src/data-store.js?v=20260714f",
+  "./src/queue-logic.js?v=20260714f",
+  "./src/zip-reader.js?v=20260714f",
+  "./src/ncb-services.js?v=20260714f",
+  "./firmware/latest/manifest.json?v=20260714f",
   "./firmware/latest/firmware.bin",
   "./assets/app_banner.png",
   "./assets/on2cook-logo.png"
