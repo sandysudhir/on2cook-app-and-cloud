@@ -2,6 +2,10 @@
 
 ## 2026-07-14
 
+- Stabilized the web interface during BLE cooking: telemetry now reconciles existing DOM nodes instead of rebuilding the complete app, preserving scroll positions, focused controls, open panels, and Manual Mode selections.
+- Batched raw BLE messages and parsed telemetry into one state update, capped visual telemetry reconciliation at four times per second, and reduced full database persistence to once per second during live activity.
+- Added regression coverage for stable rendering, BLE batching, and deferred persistence; all 14 automated tests pass.
+- Bumped web cache version to `20260714d` / service-worker cache `v98` so the web deployment and APK WebView receive the stability fix.
 - Fixed the Recipe Sheet contrast regression by isolating its light report palette from the dark dashboard, including readable ingredient, cooking-step, profile, and timing cards.
 - Replaced ambiguous completion values with exact outcome metrics: actual cook time, remaining time at abort, time since abort/completion, planned duration, exact finish clock, and relative finish age.
 - Started recorded cook time only when firmware reports recipe execution, rather than when the recipe selection is acknowledged; legacy abort records are also normalized from their saved device note.

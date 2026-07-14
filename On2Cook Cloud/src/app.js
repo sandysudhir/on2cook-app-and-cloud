@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714c";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714c";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714d";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714d";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260714c";
+} from "./ncb-services.js?v=20260714d";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260714c";
+} from "./data-store.js?v=20260714d";
 import {
   canStartQueuedIndex,
   getRunTimingMetrics,
@@ -29,7 +29,7 @@ import {
   removeQueueId,
   reorderQueueIds,
   shouldStartQueuedWork
-} from "./queue-logic.js?v=20260714c";
+} from "./queue-logic.js?v=20260714d";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -38,7 +38,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260714c";
+const APP_ASSET_VERSION = "20260714d";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -94,8 +94,161 @@ function state() {
   return store.getState();
 }
 
-function mutate(recipe) {
-  store.setState((draft) => recipe(draft) || draft);
+function mutate(recipe, options = {}) {
+  if (options.render !== "telemetry") flushTelemetryMutations();
+  store.setState((draft) => recipe(draft) || draft, options);
+}
+
+const TELEMETRY_RENDER_INTERVAL_MS = 250;
+const TELEMETRY_BATCH_INTERVAL_MS = 75;
+const TELEMETRY_MUTATION_OPTIONS = Object.freeze({
+  render: "telemetry",
+  persist: "defer",
+  persistDelayMs: 1000
+});
+
+let telemetryRenderTimer = 0;
+let telemetryMutationTimer = 0;
+let pendingTelemetryMutations = [];
+
+function flushTelemetryMutations() {
+  if (telemetryMutationTimer) {
+    window.clearTimeout(telemetryMutationTimer);
+    telemetryMutationTimer = 0;
+  }
+  if (!pendingTelemetryMutations.length) return;
+  const queuedMutations = pendingTelemetryMutations;
+  pendingTelemetryMutations = [];
+  store.setState((initialDraft) => {
+    let draft = initialDraft;
+    queuedMutations.forEach((recipe) => {
+      draft = recipe(draft) || draft;
+    });
+    return draft;
+  }, TELEMETRY_MUTATION_OPTIONS);
+}
+
+function queueTelemetryMutation(recipe) {
+  pendingTelemetryMutations.push(recipe);
+  if (telemetryMutationTimer) return;
+  telemetryMutationTimer = window.setTimeout(flushTelemetryMutations, TELEMETRY_BATCH_INTERVAL_MS);
+}
+
+function getMorphKey(node) {
+  if (node?.nodeType !== Node.ELEMENT_NODE) return "";
+  const element = /** @type {Element} */ (node);
+  if (element.id) return `id:${element.id}`;
+  if (element.hasAttribute("data-morph-key")) return `morph:${element.getAttribute("data-morph-key")}`;
+  if (element.hasAttribute("data-scroll-key")) return `scroll:${element.getAttribute("data-scroll-key")}`;
+  return "";
+}
+
+function canMorphNode(current, desired) {
+  if (!current || !desired || current.nodeType !== desired.nodeType) return false;
+  if (current.nodeType !== Node.ELEMENT_NODE) return true;
+  return current.nodeName === desired.nodeName;
+}
+
+function syncElementAttributes(current, desired, preserveControlState) {
+  const protectedAttributes = preserveControlState ? new Set(["value", "checked", "selected"]) : null;
+  Array.from(current.attributes).forEach((attribute) => {
+    if (protectedAttributes?.has(attribute.name)) return;
+    if (!desired.hasAttribute(attribute.name)) current.removeAttribute(attribute.name);
+  });
+  Array.from(desired.attributes).forEach((attribute) => {
+    if (protectedAttributes?.has(attribute.name)) return;
+    if (current.getAttribute(attribute.name) !== attribute.value) {
+      current.setAttribute(attribute.name, attribute.value);
+    }
+  });
+}
+
+function morphNode(current, desired) {
+  if (current.nodeType === Node.TEXT_NODE || current.nodeType === Node.COMMENT_NODE) {
+    if (current.nodeValue !== desired.nodeValue) current.nodeValue = desired.nodeValue;
+    return;
+  }
+
+  const activeElement = document.activeElement;
+  const preserveControlState = current === activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(current.nodeName);
+  const preservedValue = preserveControlState ? current.value : null;
+  const preservedSelectionStart = preserveControlState && "selectionStart" in current ? current.selectionStart : null;
+  const preservedSelectionEnd = preserveControlState && "selectionEnd" in current ? current.selectionEnd : null;
+  const preservedDetailsOpen = current.nodeName === "DETAILS" ? current.open : null;
+
+  syncElementAttributes(current, desired, preserveControlState);
+  if (!(preserveControlState && current.nodeName === "TEXTAREA")) {
+    morphChildren(current, desired);
+  }
+
+  if (preserveControlState) {
+    current.value = preservedValue;
+    if (preservedSelectionStart !== null && typeof current.setSelectionRange === "function") {
+      current.setSelectionRange(preservedSelectionStart, preservedSelectionEnd);
+    }
+  } else if (current.nodeName === "INPUT") {
+    current.value = desired.value;
+    current.checked = desired.checked;
+  } else if (current.nodeName === "TEXTAREA" || current.nodeName === "SELECT") {
+    current.value = desired.value;
+  }
+
+  if (current.nodeName === "DETAILS" && preservedDetailsOpen !== null) {
+    current.open = preservedDetailsOpen;
+  }
+}
+
+function morphChildren(currentParent, desiredParent) {
+  const currentChildren = Array.from(currentParent.childNodes);
+  const keyedCurrent = new Map();
+  currentChildren.forEach((child) => {
+    const key = getMorphKey(child);
+    if (key) keyedCurrent.set(key, child);
+  });
+
+  const used = new Set();
+  let cursor = currentParent.firstChild;
+  Array.from(desiredParent.childNodes).forEach((desiredChild) => {
+    const desiredKey = getMorphKey(desiredChild);
+    let match = desiredKey ? keyedCurrent.get(desiredKey) : null;
+
+    if (!match || used.has(match) || !canMorphNode(match, desiredChild)) {
+      match = null;
+      let candidate = cursor;
+      while (candidate) {
+        if (!used.has(candidate) && !getMorphKey(candidate) && canMorphNode(candidate, desiredChild)) {
+          match = candidate;
+          break;
+        }
+        candidate = candidate.nextSibling;
+      }
+    }
+
+    if (!match) {
+      match = desiredChild.cloneNode(true);
+      currentParent.insertBefore(match, cursor);
+    } else {
+      if (match !== cursor) currentParent.insertBefore(match, cursor);
+      morphNode(match, desiredChild);
+    }
+
+    used.add(match);
+    cursor = match.nextSibling;
+  });
+
+  Array.from(currentParent.childNodes).forEach((child) => {
+    if (!used.has(child)) child.remove();
+  });
+}
+
+function setStableAppMarkup(markup) {
+  const template = document.createElement("template");
+  template.innerHTML = markup;
+  if (!app.firstChild) {
+    app.replaceChildren(template.content.cloneNode(true));
+    return;
+  }
+  morphChildren(app, template.content);
 }
 
 function captureScrollState() {
@@ -4110,7 +4263,7 @@ function handleTransportEvents() {
 
   ble.addEventListener("device-message", (event) => {
     const { slot, channel, message, at } = event.detail;
-    mutate((draft) => {
+    queueTelemetryMutation((draft) => {
       const device = draft.devices.find((item) => item.slot === Number(slot));
       if (!device) return draft;
       if (String(channel || "").toLowerCase() === "file") {
@@ -4160,7 +4313,7 @@ function handleTransportEvents() {
 
   ble.addEventListener("telemetry", (event) => {
     const { slot, parsed, message, at } = event.detail;
-    mutate((draft) => {
+    queueTelemetryMutation((draft) => {
       const device = draft.devices.find((item) => item.slot === Number(slot));
       if (!device) return draft;
       applyTelemetry(device, parsed, message, at, draft);
@@ -9356,7 +9509,7 @@ function renderDeviceManualModeModal(snapshot, device) {
   const cooking = isDeviceRecipeRuntimeActive(snapshot, device);
   return `
     <div class="native-manual-backdrop">
-      <div class="native-manual-phone device-manual-screen ${cooking ? "native-cooking-screen" : ""}" data-scroll-key="device-manual-modal-${device.slot}">
+      <div class="native-manual-phone device-manual-screen ${cooking ? "native-cooking-screen" : ""}" data-morph-key="device-manual-modal-${device.slot}" data-scroll-key="device-manual-modal-${device.slot}">
         <div class="native-manual-statusbar">
           <strong>${escapeHtml(new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }))}</strong>
           <span>!</span>
@@ -10823,7 +10976,7 @@ function renderDevicePhone(snapshot, device) {
       : "Not assigned";
   const moveCandidate = findConnectedSlotMoveCandidate(snapshot, device.slot);
   return `
-    <section class="phone-frame device-phone ${device.connection}" data-scroll-key="frame-device-${device.slot}">
+    <section class="phone-frame device-phone ${device.connection}" data-morph-key="device-phone-${device.slot}" data-scroll-key="frame-device-${device.slot}">
       <div class="phone-shell">
         <header class="phone-head device-head">
           <img class="device-head-logo" src="./assets/on2cook-logo.png" alt="On2Cook">
@@ -12012,11 +12165,11 @@ function render() {
   const scrollState = captureScrollState();
   const signedIn = Boolean(cloudRuntime.session?.id || snapshot.ui.demoAuthBypass);
   if (!signedIn) {
-    app.innerHTML = renderLoginGate(snapshot);
+    setStableAppMarkup(renderLoginGate(snapshot));
     restoreScrollState(scrollState);
     return;
   }
-  app.innerHTML = `
+  setStableAppMarkup(`
     <div class="surface ${IS_APK_MODE ? "apk-surface" : ""}">
       ${snapshot.ui.toast ? `<div class="toast ${snapshot.ui.toastTone}">${escapeHtml(snapshot.ui.toast)}</div>` : ""}
       ${renderOrderNotice(snapshot)}
@@ -12028,7 +12181,7 @@ function render() {
       </main>
       ${renderModal(snapshot)}
     </div>
-  `;
+  `);
   restoreScrollState(scrollState);
   restoreApkRailFromUiState(snapshot);
 }
@@ -14056,8 +14209,21 @@ async function handleChange(event) {
 }
 
 function bindStore(initialScrollState = null) {
-  store.subscribe((snapshot) => {
-    render();
+  store.subscribe((snapshot, options = {}) => {
+    if (options.render === "telemetry") {
+      if (!telemetryRenderTimer) {
+        telemetryRenderTimer = window.setTimeout(() => {
+          telemetryRenderTimer = 0;
+          render();
+        }, TELEMETRY_RENDER_INTERVAL_MS);
+      }
+    } else {
+      if (telemetryRenderTimer) {
+        window.clearTimeout(telemetryRenderTimer);
+        telemetryRenderTimer = 0;
+      }
+      render();
+    }
     scheduleSaveUiSessionState(snapshot);
   });
   render();
@@ -14286,8 +14452,14 @@ async function init() {
   app.addEventListener("change", handleChange);
   app.addEventListener("scroll", () => scheduleSaveUiSessionState(null, 250), true);
   window.addEventListener("scroll", () => scheduleSaveUiSessionState(null, 250), { passive: true });
-  window.addEventListener("beforeunload", () => saveUiSessionState());
+  window.addEventListener("beforeunload", () => {
+    flushTelemetryMutations();
+    store.flush?.();
+    saveUiSessionState();
+  });
   window.addEventListener("pagehide", () => {
+    flushTelemetryMutations();
+    store.flush?.();
     saveUiSessionState();
     ble.disconnectAllLocal?.();
   });

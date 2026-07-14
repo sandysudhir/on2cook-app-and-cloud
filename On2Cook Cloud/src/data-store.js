@@ -1051,20 +1051,41 @@ export function loadState(seedRecipes) {
 export function createStore(initialState) {
   let state = structuredClone(initialState);
   const listeners = new Set();
+  let deferredPersistTimer = 0;
 
-  function emit() {
+  function persistNow() {
+    if (deferredPersistTimer) {
+      clearTimeout(deferredPersistTimer);
+      deferredPersistTimer = 0;
+    }
     writeStateToStorage(state);
-    listeners.forEach((listener) => listener(state));
+  }
+
+  function scheduleDeferredPersist(delayMs = 1000) {
+    if (deferredPersistTimer) return;
+    deferredPersistTimer = setTimeout(() => {
+      deferredPersistTimer = 0;
+      writeStateToStorage(state);
+    }, delayMs);
+  }
+
+  function emit(options = {}) {
+    if (options.persist === "defer") {
+      scheduleDeferredPersist(options.persistDelayMs);
+    } else if (options.persist !== false) {
+      persistNow();
+    }
+    listeners.forEach((listener) => listener(state, options));
   }
 
   return {
     getState() {
       return state;
     },
-    setState(updater) {
+    setState(updater, options = {}) {
       const nextState = typeof updater === "function" ? updater(structuredClone(state)) : updater;
       state = nextState;
-      emit();
+      emit(options);
     },
     subscribe(listener) {
       listeners.add(listener);
@@ -1073,6 +1094,9 @@ export function createStore(initialState) {
     reset(seedRecipes) {
       state = createInitialState(seedRecipes);
       emit();
+    },
+    flush() {
+      persistNow();
     }
   };
 }
