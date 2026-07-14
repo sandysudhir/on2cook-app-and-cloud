@@ -672,6 +672,7 @@ function createUiState() {
     orderMode: "current",
     recipeMode: "selected",
     recipeScaleId: "",
+    recipeScaleDraft: null,
     globalRecipeSearch: "",
     globalRecipePickedIds: [],
     apkScreenIndex: 0,

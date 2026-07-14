@@ -2,6 +2,10 @@
 
 ## 2026-07-14
 
+- Rebuilt recipe scaling around the approved 300 g, 350 g, 500 g, 600 g, 1 kg, 1.5 kg, 2 kg, and 2.5 kg target sizes.
+- Made every ingredient category expandable and added editable source and final quantities for pre-scale and post-scale fine-tuning.
+- Fine-tuned saves now update detailed ingredient text, grouped weights, instruction weights, and automatic-water pump ticks together while preserving the base recipe.
+- Normalized scaled filenames to a single `_SIZEg` suffix and added responsive scale-editor coverage. Release `20260714h` / service-worker cache `v102`.
 - Reorganized Recipes into three clear destinations: `Kitchen Recipes` for enabled cooking recipes, `Custom Recipes` for edited/scaled versions, and `Import Recipe` for adding a firmware-compatible ZIP.
 - Removed Scale from the permanent tab bar. Scale now opens as a focused workspace for one chosen recipe and saves a separately named copy directly into Custom Recipes.
 - Clarified recipe cards with enabled/disabled status, standard/imported/edited/scaled lineage, and explicit actions for editing, renaming, scaling, kitchen availability, and deletion.

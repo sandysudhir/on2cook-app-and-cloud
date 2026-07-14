@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714f";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714f";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714h";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714h";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260714f";
+} from "./ncb-services.js?v=20260714h";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260714f";
+} from "./data-store.js?v=20260714h";
 import {
   canStartQueuedIndex,
   getRunTimingMetrics,
@@ -29,7 +29,7 @@ import {
   removeQueueId,
   reorderQueueIds,
   shouldStartQueuedWork
-} from "./queue-logic.js?v=20260714f";
+} from "./queue-logic.js?v=20260714h";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -38,7 +38,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260714f";
+const APP_ASSET_VERSION = "20260714h";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -322,6 +322,7 @@ function captureUiSessionState(snapshot = null) {
     orderMode: ui.orderMode || "current",
     recipeMode: ui.recipeMode || "selected",
     recipeScaleId: ui.recipeScaleId || "",
+    recipeScaleDraft: ui.recipeScaleDraft ? structuredClone(ui.recipeScaleDraft) : null,
     globalRecipeSearch: ui.globalRecipeSearch || "",
     globalRecipePickedIds: Array.isArray(ui.globalRecipePickedIds) ? ui.globalRecipePickedIds.slice(0, 200) : [],
     manualMode: {
@@ -380,6 +381,7 @@ function applySavedUiSessionState(initialState, sessionState) {
     initialState.ui.recipeMode = sessionState.recipeMode;
   }
   initialState.ui.recipeScaleId = String(sessionState.recipeScaleId || "");
+  initialState.ui.recipeScaleDraft = sessionState.recipeScaleDraft ? structuredClone(sessionState.recipeScaleDraft) : null;
   initialState.ui.globalRecipeSearch = String(sessionState.globalRecipeSearch || "");
   initialState.ui.globalRecipePickedIds = Array.isArray(sessionState.globalRecipePickedIds)
     ? sessionState.globalRecipePickedIds.slice(0, 200)
@@ -8040,6 +8042,7 @@ const SALT_INTENSITY_PERCENT = {
   medium: 0.009,
   rich: 0.011
 };
+const RECIPE_SCALE_TARGETS_G = [300, 350, 500, 600, 1000, 1500, 2000, 2500];
 let latestFirmwareManifest = null;
 let firmwareManifestLoadPromise = null;
 
@@ -8069,6 +8072,20 @@ function formatScaledWeight(quantity, unit) {
   return `${formatScaledNumber(quantity, unit)} ${normalizeIngredientUnit(unit)}`.trim();
 }
 
+function recipeQuantityInGrams(quantity) {
+  const amount = Math.max(1, Number(quantity?.quantity) || 1);
+  const unit = normalizeIngredientUnit(quantity?.unit || "g");
+  if (unit === "kg" || unit === "l") return amount * 1000;
+  return amount;
+}
+
+function normalizeIngredientNameKey(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 function getRecipeIngredientFactor(baseQuantity, targetQuantity) {
   const base = Math.max(1, Number(baseQuantity) || 1);
   return Math.max(0.05, Number(targetQuantity) || base) / base;
@@ -8094,6 +8111,80 @@ function scaleIngredientAmount(name, quantity, unit, ingredientFactor, targetFin
     unit: normalizedUnit,
     category
   };
+}
+
+function calculateScaleDraftQuantity(ingredient, baseFinalQuantity, targetQuantity, intensity) {
+  const baseQuantity = Math.max(0, Number(ingredient.baseQuantity) || 0);
+  const category = INGREDIENT_CATEGORY_RULES.find((item) => item.id === ingredient.categoryId) || classifyIngredientCategory(ingredient.name);
+  if (category.id === "salt" && normalizeIngredientUnit(ingredient.unit) === "g") {
+    return Math.max(0.1, Number(targetQuantity) * (SALT_INTENSITY_PERCENT[intensity] || SALT_INTENSITY_PERCENT.medium));
+  }
+  const factor = getRecipeIngredientFactor(baseFinalQuantity, targetQuantity);
+  return baseQuantity * Math.pow(factor, category.exponent);
+}
+
+function chooseInitialScaleTarget(quantity) {
+  const amount = recipeQuantityInGrams(quantity);
+  if (RECIPE_SCALE_TARGETS_G.includes(Math.round(amount))) return Math.round(amount);
+  return RECIPE_SCALE_TARGETS_G.reduce((closest, target) =>
+    Math.abs(target - amount) < Math.abs(closest - amount) ? target : closest
+  );
+}
+
+function createRecipeScaleDraft(recipe, existingDraft = null) {
+  const summary = summarizeRecipeForCard(recipe);
+  const baseFinalQuantity = recipeQuantityInGrams(summary.quantity);
+  const targetQuantity = RECIPE_SCALE_TARGETS_G.includes(Number(existingDraft?.targetQuantity))
+    ? Number(existingDraft.targetQuantity)
+    : chooseInitialScaleTarget(summary.quantity);
+  const intensity = ["mild", "medium", "rich"].includes(existingDraft?.intensity)
+    ? existingDraft.intensity
+    : recipe.recipeJson?.scaling?.intensity || "medium";
+  const previousIngredients = new Map(
+    (existingDraft?.ingredients || []).map((item) => [String(item.key || ""), item])
+  );
+  const ingredients = summary.details.map((item, index) => {
+    const category = item.category || classifyIngredientCategory(item.name);
+    const key = `${normalizeIngredientNameKey(item.name) || "ingredient"}-${index}`;
+    const previous = previousIngredients.get(key);
+    const ingredient = {
+      key,
+      name: item.name,
+      unit: normalizeIngredientUnit(item.unit),
+      categoryId: category.id,
+      categoryLabel: category.label,
+      baseQuantity: previous ? Math.max(0, Number(previous.baseQuantity) || 0) : Math.max(0, Number(item.quantity) || 0),
+      finalQuantity: 0
+    };
+    ingredient.finalQuantity = previous
+      ? Math.max(0, Number(previous.finalQuantity) || 0)
+      : calculateScaleDraftQuantity(ingredient, baseFinalQuantity, targetQuantity, intensity);
+    return ingredient;
+  });
+  return {
+    recipeId: recipe.id,
+    targetQuantity,
+    intensity,
+    baseFinalQuantity,
+    ingredients
+  };
+}
+
+function recalculateRecipeScaleDraft(draft, ingredientKey = "") {
+  if (!draft) return draft;
+  draft.ingredients = (draft.ingredients || []).map((ingredient) => {
+    if (ingredientKey && ingredient.key !== ingredientKey) return ingredient;
+    return {
+      ...ingredient,
+      finalQuantity: calculateScaleDraftQuantity(
+        ingredient,
+        draft.baseFinalQuantity,
+        draft.targetQuantity,
+        draft.intensity
+      )
+    };
+  });
+  return draft;
 }
 
 const INGREDIENT_TOKEN_PATTERN =
@@ -8195,7 +8286,7 @@ function summarizeRecipeForCard(recipe) {
   return {
     quantity,
     details,
-    categories: [...categories.entries()].slice(0, 5),
+    categories: [...categories.entries()],
     calories
   };
 }
@@ -8228,12 +8319,117 @@ function renderIngredientSummary(summary) {
     )
     .join("");
   const categoryRows = summary.categories
-    .map(([label, count]) => `<span class="category-chip">${escapeHtml(label)} ${count}</span>`)
+    .map(([label, count]) => {
+      const categoryIngredients = summary.details.filter((item) => (item.category?.label || "Ingredients") === label);
+      return `
+        <details class="ingredient-category-summary">
+          <summary class="category-chip">${escapeHtml(label)} ${count}</summary>
+          <div class="ingredient-category-items">
+            ${categoryIngredients
+              .map(
+                (item) => `<span><b>${escapeHtml(item.name)}</b>${escapeHtml(formatScaledWeight(item.quantity, item.unit))}</span>`
+              )
+              .join("")}
+          </div>
+        </details>
+      `;
+    })
     .join("");
   return `
     <div class="recipe-ingredient-summary">
       <div class="category-chip-row">${categoryRows || `<span class="category-chip">Ingredients ${summary.details.length}</span>`}</div>
       <div class="ingredient-mini-grid">${detailRows || `<span class="subtle">Ingredient details are not listed in this recipe file.</span>`}</div>
+    </div>
+  `;
+}
+
+function renderScaleIngredientEditor(scaleDraft) {
+  const groups = new Map();
+  (scaleDraft.ingredients || []).forEach((ingredient) => {
+    const label = ingredient.categoryLabel || "Ingredients";
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(ingredient);
+  });
+  if (!groups.size) {
+    return `<div class="empty-card compact">Ingredient details are not listed in this recipe file.</div>`;
+  }
+  const preferredOrder = INGREDIENT_CATEGORY_RULES.map((rule) => rule.label);
+  const sortedGroups = [...groups.entries()].sort(
+    ([left], [right]) => preferredOrder.indexOf(left) - preferredOrder.indexOf(right)
+  );
+  return `
+    <div class="scale-ingredient-editor">
+      <div class="scale-ingredient-heading">
+        <div>
+          <div class="mini-title">Fine-tune ingredients</div>
+          <p class="subtle">Open a category, adjust the source amount before scaling or change the calculated final amount.</p>
+        </div>
+        <span>${scaleDraft.ingredients.length} ingredients</span>
+      </div>
+      <div class="scale-category-list">
+        ${sortedGroups
+          .map(
+            ([label, ingredients]) => `
+              <details class="scale-category" ${["Main ingredient / base", "Whole spices", "Ground spices"].includes(label) ? "open" : ""}>
+                <summary>
+                  <span>${escapeHtml(label)}</span>
+                  <strong>${ingredients.length}</strong>
+                </summary>
+                <div class="scale-ingredient-table">
+                  <div class="scale-ingredient-row scale-ingredient-labels" aria-hidden="true">
+                    <span>Ingredient</span>
+                    <span>Source</span>
+                    <span>Final</span>
+                  </div>
+                  ${ingredients
+                    .map(
+                      (ingredient) => `
+                        <div class="scale-ingredient-row" data-scale-ingredient-row="${escapeHtml(ingredient.key)}">
+                          <div class="scale-ingredient-name">
+                            <strong>${escapeHtml(ingredient.name)}</strong>
+                            <span>${escapeHtml(ingredient.unit)}</span>
+                          </div>
+                          <label>
+                            <span class="sr-only">Source amount for ${escapeHtml(ingredient.name)}</span>
+                            <input
+                              class="field-input compact"
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              name="ingredientBaseQuantity"
+                              value="${escapeHtml(formatScaledNumber(ingredient.baseQuantity, ingredient.unit))}"
+                              data-input="recipe-scale-base-ingredient"
+                              data-ingredient-key="${escapeHtml(ingredient.key)}"
+                            >
+                          </label>
+                          <label class="scale-final-quantity">
+                            <span class="sr-only">Final amount for ${escapeHtml(ingredient.name)}</span>
+                            <input
+                              class="field-input compact"
+                              type="number"
+                              min="0"
+                              step="0.1"
+                              name="ingredientFinalQuantity"
+                              value="${escapeHtml(formatScaledNumber(ingredient.finalQuantity, ingredient.unit))}"
+                              data-input="recipe-scale-final-ingredient"
+                              data-ingredient-key="${escapeHtml(ingredient.key)}"
+                            >
+                            <span>${escapeHtml(ingredient.unit)}</span>
+                          </label>
+                          <input type="hidden" name="ingredientKey" value="${escapeHtml(ingredient.key)}">
+                          <input type="hidden" name="ingredientName" value="${escapeHtml(ingredient.name)}">
+                          <input type="hidden" name="ingredientUnit" value="${escapeHtml(ingredient.unit)}">
+                          <input type="hidden" name="ingredientCategory" value="${escapeHtml(ingredient.categoryLabel)}">
+                        </div>
+                      `
+                    )
+                    .join("")}
+                </div>
+              </details>
+            `
+          )
+          .join("")}
+      </div>
     </div>
   `;
 }
@@ -8258,6 +8454,100 @@ function scaleIngredientPhraseText(text, ingredientFactor, targetQuantity, inten
   });
 }
 
+function replaceIngredientOverrideText(text, overrideMap) {
+  return String(text || "").replace(INGREDIENT_TOKEN_PATTERN, (full, rawName, rawQuantity, rawUnit) => {
+    const cleanName = String(rawName || "")
+      .replace(/^[,\s:&+-]+|[,\s:&+-]+$/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    const override = overrideMap.get(normalizeIngredientNameKey(cleanName));
+    if (!override) return full;
+    return `${cleanName} ${formatScaledWeight(override.finalQuantity, override.unit || rawUnit)}`;
+  });
+}
+
+function summarizeIngredientTextWeight(text) {
+  const details = parseIngredientDetailsFromText(text);
+  if (!details.length) return null;
+  const units = new Set(details.map((item) => normalizeIngredientUnit(item.unit)));
+  if (units.size !== 1) return null;
+  const unit = [...units][0];
+  if (!["g", "ml"].includes(unit)) return null;
+  return {
+    quantity: details.reduce((total, item) => total + (Number(item.quantity) || 0), 0),
+    unit
+  };
+}
+
+function applyIngredientOverridesToRecipe(recipeJson, overrides = []) {
+  const overrideMap = new Map(
+    overrides
+      .filter((item) => item?.name && Number.isFinite(Number(item.finalQuantity)))
+      .map((item) => [normalizeIngredientNameKey(item.name), {
+        ...item,
+        finalQuantity: Math.max(0, Number(item.finalQuantity) || 0),
+        unit: normalizeIngredientUnit(item.unit)
+      }])
+  );
+  if (!overrideMap.size) return recipeJson;
+  const groupWeights = new Map();
+  const ingredients = Array.isArray(recipeJson.Ingredients)
+    ? recipeJson.Ingredients
+    : Array.isArray(recipeJson.Ingredient)
+      ? recipeJson.Ingredient
+      : [];
+  const updatedIngredients = ingredients.map((item) => {
+    const next = structuredClone(item || {});
+    const groupName = next.title || next.name || next.audioI || "Ingredient";
+    const groupOverride = overrideMap.get(normalizeIngredientNameKey(groupName));
+    if (next.text) next.text = replaceIngredientOverrideText(next.text, overrideMap);
+    if (next.ingredients) next.ingredients = replaceIngredientOverrideText(next.ingredients, overrideMap);
+    if (next.title && /\d/.test(next.title)) next.title = replaceIngredientOverrideText(next.title, overrideMap);
+    let groupWeight = summarizeIngredientTextWeight(next.text || next.ingredients || "");
+    if (!groupWeight && groupOverride) {
+      groupWeight = { quantity: groupOverride.finalQuantity, unit: groupOverride.unit };
+    }
+    if (groupWeight) {
+      const formatted = formatScaledWeight(groupWeight.quantity, groupWeight.unit);
+      next.weight = formatted;
+      next.Weight = formatted;
+      next.audioQ = formatScaledNumber(groupWeight.quantity, groupWeight.unit);
+      next.audioU = normalizeIngredientUnit(groupWeight.unit);
+      groupWeights.set(normalizeIngredientNameKey(groupName), groupWeight);
+    }
+    return next;
+  });
+  if (Array.isArray(recipeJson.Ingredients)) recipeJson.Ingredients = updatedIngredients;
+  if (Array.isArray(recipeJson.Ingredient)) recipeJson.Ingredient = updatedIngredients;
+  if (Array.isArray(recipeJson.Instruction)) {
+    recipeJson.Instruction = recipeJson.Instruction.map((step) => {
+      const next = structuredClone(step || {});
+      const stepName = next.Text || next.audioI || "Step";
+      const groupWeight = groupWeights.get(normalizeIngredientNameKey(stepName));
+      if (!groupWeight) return next;
+      const formatted = formatScaledWeight(groupWeight.quantity, groupWeight.unit);
+      next.Weight = formatted;
+      next.weight = formatted;
+      next.audioQ = formatScaledNumber(groupWeight.quantity, groupWeight.unit);
+      if (/water|pump/i.test(stepName) && normalizeIngredientUnit(groupWeight.unit) === "ml") {
+        next.pump_on = String(Math.max(1, Math.round(groupWeight.quantity / 10)));
+      }
+      return next;
+    });
+  }
+  recipeJson.scaling = {
+    ...(recipeJson.scaling || {}),
+    fineTunedIngredients: overrides.map((item) => ({
+      name: item.name,
+      category: item.categoryLabel || classifyIngredientCategory(item.name).label,
+      baseQuantity: Number(item.baseQuantity) || 0,
+      finalQuantity: Number(item.finalQuantity) || 0,
+      unit: normalizeIngredientUnit(item.unit)
+    }))
+  };
+  return recipeJson;
+}
+
 function roundScaledSeconds(value, timeFactor) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric <= 0) return value;
@@ -8276,10 +8566,11 @@ function formatAudioDuration(seconds) {
 function createScaledRecipePayload(sourceRecipe, targetQuantity, intensity = "medium") {
   const recipeJson = cloneRecipeForEditing(sourceRecipe);
   const baseQuantity = inferRecipeQuantity(sourceRecipe.recipeJson || {});
-  const targetUnit = normalizeIngredientUnit(baseQuantity.unit || "g");
-  const cleanTarget = Math.max(1, Number(targetQuantity) || baseQuantity.quantity || 500);
-  const ingredientFactor = getRecipeIngredientFactor(baseQuantity.quantity, cleanTarget);
-  const timeFactor = getRecipeTimeFactor(baseQuantity.quantity, cleanTarget);
+  const baseComparableQuantity = recipeQuantityInGrams(baseQuantity);
+  const targetUnit = "g";
+  const cleanTarget = Math.max(1, Number(targetQuantity) || baseComparableQuantity || 500);
+  const ingredientFactor = getRecipeIngredientFactor(baseComparableQuantity, cleanTarget);
+  const timeFactor = getRecipeTimeFactor(baseComparableQuantity, cleanTarget);
   const originalIngredients = Array.isArray(recipeJson.Ingredients) ? recipeJson.Ingredients : [];
   recipeJson.Ingredients = originalIngredients.map((item) => {
     const next = structuredClone(item || {});
@@ -8321,7 +8612,8 @@ function createScaledRecipePayload(sourceRecipe, targetQuantity, intensity = "me
       return next;
     });
   }
-  const scaledName = `${sourceRecipe.displayName}_${Math.round(cleanTarget)}${targetUnit}`;
+  const scaleNameBase = String(sourceRecipe.displayName || "Recipe").replace(/_\d+(?:\.\d+)?(?:kg|g)$/i, "");
+  const scaledName = `${scaleNameBase}_${Math.round(cleanTarget)}${targetUnit}`;
   const firmwareName = sanitizeFirmwareName(scaledName);
   recipeJson.quantity = `${formatScaledNumber(cleanTarget, targetUnit)} ${targetUnit}`;
   recipeJson.finalQuantity = recipeJson.quantity;
@@ -8347,7 +8639,7 @@ function createScaledRecipePayload(sourceRecipe, targetQuantity, intensity = "me
   };
 }
 
-async function saveScaledRecipe(recipeId, targetQuantity, intensity = "medium") {
+async function saveScaledRecipe(recipeId, targetQuantity, intensity = "medium", ingredientOverrides = []) {
   const snapshot = state();
   const sourceRecipe = findRecipeById(snapshot, recipeId);
   if (!sourceRecipe) {
@@ -8357,6 +8649,7 @@ async function saveScaledRecipe(recipeId, targetQuantity, intensity = "medium") 
   const baseRecipe =
     sourceRecipe.type === "final" && sourceRecipe.baseRecipeId ? findRecipeById(snapshot, sourceRecipe.baseRecipeId) || sourceRecipe : sourceRecipe;
   const payload = createScaledRecipePayload(sourceRecipe, targetQuantity, intensity);
+  applyIngredientOverridesToRecipe(payload.recipeJson, ingredientOverrides);
   const finalRecipe = createFinalRecipeFromBase(baseRecipe, payload.recipeJson, {
     displayName: payload.displayName,
     firmwareName: payload.firmwareName,
@@ -8379,6 +8672,7 @@ async function saveScaledRecipe(recipeId, targetQuantity, intensity = "medium") 
     draft.recipes.unshift(finalRecipe);
     draft.ui.recipeMode = "final";
     draft.ui.recipeScaleId = "";
+    draft.ui.recipeScaleDraft = null;
     syncSelectedRecipesToAllDevices(draft);
   });
   const saved = state().recipes.find((recipe) => recipe.id === finalRecipe.id) || finalRecipe;
@@ -9626,11 +9920,14 @@ function renderRecipeCard(snapshot, recipe, perms) {
 function renderRecipeScaleCard(snapshot, recipe, perms) {
   const summary = summarizeRecipeForCard(recipe);
   const quantity = summary.quantity;
-  const intensity = recipe.recipeJson?.scaling?.intensity || "medium";
+  const scaleDraft = createRecipeScaleDraft(
+    recipe,
+    snapshot.ui.recipeScaleDraft?.recipeId === recipe.id ? snapshot.ui.recipeScaleDraft : null
+  );
+  const intensity = scaleDraft.intensity;
   const scaledRecipes = snapshot.recipes
     .filter((item) => item.type === "final" && item.baseRecipeId === (recipe.baseRecipeId || recipe.id) && item.source === "scaled-final")
     .slice(0, 3);
-  const previewQuantities = [0.5, 0.75, 1, 1.5, 2].map((factor) => Math.max(1, Math.round(quantity.quantity * factor)));
   return `
     <article class="recipe-card recipe-scale-card">
       <div class="recipe-thumb ${recipe.imageDataUrl ? "has-image" : ""}">
@@ -9645,36 +9942,45 @@ function renderRecipeScaleCard(snapshot, recipe, perms) {
           <span class="status-pill pending">New custom copy</span>
         </div>
         ${renderRecipeNutritionLine(summary)}
-        ${renderIngredientSummary(summary)}
         <form class="recipe-scale-form" data-form="scale-recipe" data-recipe-id="${recipe.id}">
-          <div class="scale-control-grid">
-            <label class="field-label">
-              Target final quantity
-              <input class="field-input" name="targetQuantity" type="number" min="1" step="50" value="${escapeHtml(quantity.quantity)}" required>
-            </label>
+          <input type="hidden" name="targetQuantity" value="${scaleDraft.targetQuantity}">
+          <div class="scale-target-panel">
+            <div class="mini-title">Target final quantity</div>
+            <div class="scale-target-grid">
+              ${RECIPE_SCALE_TARGETS_G.map(
+                (target) => `
+                  <button
+                    class="scale-target-button ${target === scaleDraft.targetQuantity ? "active" : ""}"
+                    type="button"
+                    data-action="set-scale-target"
+                    data-recipe-id="${recipe.id}"
+                    data-target-quantity="${target}"
+                  >
+                    ${target >= 1000 ? `${formatScaledNumber(target / 1000, "kg")} kg` : `${target} g`}
+                  </button>
+                `
+              ).join("")}
+            </div>
+          </div>
+          <div class="scale-control-grid single-profile">
             <label class="field-label">
               Salt and intensity profile
-              <select class="field-input" name="intensity">
+              <select class="field-input" name="intensity" data-input="recipe-scale-intensity">
                 <option value="mild" ${intensity === "mild" ? "selected" : ""}>Mild - 0.7% salt</option>
                 <option value="medium" ${intensity === "medium" ? "selected" : ""}>Medium - 0.9% salt</option>
                 <option value="rich" ${intensity === "rich" ? "selected" : ""}>Rich - 1.1% salt</option>
               </select>
             </label>
           </div>
-          <button class="primary-button small" type="submit">Save as Custom Recipe</button>
+          ${renderScaleIngredientEditor(scaleDraft)}
+          <div class="scale-save-bar">
+            <div>
+              <strong>${escapeHtml(String(recipe.displayName || "Recipe").replace(/_\d+(?:\.\d+)?(?:kg|g)$/i, ""))}_${scaleDraft.targetQuantity}g</strong>
+              <span>The base recipe remains unchanged.</span>
+            </div>
+            <button class="primary-button" type="submit">Save Fine-tuned Recipe</button>
+          </div>
         </form>
-        <div class="mini-title">Quick sizes</div>
-        <div class="chip-row">
-          ${previewQuantities
-            .map(
-              (target) => `
-                <button class="chip-button" data-action="scale-recipe-now" data-recipe-id="${recipe.id}" data-target-quantity="${target}" data-intensity="${escapeHtml(intensity)}">
-                  ${escapeHtml(formatScaledWeight(target, quantity.unit))} copy
-                </button>
-              `
-            )
-            .join("")}
-        </div>
         <div class="scaling-rule-card">
           <span><b>Ingredients</b> new / base quantity</span>
           <span><b>Time</b> square root of new / base quantity</span>
@@ -12763,10 +13069,25 @@ async function handleSubmit(event) {
     return;
   }
   if (formName === "scale-recipe") {
+    const ingredientKeys = formData.getAll("ingredientKey");
+    const ingredientNames = formData.getAll("ingredientName");
+    const ingredientUnits = formData.getAll("ingredientUnit");
+    const ingredientCategories = formData.getAll("ingredientCategory");
+    const ingredientBaseQuantities = formData.getAll("ingredientBaseQuantity");
+    const ingredientFinalQuantities = formData.getAll("ingredientFinalQuantity");
+    const ingredientOverrides = ingredientKeys.map((key, index) => ({
+      key: String(key || ""),
+      name: String(ingredientNames[index] || ""),
+      unit: String(ingredientUnits[index] || "g"),
+      categoryLabel: String(ingredientCategories[index] || "Ingredients"),
+      baseQuantity: Math.max(0, Number(ingredientBaseQuantities[index]) || 0),
+      finalQuantity: Math.max(0, Number(ingredientFinalQuantities[index]) || 0)
+    }));
     await saveScaledRecipe(
       form.dataset.recipeId,
       Number(formData.get("targetQuantity")),
-      String(formData.get("intensity") || "medium")
+      String(formData.get("intensity") || "medium"),
+      ingredientOverrides
     );
     return;
   }
@@ -13035,10 +13356,27 @@ async function handleClick(event) {
     return;
   }
   if (action === "switch-recipe-mode") {
+    const nextMode = button.dataset.mode;
+    const scaleRecipe = nextMode === "scale" ? findRecipeById(state(), button.dataset.recipeId) : null;
     mutate((draft) => {
-      const nextMode = button.dataset.mode;
       draft.ui.recipeMode = nextMode;
       draft.ui.recipeScaleId = nextMode === "scale" ? button.dataset.recipeId || draft.ui.recipeScaleId || "" : "";
+      draft.ui.recipeScaleDraft = scaleRecipe ? createRecipeScaleDraft(scaleRecipe) : null;
+    });
+    return;
+  }
+  if (action === "set-scale-target") {
+    const recipe = findRecipeById(state(), button.dataset.recipeId);
+    if (!recipe) return;
+    mutate((draft) => {
+      const scaleDraft = createRecipeScaleDraft(
+        recipe,
+        draft.ui.recipeScaleDraft?.recipeId === recipe.id ? draft.ui.recipeScaleDraft : null
+      );
+      scaleDraft.targetQuantity = RECIPE_SCALE_TARGETS_G.includes(Number(button.dataset.targetQuantity))
+        ? Number(button.dataset.targetQuantity)
+        : chooseInitialScaleTarget(summarizeRecipeForCard(recipe).quantity);
+      draft.ui.recipeScaleDraft = recalculateRecipeScaleDraft(scaleDraft);
     });
     return;
   }
@@ -13422,6 +13760,7 @@ async function handleClick(event) {
       draft.ui.activeModal = null;
       draft.ui.recipeMode = "import";
       draft.ui.recipeScaleId = "";
+      draft.ui.recipeScaleDraft = null;
     });
     return;
   }
@@ -14122,6 +14461,33 @@ async function handleChange(event) {
     return;
   }
 
+  if (input.dataset.input?.startsWith("recipe-scale-")) {
+    const form = input.closest('form[data-form="scale-recipe"]');
+    const recipe = findRecipeById(state(), form?.dataset.recipeId);
+    if (!recipe) return;
+    mutate((draft) => {
+      const scaleDraft = createRecipeScaleDraft(
+        recipe,
+        draft.ui.recipeScaleDraft?.recipeId === recipe.id ? draft.ui.recipeScaleDraft : null
+      );
+      if (input.dataset.input === "recipe-scale-intensity") {
+        scaleDraft.intensity = ["mild", "medium", "rich"].includes(input.value) ? input.value : "medium";
+        draft.ui.recipeScaleDraft = recalculateRecipeScaleDraft(scaleDraft);
+        return;
+      }
+      const ingredient = scaleDraft.ingredients.find((item) => item.key === input.dataset.ingredientKey);
+      if (!ingredient) return;
+      if (input.dataset.input === "recipe-scale-base-ingredient") {
+        ingredient.baseQuantity = Math.max(0, Number(input.value) || 0);
+        draft.ui.recipeScaleDraft = recalculateRecipeScaleDraft(scaleDraft, ingredient.key);
+        return;
+      }
+      ingredient.finalQuantity = Math.max(0, Number(input.value) || 0);
+      draft.ui.recipeScaleDraft = scaleDraft;
+    });
+    return;
+  }
+
   if (input.dataset.input === "serial-photo" && input.files?.[0]) {
     const file = input.files[0];
     const slot = Number(input.dataset.slot);
@@ -14280,6 +14646,12 @@ async function handleChange(event) {
       showToast(error.message, "error");
     }
   }
+}
+
+function handleInput(event) {
+  const inputType = event.target?.dataset?.input;
+  if (!["recipe-scale-base-ingredient", "recipe-scale-final-ingredient"].includes(inputType)) return;
+  handleChange(event).catch((error) => console.warn("[On2Cook] Could not update the scale draft.", error));
 }
 
 function bindStore(initialScrollState = null) {
@@ -14524,6 +14896,7 @@ async function init() {
   app.addEventListener("click", handleClick);
   app.addEventListener("submit", handleSubmit);
   app.addEventListener("change", handleChange);
+  app.addEventListener("input", handleInput);
   app.addEventListener("scroll", () => scheduleSaveUiSessionState(null, 250), true);
   window.addEventListener("scroll", () => scheduleSaveUiSessionState(null, 250), { passive: true });
   window.addEventListener("beforeunload", () => {
