@@ -1,5 +1,5 @@
-import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714d";
-import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714d";
+import { BleTransport, BLE_UUIDS } from "./ble-transport.js?v=20260714e";
+import { importRecipeZipArrayBuffer, importRecipeZipFile, importRecipeZipUrl } from "./zip-reader.js?v=20260714e";
 import {
   authService,
   profileService,
@@ -7,7 +7,7 @@ import {
   recipeService,
   recipeSignatureFromJson,
   syncService
-} from "./ncb-services.js?v=20260714d";
+} from "./ncb-services.js?v=20260714e";
 import {
   cloneRecipeForEditing,
   createFinalRecipeFromBase,
@@ -21,7 +21,7 @@ import {
   importState,
   loadState,
   syncStateToSupabase
-} from "./data-store.js?v=20260714d";
+} from "./data-store.js?v=20260714e";
 import {
   canStartQueuedIndex,
   getRunTimingMetrics,
@@ -29,7 +29,7 @@ import {
   removeQueueId,
   reorderQueueIds,
   shouldStartQueuedWork
-} from "./queue-logic.js?v=20260714d";
+} from "./queue-logic.js?v=20260714e";
 
 if (window.location.protocol === "https:" && window.location.hostname === "on2cook.net") {
   window.location.replace(`https://www.on2cook.net${window.location.pathname}${window.location.search}${window.location.hash}`);
@@ -38,7 +38,7 @@ if (window.location.protocol === "https:" && window.location.hostname === "on2co
 const app = document.getElementById("app");
 const SCROLL_STATE_KEY = "on2cook-cloud-scroll-state";
 const UI_SESSION_STATE_KEY = "on2cook-cloud-ui-session-v1";
-const APP_ASSET_VERSION = "20260714d";
+const APP_ASSET_VERSION = "20260714e";
 const IS_APK_MODE =
   new URLSearchParams(window.location.search).get("apk") === "1" ||
   navigator.userAgent.includes("On2CookCloudApk");
@@ -2864,7 +2864,7 @@ function renderNotificationDrawer(snapshot) {
           </div>
           <div class="notification-head-actions">
             <button class="secondary-button micro" type="button" data-action="mark-notifications-read">Mark read</button>
-            <button class="icon-button" type="button" data-action="close-notification-drawer" aria-label="Close notifications">x</button>
+            <button class="icon-button" type="button" data-action="close-notification-drawer" aria-label="Close notifications">&times;</button>
           </div>
         </header>
         <div class="notification-type-legend">
@@ -6589,7 +6589,7 @@ function renderLiveLogsModal(snapshot, device) {
             <h3>${escapeHtml(device.displayName)}</h3>
             <p class="subtle">Real-time diagnostics only. Opens with livelog=ON and closes with livelog=OFF.</p>
           </div>
-          <button class="icon-button" data-action="close-modal" aria-label="Close live logs">x</button>
+          <button class="icon-button" data-action="close-modal" aria-label="Close live logs">&times;</button>
         </div>
         <div class="settings-card live-log-status-card">
           <div class="meta-grid">
@@ -11371,7 +11371,7 @@ function renderProfessionalEditorModal(snapshot, modal) {
           </div>
           <div class="action-row">
             <button class="secondary-button small" data-action="pro-back-to-config">Edit</button>
-            <button class="icon-button" data-action="close-modal">x</button>
+            <button class="icon-button" data-action="close-modal" aria-label="Close timeline editor">&times;</button>
           </div>
         </div>
         <div class="pro-editor-layout">
@@ -11521,7 +11521,7 @@ function renderModal(snapshot) {
         <div class="modal-card">
           <div class="row space">
             <h3>Manual order</h3>
-            <button class="icon-button" data-action="close-modal">x</button>
+            <button class="icon-button" data-action="close-modal" aria-label="Close manual order">&times;</button>
           </div>
           <form data-form="manual-order" class="modal-form">
             <label class="field-label">Item name<input class="field-input" type="text" name="itemName" required></label>
@@ -11550,7 +11550,7 @@ function renderModal(snapshot) {
         <div class="modal-card wide">
           <div class="row space">
             <h3>${sourceRecipe.type === "final" ? "Edit final recipe" : "Create final recipe"}</h3>
-            <button class="icon-button" data-action="close-modal">x</button>
+            <button class="icon-button" data-action="close-modal" aria-label="Close recipe editor">&times;</button>
           </div>
           <form data-form="recipe-editor" class="modal-form">
             <input type="hidden" name="recipeId" value="${sourceRecipe.id}">
@@ -11845,7 +11845,7 @@ function renderModal(snapshot) {
         <div class="modal-card">
           <div class="row space">
             <h3>Add user</h3>
-            <button class="icon-button" data-action="close-modal">x</button>
+            <button class="icon-button" data-action="close-modal" aria-label="Close add user">&times;</button>
           </div>
           <form data-form="add-user" class="modal-form">
             <label class="field-label">Full name<input class="field-input" type="text" name="displayName" required></label>
@@ -11878,7 +11878,7 @@ function renderModal(snapshot) {
         <div class="modal-card">
           <div class="row space">
             <h3>${mode === "signup" ? "Create cloud account" : "Sign in with Email"}</h3>
-            <button class="icon-button" data-action="close-modal">x</button>
+            <button class="icon-button" data-action="close-modal" aria-label="Close sign in">&times;</button>
           </div>
           <form data-form="cloud-auth" class="modal-form">
             <input type="hidden" name="mode" value="${mode}">
@@ -11924,7 +11924,7 @@ function renderModal(snapshot) {
               <div class="eyebrow">Order details</div>
               <h3>${escapeHtml(order.itemName)}</h3>
             </div>
-            <button class="icon-button" data-action="close-modal">x</button>
+            <button class="icon-button" data-action="close-modal" aria-label="Close order details">&times;</button>
           </div>
           <div class="detail-hero">
             <div class="detail-hero-copy">
@@ -12833,6 +12833,20 @@ async function handleSubmit(event) {
 }
 
 async function handleClick(event) {
+  const eventTarget = event.target;
+  if (eventTarget?.matches?.(".notification-drawer-backdrop")) {
+    mutate((draft) => {
+      draft.ui.notificationDrawerOpen = false;
+    });
+    return;
+  }
+  if (
+    eventTarget?.matches?.(".modal-backdrop, .native-manual-backdrop") &&
+    !eventTarget.dataset.action
+  ) {
+    closeModal();
+    return;
+  }
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const action = button.dataset.action;

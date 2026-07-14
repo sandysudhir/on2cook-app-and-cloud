@@ -2,6 +2,9 @@
 
 ## 2026-07-14
 
+- Added click-outside dismissal to every standard popup, device Manual Mode overlay, and notification drawer while preserving the existing close cleanup for live logs and orientation.
+- Increased popup close controls to a reliable 44 x 44 touch target and replaced the small text `x` with a clearer close symbol and accessible labels.
+- Added regression coverage for backdrop dismissal and touch-target sizing; bumped the web cache to `20260714e` / service-worker cache `v99`.
 - Stabilized the web interface during BLE cooking: telemetry now reconciles existing DOM nodes instead of rebuilding the complete app, preserving scroll positions, focused controls, open panels, and Manual Mode selections.
 - Batched raw BLE messages and parsed telemetry into one state update, capped visual telemetry reconciliation at four times per second, and reduced full database persistence to once per second during live activity.
 - Added regression coverage for stable rendering, BLE batching, and deferred persistence; all 14 automated tests pass.

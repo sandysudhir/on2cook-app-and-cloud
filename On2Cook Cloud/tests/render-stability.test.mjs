@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { createStore } from "../src/data-store.js";
 
 const appSource = readFileSync(new URL("../src/app.js", import.meta.url), "utf8");
+const styleSource = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
 
 test("the main renderer reconciles existing DOM instead of replacing the app", () => {
   const renderStart = appSource.indexOf("function render() {");
@@ -56,4 +57,15 @@ test("telemetry persistence is deferred and subscription metadata is retained", 
   } finally {
     globalThis.localStorage = originalLocalStorage;
   }
+});
+
+test("popup backdrops dismiss through the normal cleanup path", () => {
+  const clickStart = appSource.indexOf("async function handleClick(event) {");
+  const clickEnd = appSource.indexOf("async function handleChange", clickStart);
+  const clickSource = appSource.slice(clickStart, clickEnd);
+
+  assert.match(clickSource, /\.notification-drawer-backdrop/);
+  assert.match(clickSource, /\.modal-backdrop, \.native-manual-backdrop/);
+  assert.match(clickSource, /closeModal\(\)/);
+  assert.match(styleSource, /\.icon-button\[data-action="close-modal"\][\s\S]*?min-width:\s*44px[\s\S]*?min-height:\s*44px/);
 });

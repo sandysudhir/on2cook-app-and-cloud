@@ -1411,7 +1411,9 @@ button {
 }
 
 .order-notice-close {
-  width: 42px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.88);
@@ -1943,6 +1945,19 @@ button {
   background: rgba(115, 92, 62, 0.08);
   color: var(--ink);
   font-weight: 800;
+}
+
+.icon-button[data-action="close-modal"],
+.icon-button[data-action="close-notification-drawer"] {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  font-size: 1.45rem;
+  line-height: 1;
 }
 
 .icon-button svg {
